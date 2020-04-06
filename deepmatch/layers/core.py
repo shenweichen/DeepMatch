@@ -123,3 +123,30 @@ class LabelAwareAttention(Layer):
         config = {'k_max': self.k_max, 'pow_p': self.pow_p}
         base_config = super(LabelAwareAttention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
+
+class Similarity(Layer):
+
+    def __init__(self, gamma=1, axis=-1, type='cos', **kwargs):
+        self.gamma = gamma
+        self.axis = axis
+        self.type = type
+        super(Similarity, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        # Be sure to call this somewhere!
+        super(Similarity, self).build(input_shape)
+
+    def call(self, inputs, **kwargs):
+        query, candidate = inputs
+        if self.type == "cos":
+            query_norm = tf.norm(query, axis=self.axis)
+            candidate_norm = tf.norm(candidate, axis=self.axis)
+        cosine_score = reduce_sum(tf.multiply(query, candidate), -1)
+        if self.type == "cos":
+            cosine_score = div(cosine_score, query_norm * candidate_norm + 1e-8)
+        cosine_score = tf.clip_by_value(cosine_score, -1, 1.0) * self.gamma
+        return cosine_score
+
+    def compute_output_shape(self, input_shape):
+        return (None, 1)
