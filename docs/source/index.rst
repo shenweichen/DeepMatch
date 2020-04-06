@@ -8,7 +8,7 @@ Welcome to DeepMatch's documentation!
 
 
 
-DeepMatch is a **Easy-to-use** deep matching model library for recommendations, advertising, and search. It's easy to train models and to **export representation vectors** for user and item which can be used for **ANN search**.You can use any complex model with ``model.fit()`` and ``model.predict()`` .
+DeepMatch is a  deep matching model library for recommendations, advertising, and search. It's easy to **train models** and to **export representation vectors** for user and item which can be used for **ANN search**.You can use any complex model with ``model.fit()`` and ``model.predict()`` .
 
 
 Let's `Get Started! <./Quick-Start.html>`_ 
