@@ -155,8 +155,8 @@ class Similarity(Layer):
 class CapsuleLayer(Layer):
     def __init__(self, input_units, out_units, max_len, k_max, iteration=3,
                  weight_initializer=RandomNormal(stddev=1.0), **kwargs):
-        self.input_units = input_units  # E1
-        self.out_units = out_units  # E2
+        self.input_units = input_units
+        self.out_units = out_units
         self.max_len = max_len
         self.k_max = k_max
         self.iteration = iteration
@@ -165,31 +165,30 @@ class CapsuleLayer(Layer):
 
     def build(self, input_shape):
         self.B_matrix = self.add_weight(shape=[1, self.k_max, self.max_len], initializer=self.weight_initializer,
-                                        trainable=False, name="B", dtype=tf.float32)  # [1,K,H]
+                                        trainable=False, name="B", dtype=tf.float32)
         self.S_matrix = self.add_weight(shape=[self.input_units, self.out_units], initializer=self.weight_initializer,
                                         name="S", dtype=tf.float32)
         super(CapsuleLayer, self).build(input_shape)
 
-    def call(self, inputs, **kwargs):  # seq_len:[B,1]
+    def call(self, inputs, **kwargs):
         low_capsule, seq_len = inputs
         B = tf.shape(low_capsule)[0]
-        seq_len_tile = tf.tile(seq_len, [1, self.k_max])  # [B,K]
+        seq_len_tile = tf.tile(seq_len, [1, self.k_max])
 
         for i in range(self.iteration):
-            mask = tf.sequence_mask(seq_len_tile, self.max_len)  # [B,K,H]
-            pad = tf.ones_like(mask, dtype=tf.float32) * (-2 ** 16 + 1)  # [B,K,H]
-            B_tile = tf.tile(self.B_matrix, [B, 1, 1])  # [B,K,H]
+            mask = tf.sequence_mask(seq_len_tile, self.max_len)
+            pad = tf.ones_like(mask, dtype=tf.float32) * (-2 ** 16 + 1)
+            B_tile = tf.tile(self.B_matrix, [B, 1, 1])
             B_mask = tf.where(mask, B_tile, pad)
-            W = tf.nn.softmax(B_mask)  # [B,K,H]
-            low_capsule_new = tf.tensordot(low_capsule, self.S_matrix, axes=1)  # [B,H,E2]
-            high_capsule_tmp = tf.matmul(W, low_capsule_new)  # [B,K,E2]
-            high_capsule = squash(high_capsule_tmp)  # [B,K,E2]
+            W = tf.nn.softmax(B_mask)
+            low_capsule_new = tf.tensordot(low_capsule, self.S_matrix, axes=1)
+            high_capsule_tmp = tf.matmul(W, low_capsule_new)
+            high_capsule = squash(high_capsule_tmp)
 
-            # ([B,K,E2], [B,H,E2]->[B,E2,H])->[B,K,H]->[1,K,H]
             B_delta = tf.reduce_sum(
                 tf.matmul(high_capsule, tf.transpose(low_capsule_new, perm=[0, 2, 1])),
                 axis=0, keep_dims=True
-            )  # [1,K,H]
+            )
             self.B_matrix.assign_add(B_delta)
         high_capsule = tf.reshape(high_capsule, [-1, self.k_max, self.out_units])
         return high_capsule
@@ -201,5 +200,5 @@ class CapsuleLayer(Layer):
 def squash(inputs):
     vec_squared_norm = tf.reduce_sum(tf.square(inputs), axis=-1, keep_dims=True)
     scalar_factor = vec_squared_norm / (1 + vec_squared_norm) / tf.sqrt(vec_squared_norm + 1e-9)
-    vec_squashed = scalar_factor * inputs  # element-wise
+    vec_squashed = scalar_factor * inputs
     return vec_squashed
