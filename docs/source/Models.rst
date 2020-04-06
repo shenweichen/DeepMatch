@@ -1,4 +1,4 @@
-DeepCTR Models API
+DeepMatch Models API
 ======================
 
 .. toctree::

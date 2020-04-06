@@ -1,6 +1,6 @@
 # DeepMatch
 
-[![Python Versions](https://img.shields.io/pypi/pyversions/deepmatch.svg)](https://pypi.org/project/deepctr)
+[![Python Versions](https://img.shields.io/pypi/pyversions/deepmatch.svg)](https://pypi.org/project/deepmatch)
 [![TensorFlow Versions](https://img.shields.io/badge/TensorFlow-1.4+/2.0+-blue.svg)](https://pypi.org/project/deepmatch)
 [![PyPI Version](https://img.shields.io/pypi/v/deepmatch.svg)](https://pypi.org/project/deepmatch)
 [![GitHub Issues](https://img.shields.io/github/issues/shenweichen/deepmatch.svg
@@ -8,12 +8,11 @@
 <!-- [![Activity](https://img.shields.io/github/last-commit/shenweichen/deepmatch.svg)](https://github.com/shenweichen/DeepMatch/commits/master) -->
 
 
-[![Documentation Status](https://readthedocs.org/projects/deepctrmatch/badge/?version=latest)](https://deepctrmatch.readthedocs.io/)
+[![Documentation Status](https://readthedocs.org/projects/deepmatch/badge/?version=latest)](https://deepmatch.readthedocs.io/)
 [![Disscussion](https://img.shields.io/badge/chat-wechat-brightgreen?style=flat)](./README.md#disscussiongroup)
 [![License](https://img.shields.io/github/license/shenweichen/deepmatch.svg)](https://github.com/shenweichen/deepmatch/blob/master/LICENSE)
-<!-- [![Gitter](https://badges.gitter.im/DeepCTR/community.svg)](https://gitter.im/DeepCTR/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) -->
 
-DeepMatch is a **Easy-to-use** deep matching model library for recommendations, advertising, and search. It's easy to train models and to **export representation vectors** for user and item which can be used for **ANN search**.You can use any complex model with `model.fit()`and `model.predict()` .
+DeepMatch is a deep matching model library for recommendations, advertising, and search. It's easy to **train models** and to **export representation vectors** for user and item which can be used for **ANN search**.You can use any complex model with `model.fit()`and `model.predict()` .
 
 Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.html)
 
