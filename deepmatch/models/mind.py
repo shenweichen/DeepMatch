@@ -28,7 +28,7 @@ def tile_user_otherfeat(user_other_feature, k_max):
     return tf.tile(tf.expand_dims(user_other_feature, -2), [1, k_max, 1])
 
 
-def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1.0, dynamic_k=False,
+def MIND(user_feature_columns, item_feature_columns, num_sampled=5, max_k=2, p=1.0, dynamic_k=False,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
          dnn_dropout=0,
          init_std=0.0001, seed=1024):
@@ -37,7 +37,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     :param user_feature_columns: An iterable containing user's features used by  the model.
     :param item_feature_columns: An iterable containing item's features used by  the model.
     :param num_sampled: int, the number of classes to randomly sample per batch.
-    :param k_max: int, the max size of user interest embedding
+    :param max_k: int, the max size of user interest embedding
     :param p: float,the parameter for adjusting the attention distribution in LabelAwareAttention.
     :param dynamic_k: bool, whether or not use dynamic interest number
     :param dnn_use_bn: bool. Whether use BatchNormalization before activation or not in deep net
@@ -110,12 +110,12 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
 
     high_capsule = CapsuleLayer(input_units=target_emb_size,
                                 out_units=target_emb_size, max_len=max_len,
-                                k_max=k_max)((history_emb, hist_len))
+                                max_k=max_k)((history_emb, hist_len))
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
 
-        other_feature_tile = tf.keras.layers.Lambda(tile_user_otherfeat, arguments={'k_max': k_max})(user_other_feature)
+        other_feature_tile = tf.keras.layers.Lambda(tile_user_otherfeat, arguments={'k_max': max_k})(user_other_feature)
 
         user_deep_input = Concatenate()([NoMask()(other_feature_tile), high_capsule])
     else:
@@ -130,9 +130,9 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     item_embedding = embedding_dict[item_feature_name]
 
     if dynamic_k:
-        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p, )((user_embeddings, target_emb, hist_len))
+        user_embedding_final = LabelAwareAttention(k_max=max_k, pow_p=p, )((user_embeddings, target_emb, hist_len))
     else:
-        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p, )((user_embeddings, target_emb))
+        user_embedding_final = LabelAwareAttention(k_max=max_k, pow_p=p, )((user_embeddings, target_emb))
 
     output = SampledSoftmaxLayer(item_embedding, num_sampled=num_sampled)(
         inputs=(user_embedding_final, item_features[item_feature_name]))
