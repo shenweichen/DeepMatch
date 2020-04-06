@@ -153,18 +153,18 @@ class Similarity(Layer):
 
 
 class CapsuleLayer(Layer):
-    def __init__(self, input_units, out_units, max_len, max_k, iteration_times=3,
+    def __init__(self, input_units, out_units, max_len, k_max, iteration_times=3,
                  initializer=RandomNormal(stddev=1.0), **kwargs):
         self.input_units = input_units
         self.out_units = out_units
         self.max_len = max_len
-        self.max_k = max_k
+        self.k_max = k_max
         self.iteration_times = iteration_times
         self.initializer = initializer
         super(CapsuleLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.routing_logits = self.add_weight(shape=[1, self.max_k, self.max_len], initializer=self.initializer,
+        self.routing_logits = self.add_weight(shape=[1, self.k_max, self.max_len], initializer=self.initializer,
                                               trainable=False, name="B", dtype=tf.float32)
         self.bilinear_mapping_matrix = self.add_weight(shape=[self.input_units, self.out_units],
                                                        initializer=self.initializer,
@@ -174,7 +174,7 @@ class CapsuleLayer(Layer):
     def call(self, inputs, **kwargs):
         behavior_embddings, seq_len = inputs
         batch_size = tf.shape(behavior_embddings)[0]
-        seq_len_tile = tf.tile(seq_len, [1, self.max_k])
+        seq_len_tile = tf.tile(seq_len, [1, self.k_max])
 
         for i in range(self.iteration_times):
             mask = tf.sequence_mask(seq_len_tile, self.max_len)
@@ -189,11 +189,11 @@ class CapsuleLayer(Layer):
                 axis=0, keep_dims=True
             )
             self.routing_logits.assign_add(delta_routing_logits)
-        interet_capsules = tf.reshape(interet_capsules, [-1, self.max_k, self.out_units])
+        interet_capsules = tf.reshape(interet_capsules, [-1, self.k_max, self.out_units])
         return interet_capsules
 
     def compute_output_shape(self, input_shape):
-        return (None, self.max_k, self.out_units)
+        return (None, self.k_max, self.out_units)
 
 
 def squash(inputs):
