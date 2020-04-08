@@ -41,7 +41,7 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
         raise ValueError("Now YoutubeNN only support 1 item feature like item_id")
     item_feature_name = item_feature_columns[0].name
     item_vocabulary_size = item_feature_columns[0].vocabulary_size
-    item_idx = Input(tensor=tf.range(0,item_vocabulary_size),name="item_idx")
+    item_idx = Input(shape=[None,],tensor=tf.range(0,item_vocabulary_size),name="item_idx")
 
     embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding,
                                                     init_std, seed, prefix="")
