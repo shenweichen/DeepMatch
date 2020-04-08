@@ -34,8 +34,8 @@ def get_item_embedding(item_embedding_layer, item_input_layer):
     return Lambda(lambda x: tf.squeeze(tf.gather(item_embedding_layer.embeddings, x), axis=1))(
         item_input_layer)
 
-def get_item_embeddingv2(item_embedding_layer, item_input_layer):
-    return Lambda(lambda x: tf.squeeze(tf.gather(item_embedding_layer, x), axis=1))(
+def get_item_embeddingv2(item_embedding, item_input_layer):
+    return Lambda(lambda x: tf.squeeze(tf.gather(item_embedding, x), axis=1))(
         item_input_layer)
 
 

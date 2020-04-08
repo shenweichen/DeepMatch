@@ -60,6 +60,8 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
                        dnn_use_bn, seed, )(user_dnn_input)
 
     item_embedding = NoMask()(embedding_matrix_dict[item_feature_name](item_idx))
+    #item_embedding = get_item_embeddingv2()
+
     # if not item_embedding.built:
     #     item_embedding.build([])
 
