@@ -388,5 +388,5 @@ def get_xy_fd(hash_flag=False):
 
     #feature_names = get_feature_names(feature_columns)
     x = feature_dict
-    y = [1, 1, 1]
+    y = np.array([1, 1, 1])
     return x, y, user_feature_columns,item_feature_columns

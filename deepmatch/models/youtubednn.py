@@ -75,8 +75,3 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
 
     return model
 
-from tensorflow.python.keras import backend as K
-
-
-def loss(y_true, y_pred):
-    return K.mean(K.log(K.sigmoid(y_true*y_pred)))
