@@ -106,14 +106,14 @@ class SampledSoftmaxLayerv2(Layer):
         target (i.e., a repeat of the training data) to compute the labels
         argument
         """
-        embeddings,inputs, label_idx = inputs_with_label_idx
+        embeddings, inputs, label_idx = inputs_with_label_idx
 
-        loss = tf.nn.sampled_softmax_loss(weights=embeddings,#self.item_embedding.
+        loss = tf.nn.sampled_softmax_loss(weights=embeddings,  # self.item_embedding.
                                           biases=self.zero_bias,
                                           labels=label_idx,
                                           inputs=inputs,
                                           num_sampled=self.num_sampled,
-                                          num_classes=self.size,#self.target_song_size
+                                          num_classes=self.size,  # self.target_song_size
                                           )
         return tf.expand_dims(loss, axis=1)
 
@@ -121,10 +121,9 @@ class SampledSoftmaxLayerv2(Layer):
         return (None, 1)
 
     def get_config(self, ):
-        config = { 'num_sampled': self.num_sampled}
+        config = {'num_sampled': self.num_sampled}
         base_config = super(SampledSoftmaxLayerv2, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
-
 
 
 class LabelAwareAttention(Layer):
@@ -197,6 +196,11 @@ class Similarity(Layer):
     def compute_output_shape(self, input_shape):
         return (None, 1)
 
+    def get_config(self, ):
+        config = {'gamma': self.gamma, 'axis': self.axis, 'type': self.type}
+        base_config = super(Similarity, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
 
 class CapsuleLayer(Layer):
     def __init__(self, input_units, out_units, max_len, k_max, iteration_times=3,
@@ -240,6 +244,12 @@ class CapsuleLayer(Layer):
 
     def compute_output_shape(self, input_shape):
         return (None, self.k_max, self.out_units)
+
+    def get_config(self, ):
+        config = {'input_units': self.input_units, 'out_units': self.out_units, 'max_len': self.max_len,
+                  'k_max': self.k_max, 'iteration_times': self.iteration_times, "initializer": self.initializer}
+        base_config = super(CapsuleLayer, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
 
 
 def squash(inputs):
