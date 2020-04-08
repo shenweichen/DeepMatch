@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     # 4. Generate user features for testing and full item features for retrieval
     test_user_model_input = test_model_input
-    all_item_model_input = {"movie_id": item_profile['movie_id'].values, "movie_idx": item_profile['movie_id'].values}
+    all_item_model_input = {"movie_id": item_profile['movie_id'].values}
 
     user_embedding_model = Model(inputs=model.user_input, outputs=model.user_embedding)
     item_embedding_model = Model(inputs=model.item_input, outputs=model.item_embedding)
