@@ -4,14 +4,16 @@ Author:
 Reference:
 Deep Neural Networks for YouTube Recommendations
 """
-
+import tensorflow as tf
 from deepctr.inputs import input_from_feature_columns, build_input_features, combined_dnn_input, create_embedding_matrix
 from deepctr.layers.core import DNN
+from deepctr.layers.utils import NoMask
 from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.layers import Input
 
-from deepmatch.utils import get_item_embedding
+from deepmatch.utils import get_item_embedding,get_item_embeddingv2
 from ..inputs import input_from_feature_columns
-from ..layers.core import SampledSoftmaxLayer
+from ..layers.core import SampledSoftmaxLayer,SampledSoftmaxLayerv2
 
 
 def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
@@ -38,6 +40,8 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
     if len(item_feature_columns) > 1:
         raise ValueError("Now YoutubeNN only support 1 item feature like item_id")
     item_feature_name = item_feature_columns[0].name
+    item_vocabulary_size = item_feature_columns[0].vocabulary_size
+    item_idx = Input(tensor=tf.range(0,item_vocabulary_size),name="item_idx")
 
     embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding,
                                                     init_std, seed, prefix="")
@@ -55,16 +59,24 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
     user_dnn_out = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn, dnn_dropout,
                        dnn_use_bn, seed, )(user_dnn_input)
 
-    item_embedding = embedding_matrix_dict[item_feature_name]
+    item_embedding = NoMask()(embedding_matrix_dict[item_feature_name](item_idx))
+    # if not item_embedding.built:
+    #     item_embedding.build([])
 
-    output = SampledSoftmaxLayer(item_embedding, num_sampled=num_sampled)(
-        inputs=(user_dnn_out, item_features[item_feature_name]))
-    model = Model(inputs=user_inputs_list + item_inputs_list, outputs=output)
+    output = SampledSoftmaxLayerv2( num_sampled=num_sampled)(
+        inputs=(item_embedding,user_dnn_out, item_features[item_feature_name]))
+    model = Model(inputs=user_inputs_list + item_inputs_list+[item_idx], outputs=output)
 
     model.__setattr__("user_input", user_inputs_list)
     model.__setattr__("user_embedding", user_dnn_out)
 
     model.__setattr__("item_input", item_inputs_list)
-    model.__setattr__("item_embedding", get_item_embedding(item_embedding, item_features[item_feature_name]))
+    model.__setattr__("item_embedding", get_item_embeddingv2(item_embedding, item_features[item_feature_name]))
 
     return model
+
+from tensorflow.python.keras import backend as K
+
+
+def loss(y_true, y_pred):
+    return K.mean(K.log(K.sigmoid(y_true*y_pred)))
