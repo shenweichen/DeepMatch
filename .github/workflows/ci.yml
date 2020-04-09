@@ -18,10 +18,10 @@ jobs:
     strategy:
       matrix:
         python-version: [3.5,3.6,3.7]
-        tf-version: [1.4.0,1.15.0,1.14.0]
+        tf-version: [1.4.0,1.14.0,2.1.0]
 
-        exclude:
-          - python-version: 3.7
+#        exclude:
+#          - python-version: 3.7
             #tf-version: 1.4.0
 
     steps:
