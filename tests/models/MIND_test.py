@@ -11,16 +11,16 @@ from ..utils import check_model,get_xy_fd
 #@pytest.mark.skip(reason="misunderstood the API")
 
 
-# def test_MIND():
-#     model_name = "MIND"
-#
-#     x, y, user_feature_columns, item_feature_columns = get_xy_fd(False)
-#     K.set_learning_phase(True)
-#     model = MIND(user_feature_columns, item_feature_columns, num_sampled=2, user_dnn_hidden_units=(16, 4))
-#
-#     model.compile('adam', sampledsoftmaxloss)
-#     check_model(model,model_name,x,y,check_model_io=True)
-#
+def test_MIND():
+    model_name = "MIND"
+
+    x, y, user_feature_columns, item_feature_columns = get_xy_fd(False)
+    K.set_learning_phase(True)
+    model = MIND(user_feature_columns, item_feature_columns, num_sampled=2, user_dnn_hidden_units=(16, 4))
+
+    model.compile('adam', sampledsoftmaxloss)
+    check_model(model,model_name,x,y)
+
 
 if __name__ == "__main__":
     pass

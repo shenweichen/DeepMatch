@@ -3,7 +3,7 @@ Author:
     Jieyu Yang , yangjieyu@zju.edu.cn
 
 Reference:
-Neural Collaborative Filtering
+He X, Liao L, Zhang H, et al. Neural collaborative filtering[C]//Proceedings of the 26th international conference on world wide web. 2017: 173-182.
 """
 
 import math

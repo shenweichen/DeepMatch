@@ -26,6 +26,7 @@ class PoolingLayer(Layer):
             seq_value_len_list = [seq_value_len_list]
         if len(seq_value_len_list) == 1:
             return seq_value_len_list[0]
+        # seq_value_len_list[1] = tf.squeeze(seq_value_len_list[1],axis=0)
         expand_seq_value_len_list = list(map(lambda x: tf.expand_dims(x, axis=-1), seq_value_len_list))
         a = concat_func(expand_seq_value_len_list)
         if self.mode == "mean":
@@ -204,20 +205,21 @@ class Similarity(Layer):
 
 class CapsuleLayer(Layer):
     def __init__(self, input_units, out_units, max_len, k_max, iteration_times=3,
-                 initializer=RandomNormal(stddev=1.0), **kwargs):
+                 init_std=1.0, **kwargs):
         self.input_units = input_units
         self.out_units = out_units
         self.max_len = max_len
         self.k_max = k_max
         self.iteration_times = iteration_times
-        self.initializer = initializer
+        self.init_std = init_std
         super(CapsuleLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.routing_logits = self.add_weight(shape=[1, self.k_max, self.max_len], initializer=self.initializer,
+        self.routing_logits = self.add_weight(shape=[1, self.k_max, self.max_len],
+                                              initializer=RandomNormal(stddev=self.init_std),
                                               trainable=False, name="B", dtype=tf.float32)
         self.bilinear_mapping_matrix = self.add_weight(shape=[self.input_units, self.out_units],
-                                                       initializer=self.initializer,
+                                                       initializer=RandomNormal(stddev=self.init_std),
                                                        name="S", dtype=tf.float32)
         super(CapsuleLayer, self).build(input_shape)
 
@@ -233,21 +235,21 @@ class CapsuleLayer(Layer):
             weight = tf.nn.softmax(routing_logits_with_padding)
             behavior_embdding_mapping = tf.tensordot(behavior_embddings, self.bilinear_mapping_matrix, axes=1)
             Z = tf.matmul(weight, behavior_embdding_mapping)
-            interet_capsules = squash(Z)
+            interest_capsules = squash(Z)
             delta_routing_logits = tf.reduce_sum(
-                tf.matmul(interet_capsules, tf.transpose(behavior_embdding_mapping, perm=[0, 2, 1])),
+                tf.matmul(interest_capsules, tf.transpose(behavior_embdding_mapping, perm=[0, 2, 1])),
                 axis=0, keep_dims=True
             )
             self.routing_logits.assign_add(delta_routing_logits)
-        interet_capsules = tf.reshape(interet_capsules, [-1, self.k_max, self.out_units])
-        return interet_capsules
+        interest_capsules = tf.reshape(interest_capsules, [-1, self.k_max, self.out_units])
+        return interest_capsules
 
     def compute_output_shape(self, input_shape):
         return (None, self.k_max, self.out_units)
 
     def get_config(self, ):
         config = {'input_units': self.input_units, 'out_units': self.out_units, 'max_len': self.max_len,
-                  'k_max': self.k_max, 'iteration_times': self.iteration_times, "initializer": self.initializer}
+                  'k_max': self.k_max, 'iteration_times': self.iteration_times, "init_std": self.init_std}
         base_config = super(CapsuleLayer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
