@@ -1,7 +1,7 @@
 from deepctr.layers import custom_objects
 from deepctr.layers.utils import reduce_sum
 
-from .core import PoolingLayer, SampledSoftmaxLayer, Similarity, LabelAwareAttention, CapsuleLayer,SampledSoftmaxLayerv2,EmbeddingIdx
+from .core import PoolingLayer, SampledSoftmaxLayer, Similarity, LabelAwareAttention, CapsuleLayer,SampledSoftmaxLayerv2,EmbeddingIndex
 from ..utils import sampledsoftmaxloss
 
 _custom_objects = {'PoolingLayer': PoolingLayer,
@@ -12,7 +12,7 @@ _custom_objects = {'PoolingLayer': PoolingLayer,
                    'reduce_sum':reduce_sum,
                    'SampledSoftmaxLayerv2':SampledSoftmaxLayerv2,
                    'sampledsoftmaxloss':sampledsoftmaxloss,
-                   'EmbeddingIdx':EmbeddingIdx
+                   'EmbeddingIndex':EmbeddingIndex
                    }
 
 custom_objects = dict(custom_objects, **_custom_objects)

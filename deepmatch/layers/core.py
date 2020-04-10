@@ -268,21 +268,19 @@ def squash(inputs):
 
 
 
-class EmbeddingIdx(Layer):
+class EmbeddingIndex(Layer):
 
-    def __init__(self, vocabulary_size,**kwargs):
-
-        self.vocabulary_size =vocabulary_size
-        super(EmbeddingIdx, self).__init__(**kwargs)
+    def __init__(self, index,**kwargs):
+        self.index =index
+        super(EmbeddingIndex, self).__init__(**kwargs)
 
     def build(self, input_shape):
 
-        super(EmbeddingIdx, self).build(
+        super(EmbeddingIndex, self).build(
             input_shape)  # Be sure to call this somewhere!
-
     def call(self, x, **kwargs):
-       return tf.constant([list(range(self.vocabulary_size))])
+       return tf.constant(self.index)
     def get_config(self, ):
-        config = {'vocabulary_size': self.vocabulary_size,}
-        base_config = super(EmbeddingIdx, self).get_config()
+        config = {'index': self.index, }
+        base_config = super(EmbeddingIndex, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))

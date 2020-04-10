@@ -15,7 +15,7 @@ from tensorflow.python.keras.layers import Input, Lambda
 from deepmatch.utils import get_item_embedding, get_item_embeddingv2
 from deepmatch.layers import PoolingLayer
 from ..inputs import input_from_feature_columns
-from ..layers.core import SampledSoftmaxLayer, SampledSoftmaxLayerv2,EmbeddingIdx
+from ..layers.core import SampledSoftmaxLayer, SampledSoftmaxLayerv2,EmbeddingIndex
 
 
 def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
@@ -43,11 +43,6 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
         raise ValueError("Now YoutubeNN only support 1 item feature like item_id")
     item_feature_name = item_feature_columns[0].name
     item_vocabulary_size = item_feature_columns[0].vocabulary_size
-    #item_indexx = Input(tensor=tf.constant([list(range(item_vocabulary_size))]),batch_size=10,shape=[item_vocabulary_size])
-
-    #item_indexx = tf.Variable(tf.constant([list(range(item_vocabulary_size))]))
-    #item_indexx = tf.constant(list(range(item_vocabulary_size)))
-    # item_idskey = Input( tensor=tf.constant([[0]*209]), name="item_idx")
 
     embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding,
                                                     init_std, seed, prefix="")
@@ -66,38 +61,23 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
                        dnn_use_bn, seed, )(user_dnn_input)
 
 
-    item_index = EmbeddingIdx(item_vocabulary_size)(item_features[item_feature_name])
+    item_index = EmbeddingIndex(list(range(item_vocabulary_size)))(item_features[item_feature_name])
 
-    # item_embedding = NoMask()(embedding_matrix_dict[item_feature_name](item_idx))
     item_embedding_matrix = embedding_matrix_dict[
-        item_feature_name]  # Lambda( lambda x:embedding_matrix_dict[item_feature_name])(None)
-    # if not item_embedding.built:
-    #     item_embedding.build()
-    item_embedding_weight = item_embedding_matrix(item_index)
-    # item_embedding_skey = item_embedding(item_idskey)
-
-    # item_embedding_ip = Input(tensor=item_embedding.embeddings,name=item_feature_name+"_embeddings")
-    item_embedding_weight = Lambda(lambda x: tf.squeeze(x, axis=0))(NoMask()(item_embedding_weight))
-    # item_embedding_skey = Lambda(lambda x: tf.squeeze(x, axis=0))(NoMask()(item_embedding_skey))
+        item_feature_name]
+    item_embedding_weight = NoMask()(item_embedding_matrix(item_index))
 
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
-    # print(item_idx,"itemidxitem_idxitem_idxitem_idxitem_idx")
-    # print(item_embedding_ip, "item_embedding_ipitem_embedding_ipitem_embedding_ipitem_embedding_ip")
-    # item_embedding = get_item_embeddingv2()
-
-    # if not item_embedding.built:
-    #     item_embedding.build([])
-
     output = SampledSoftmaxLayerv2(num_sampled=num_sampled)(
         inputs=(pooling_item_embedding_weight, user_dnn_out, item_features[item_feature_name]))
-    model = Model(inputs=user_inputs_list + item_inputs_list , outputs=output)  # +[item_idx]
+    model = Model(inputs=user_inputs_list + item_inputs_list , outputs=output)
 
     model.__setattr__("user_input", user_inputs_list)
     model.__setattr__("user_embedding", user_dnn_out)
 
     model.__setattr__("item_input", item_inputs_list)
-    model.__setattr__("item_embedding", get_item_embeddingv2(item_embedding_weight, item_features[item_feature_name]))
+    model.__setattr__("item_embedding", get_item_embeddingv2(pooling_item_embedding_weight, item_features[item_feature_name]))
 
     return model
 
@@ -113,8 +93,3 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
 # loss = lambda labels, logits: softmax_fine_loss(labels, logits, transposed_W=transposed_W, b=b)
 #
 # model_truncated.compile(optimizer=optimizer, loss=loss, sample_weight_mode='temporal')
-
-def input_idx(x,item_vocabulary_size):
-    #print(x)
-    #item_vocabulary_size = x[1]
-    return tf.constant([list(range(item_vocabulary_size))])

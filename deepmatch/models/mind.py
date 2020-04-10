@@ -17,7 +17,7 @@ from tensorflow.python.keras.models import Model
 
 from deepmatch.utils import get_item_embedding,get_item_embeddingv2
 from ..inputs import create_embedding_matrix
-from ..layers.core import CapsuleLayer, SampledSoftmaxLayer, PoolingLayer, LabelAwareAttention,SampledSoftmaxLayerv2,EmbeddingIdx
+from ..layers.core import CapsuleLayer, SampledSoftmaxLayer, PoolingLayer, LabelAwareAttention,SampledSoftmaxLayerv2,EmbeddingIndex
 
 
 def shape_target(target_emb_tmp, target_emb_size):
@@ -131,10 +131,9 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
 
     item_embedding_matrix = embedding_matrix_dict[item_feature_name]
 
-    item_index = EmbeddingIdx(item_vocabulary_size)(item_features[item_feature_name])
+    item_index = EmbeddingIndex(list(range(item_vocabulary_size)))(item_features[item_feature_name])
 
-    item_embedding_weight = item_embedding_matrix(item_index)
-    item_embedding_weight = Lambda(lambda x: tf.squeeze(x, axis=0))(NoMask()(item_embedding_weight))
+    item_embedding_weight = NoMask()(item_embedding_matrix(item_index))
 
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
@@ -151,6 +150,6 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     model.__setattr__("user_embedding", user_embeddings)
 
     model.__setattr__("item_input", item_inputs_list)
-    model.__setattr__("item_embedding", get_item_embeddingv2(item_embedding_weight, item_features[item_feature_name]))
+    model.__setattr__("item_embedding", get_item_embeddingv2(pooling_item_embedding_weight, item_features[item_feature_name]))
 
     return model
