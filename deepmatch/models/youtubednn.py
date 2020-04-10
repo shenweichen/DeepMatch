@@ -4,13 +4,10 @@ Author:
 Reference:
 Covington P, Adams J, Sargin E. Deep neural networks for youtube recommendations[C]//Proceedings of the 10th ACM conference on recommender systems. 2016: 191-198.
 """
-import tensorflow as tf
 from deepctr.inputs import input_from_feature_columns, build_input_features, combined_dnn_input, create_embedding_matrix
 from deepctr.layers.core import DNN
 from deepctr.layers.utils import NoMask
-import numpy as np
 from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.layers import Input, Lambda
 
 from deepmatch.utils import get_item_embedding, get_item_embeddingv2
 from deepmatch.layers import PoolingLayer
