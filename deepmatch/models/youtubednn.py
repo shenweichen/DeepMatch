@@ -9,14 +9,14 @@ from deepctr.layers.core import DNN
 from deepctr.layers.utils import NoMask
 from tensorflow.python.keras.models import Model
 
-from deepmatch.utils import get_item_embedding, get_item_embeddingv2
+from deepmatch.utils import get_item_embedding
 from deepmatch.layers import PoolingLayer
 from ..inputs import input_from_feature_columns
-from ..layers.core import SampledSoftmaxLayer, SampledSoftmaxLayerv2,EmbeddingIndex
+from ..layers.core import  SampledSoftmaxLayer,EmbeddingIndex
 
 
 def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
-               user_dnn_hidden_units=(64, 16),
+               user_dnn_hidden_units=(64, 32),
                dnn_activation='relu', dnn_use_bn=False,
                l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0, init_std=0.0001, seed=1024, ):
     """Instantiates the YoutubeDNN Model architecture.
@@ -66,7 +66,7 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
 
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
-    output = SampledSoftmaxLayerv2(num_sampled=num_sampled)(
+    output = SampledSoftmaxLayer(num_sampled=num_sampled)(
         inputs=(pooling_item_embedding_weight, user_dnn_out, item_features[item_feature_name]))
     model = Model(inputs=user_inputs_list + item_inputs_list , outputs=output)
 
@@ -74,6 +74,6 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
     model.__setattr__("user_embedding", user_dnn_out)
 
     model.__setattr__("item_input", item_inputs_list)
-    model.__setattr__("item_embedding", get_item_embeddingv2(pooling_item_embedding_weight, item_features[item_feature_name]))
+    model.__setattr__("item_embedding", get_item_embedding(pooling_item_embedding_weight, item_features[item_feature_name]))
 
     return model

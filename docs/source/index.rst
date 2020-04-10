@@ -18,6 +18,8 @@ You can read the latest code at https://github.com/shenweichen/DeepMatch
 News
 -----
 
+04/10/2020 : Support `saving and loading model <./FAQ.html#save-or-load-weights-models>`_  . `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.1.2>`_
+
 04/06/2020 : DeepMatch first version .
 
 DisscussionGroup

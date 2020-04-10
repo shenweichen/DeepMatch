@@ -44,55 +44,11 @@ class PoolingLayer(Layer):
 
 
 class SampledSoftmaxLayer(Layer):
-    def __init__(self, item_embedding, num_sampled=5, **kwargs):
-        self.num_sampled = num_sampled
-        self.target_song_size = item_embedding.input_dim
-        self.item_embedding = item_embedding
-        super(SampledSoftmaxLayer, self).__init__(**kwargs)
-
-    def build(self, input_shape):
-        self.zero_bias = self.add_weight(shape=[self.target_song_size],
-                                         initializer=Zeros,
-                                         dtype=tf.float32,
-                                         trainable=False,
-                                         name="bias")
-        if not self.item_embedding.built:
-            self.item_embedding.build([])
-        self.trainable_weights.append(self.item_embedding.embeddings)
-        super(SampledSoftmaxLayer, self).build(input_shape)
-
-    def call(self, inputs_with_label_idx, training=None, **kwargs):
-        """
-        The first input should be the model as it were, and the second the
-        target (i.e., a repeat of the training data) to compute the labels
-        argument
-        """
-        inputs, label_idx = inputs_with_label_idx
-
-        loss = tf.nn.sampled_softmax_loss(weights=self.item_embedding.embeddings,
-                                          biases=self.zero_bias,
-                                          labels=label_idx,
-                                          inputs=inputs,
-                                          num_sampled=self.num_sampled,
-                                          num_classes=self.target_song_size
-                                          )
-        return tf.expand_dims(loss, axis=1)
-
-    def compute_output_shape(self, input_shape):
-        return (None, 1)
-
-    def get_config(self, ):
-        config = {'item_embedding': self.item_embedding, 'num_sampled': self.num_sampled}
-        base_config = super(SampledSoftmaxLayer, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
-
-
-class SampledSoftmaxLayerv2(Layer):
     def __init__(self, num_sampled=5, **kwargs):
         self.num_sampled = num_sampled
         # self.target_song_size = item_embedding.input_dim
         # self.item_embedding = item_embedding
-        super(SampledSoftmaxLayerv2, self).__init__(**kwargs)
+        super(SampledSoftmaxLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.size = input_shape[0][0]
@@ -104,7 +60,7 @@ class SampledSoftmaxLayerv2(Layer):
         # if not self.item_embedding.built:
         #     self.item_embedding.build([])
         # self.trainable_weights.append(self.item_embedding.embeddings)
-        super(SampledSoftmaxLayerv2, self).build(input_shape)
+        super(SampledSoftmaxLayer, self).build(input_shape)
 
     def call(self, inputs_with_label_idx, training=None, **kwargs):
         """
@@ -128,7 +84,7 @@ class SampledSoftmaxLayerv2(Layer):
 
     def get_config(self, ):
         config = {'num_sampled': self.num_sampled}
-        base_config = super(SampledSoftmaxLayerv2, self).get_config()
+        base_config = super(SampledSoftmaxLayer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
 

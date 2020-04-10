@@ -13,8 +13,8 @@ from ..inputs import input_from_feature_columns
 from ..layers.core import Similarity
 
 
-def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 16),
-         item_dnn_hidden_units=(64, 16),
+def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 32),
+         item_dnn_hidden_units=(64, 32),
          dnn_activation='tanh', dnn_use_bn=False,
          l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0, init_std=0.0001, seed=1024, metric='cos'):
     """Instantiates the Deep Structured Semantic Model architecture.

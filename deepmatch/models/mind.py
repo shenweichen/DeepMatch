@@ -12,12 +12,12 @@ from deepctr.inputs import SparseFeat, VarLenSparseFeat, DenseFeat, \
     combined_dnn_input
 from deepctr.layers.core import DNN
 from deepctr.layers.utils import NoMask
-from tensorflow.python.keras.layers import Concatenate,Input,Lambda
+from tensorflow.python.keras.layers import Concatenate
 from tensorflow.python.keras.models import Model
 
-from deepmatch.utils import get_item_embedding,get_item_embeddingv2
+from deepmatch.utils import get_item_embedding
 from ..inputs import create_embedding_matrix
-from ..layers.core import CapsuleLayer, SampledSoftmaxLayer, PoolingLayer, LabelAwareAttention,SampledSoftmaxLayerv2,EmbeddingIndex
+from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention,SampledSoftmaxLayer,EmbeddingIndex
 
 
 def shape_target(target_emb_tmp, target_emb_size):
@@ -143,7 +143,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     else:
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p, )((user_embeddings, target_emb))
 
-    output = SampledSoftmaxLayerv2( num_sampled=num_sampled)(
+    output = SampledSoftmaxLayer(num_sampled=num_sampled)(
         inputs=(pooling_item_embedding_weight,user_embedding_final, item_features[item_feature_name]))
     model = Model(inputs=inputs_list + item_inputs_list, outputs=output)
 
@@ -151,6 +151,6 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     model.__setattr__("user_embedding", user_embeddings)
 
     model.__setattr__("item_input", item_inputs_list)
-    model.__setattr__("item_embedding", get_item_embeddingv2(pooling_item_embedding_weight, item_features[item_feature_name]))
+    model.__setattr__("item_embedding", get_item_embedding(pooling_item_embedding_weight, item_features[item_feature_name]))
 
     return model

@@ -16,7 +16,7 @@ from tensorflow.python.keras.models import Model
 
 def NCF(user_feature_columns, item_feature_columns, user_gmf_embedding_dim=20, item_gmf_embedding_dim=20,
         user_mlp_embedding_dim=20, item_mlp_embedding_dim=20, dnn_use_bn=False,
-        dnn_hidden_units=(64, 16), dnn_activation='relu', l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0,
+        dnn_hidden_units=(64, 32), dnn_activation='relu', l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0,
         init_std=0.0001, seed=1024):
     """Instantiates the NCF Model architecture.
 

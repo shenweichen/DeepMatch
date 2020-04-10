@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     # 2.count #unique features for each sparse field and generate feature config for sequence feature
 
-    embedding_dim = 16
+    embedding_dim = 8
 
     user_feature_columns = [SparseFeat('user_id', feature_max_idx['user_id'], embedding_dim),
                             SparseFeat("gender", feature_max_idx['gender'], embedding_dim),
