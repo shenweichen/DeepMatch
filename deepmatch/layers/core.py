@@ -264,3 +264,25 @@ def squash(inputs):
     scalar_factor = vec_squared_norm / (1 + vec_squared_norm) / tf.sqrt(vec_squared_norm + 1e-8)
     vec_squashed = scalar_factor * inputs
     return vec_squashed
+
+
+
+
+class EmbeddingIdx(Layer):
+
+    def __init__(self, vocabulary_size,**kwargs):
+
+        self.vocabulary_size =vocabulary_size
+        super(EmbeddingIdx, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+
+        super(EmbeddingIdx, self).build(
+            input_shape)  # Be sure to call this somewhere!
+
+    def call(self, x, **kwargs):
+       return tf.constant([list(range(self.vocabulary_size))])
+    def get_config(self, ):
+        config = {'vocabulary_size': self.vocabulary_size,}
+        base_config = super(EmbeddingIdx, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))

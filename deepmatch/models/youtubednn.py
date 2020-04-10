@@ -15,7 +15,7 @@ from tensorflow.python.keras.layers import Input, Lambda
 from deepmatch.utils import get_item_embedding, get_item_embeddingv2
 from deepmatch.layers import PoolingLayer
 from ..inputs import input_from_feature_columns
-from ..layers.core import SampledSoftmaxLayer, SampledSoftmaxLayerv2
+from ..layers.core import SampledSoftmaxLayer, SampledSoftmaxLayerv2,EmbeddingIdx
 
 
 def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
@@ -59,12 +59,14 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
                                                                                    l2_reg_embedding, init_std, seed,
                                                                                    embedding_matrix_dict=embedding_matrix_dict)
     user_dnn_input = combined_dnn_input(user_sparse_embedding_list, user_dense_value_list)
-    item_index = Lambda(input_idx,arguments={'item_vocabulary_size': item_vocabulary_size})(user_dnn_input)
 
     item_features = build_input_features(item_feature_columns)
     item_inputs_list = list(item_features.values())
     user_dnn_out = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn, dnn_dropout,
                        dnn_use_bn, seed, )(user_dnn_input)
+
+
+    item_index = EmbeddingIdx(item_vocabulary_size)(item_features[item_feature_name])
 
     # item_embedding = NoMask()(embedding_matrix_dict[item_feature_name](item_idx))
     item_embedding_matrix = embedding_matrix_dict[

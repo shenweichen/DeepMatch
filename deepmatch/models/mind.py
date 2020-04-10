@@ -17,7 +17,7 @@ from tensorflow.python.keras.models import Model
 
 from deepmatch.utils import get_item_embedding,get_item_embeddingv2
 from ..inputs import create_embedding_matrix
-from ..layers.core import CapsuleLayer, SampledSoftmaxLayer, PoolingLayer, LabelAwareAttention,SampledSoftmaxLayerv2
+from ..layers.core import CapsuleLayer, SampledSoftmaxLayer, PoolingLayer, LabelAwareAttention,SampledSoftmaxLayerv2,EmbeddingIdx
 
 
 def shape_target(target_emb_tmp, target_emb_size):
@@ -58,7 +58,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     item_feature_column = item_feature_columns[0]
     item_feature_name = item_feature_column.name
     item_vocabulary_size = item_feature_columns[0].vocabulary_size
-    item_index = Input(tensor=tf.constant([list(range(item_vocabulary_size))]))
+    #item_index = Input(tensor=tf.constant([list(range(item_vocabulary_size))]))
 
     history_feature_list = [item_feature_name]
 
@@ -131,6 +131,8 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
 
     item_embedding_matrix = embedding_matrix_dict[item_feature_name]
 
+    item_index = EmbeddingIdx(item_vocabulary_size)(item_features[item_feature_name])
+
     item_embedding_weight = item_embedding_matrix(item_index)
     item_embedding_weight = Lambda(lambda x: tf.squeeze(x, axis=0))(NoMask()(item_embedding_weight))
 
@@ -143,7 +145,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
 
     output = SampledSoftmaxLayerv2( num_sampled=num_sampled)(
         inputs=(pooling_item_embedding_weight,user_embedding_final, item_features[item_feature_name]))
-    model = Model(inputs=inputs_list + item_inputs_list+[item_index], outputs=output)
+    model = Model(inputs=inputs_list + item_inputs_list, outputs=output)
 
     model.__setattr__("user_input", inputs_list)
     model.__setattr__("user_embedding", user_embeddings)
