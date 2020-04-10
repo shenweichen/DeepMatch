@@ -11,7 +11,7 @@ Welcome to DeepMatch's documentation!
 DeepMatch is a  deep matching model library for recommendations, advertising, and search. It's easy to **train models** and to **export representation vectors** for user and item which can be used for **ANN search**.You can use any complex model with ``model.fit()`` and ``model.predict()`` .
 
 
-Let's `Get Started! <./Quick-Start.html>`_  or `Run examples! <https://github.com/shenweichen/DeepMatch/blob/master/examples/colab_MovieLen1M_YoutubeDNN.ipynb>` _
+Let's `Get Started! <./Quick-Start.html>`_  or `Run examples! <https://github.com/shenweichen/DeepMatch/blob/master/examples/colab_MovieLen1M_YoutubeDNN.ipynb>`_
 
 You can read the latest code at https://github.com/shenweichen/DeepMatch
 
