@@ -80,16 +80,3 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
     model.__setattr__("item_embedding", get_item_embeddingv2(pooling_item_embedding_weight, item_features[item_feature_name]))
 
     return model
-
-
-# def softmax_fine_loss(labels, logits, transposed_W=None, b=None):
-#     res = tf.map_fn(lambda (__labels, __logits): tf.nn.sampled_softmax_loss(transposed_W, b, __labels, __logits,
-#                                                                             num_sampled=1000,
-#                                                                             num_classes=OUTPUT_COUNT + 1),
-#                     (labels, logits), dtype=tf.float32)
-#     return res
-#
-#
-# loss = lambda labels, logits: softmax_fine_loss(labels, logits, transposed_W=transposed_W, b=b)
-#
-# model_truncated.compile(optimizer=optimizer, loss=loss, sample_weight_mode='temporal')

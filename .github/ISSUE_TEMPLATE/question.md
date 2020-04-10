@@ -6,7 +6,7 @@ labels: question
 assignees: ''
 
 ---
-Please refer to the [FAQ](https://deepmatch.readthedocs.io/en/latest/FAQ.html) in doc and search for the [related issues](https://github.com/shenweichen/DeepCTR/issues) before you ask the question.
+Please refer to the [FAQ](https://deepmatch.readthedocs.io/en/latest/FAQ.html) in doc and search for the [related issues](https://github.com/shenweichen/DeepMatch/issues) before you ask the question.
 
 **Describe the question(问题描述)**
 A clear and concise description of what the question is.
