@@ -43,7 +43,10 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
         raise ValueError("Now YoutubeNN only support 1 item feature like item_id")
     item_feature_name = item_feature_columns[0].name
     item_vocabulary_size = item_feature_columns[0].vocabulary_size
-    item_index = Input(tensor=tf.constant([list(range(item_vocabulary_size))]))
+    #item_indexx = Input(tensor=tf.constant([list(range(item_vocabulary_size))]),batch_size=10,shape=[item_vocabulary_size])
+
+    #item_indexx = tf.Variable(tf.constant([list(range(item_vocabulary_size))]))
+    #item_indexx = tf.constant(list(range(item_vocabulary_size)))
     # item_idskey = Input( tensor=tf.constant([[0]*209]), name="item_idx")
 
     embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding,
@@ -56,6 +59,7 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
                                                                                    l2_reg_embedding, init_std, seed,
                                                                                    embedding_matrix_dict=embedding_matrix_dict)
     user_dnn_input = combined_dnn_input(user_sparse_embedding_list, user_dense_value_list)
+    item_index = Lambda(input_idx,arguments={'item_vocabulary_size': item_vocabulary_size})(user_dnn_input)
 
     item_features = build_input_features(item_feature_columns)
     item_inputs_list = list(item_features.values())
@@ -85,7 +89,7 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
 
     output = SampledSoftmaxLayerv2(num_sampled=num_sampled)(
         inputs=(pooling_item_embedding_weight, user_dnn_out, item_features[item_feature_name]))
-    model = Model(inputs=user_inputs_list + item_inputs_list + [item_index], outputs=output)  # +[item_idx]
+    model = Model(inputs=user_inputs_list + item_inputs_list , outputs=output)  # +[item_idx]
 
     model.__setattr__("user_input", user_inputs_list)
     model.__setattr__("user_embedding", user_dnn_out)
@@ -94,3 +98,21 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
     model.__setattr__("item_embedding", get_item_embeddingv2(item_embedding_weight, item_features[item_feature_name]))
 
     return model
+
+
+# def softmax_fine_loss(labels, logits, transposed_W=None, b=None):
+#     res = tf.map_fn(lambda (__labels, __logits): tf.nn.sampled_softmax_loss(transposed_W, b, __labels, __logits,
+#                                                                             num_sampled=1000,
+#                                                                             num_classes=OUTPUT_COUNT + 1),
+#                     (labels, logits), dtype=tf.float32)
+#     return res
+#
+#
+# loss = lambda labels, logits: softmax_fine_loss(labels, logits, transposed_W=transposed_W, b=b)
+#
+# model_truncated.compile(optimizer=optimizer, loss=loss, sample_weight_mode='temporal')
+
+def input_idx(x,item_vocabulary_size):
+    #print(x)
+    #item_vocabulary_size = x[1]
+    return tf.constant([list(range(item_vocabulary_size))])

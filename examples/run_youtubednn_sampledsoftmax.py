@@ -56,6 +56,9 @@ if __name__ == "__main__":
     # 3.Define Model and train
 
     K.set_learning_phase(True)
+    import tensorflow as tf
+    if tf.__version__ >= '2.0.0':
+       tf.compat.v1.disable_eager_execution()
 
     model = YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5, user_dnn_hidden_units=(64, 16))
     # model = MIND(user_feature_columns,item_feature_columns,dynamic_k=True,p=1,k_max=2,num_sampled=5,user_dnn_hidden_units=(64,16),init_std=0.001)

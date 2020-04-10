@@ -37,6 +37,11 @@ class PoolingLayer(Layer):
             hist = reduce_max(a, axis=-1, )
         return hist
 
+    def get_config(self, ):
+        config = {'mode': self.mode, 'supports_masking': self.supports_masking}
+        base_config = super(PoolingLayer, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
 
 class SampledSoftmaxLayer(Layer):
     def __init__(self, item_embedding, num_sampled=5, **kwargs):

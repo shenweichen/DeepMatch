@@ -16,8 +16,8 @@ def test_YoutubeDNN():
     x, y, user_feature_columns, item_feature_columns = get_xy_fd(False)
     K.set_learning_phase(True)
 
-    #if tf.__version__ >= '2.0.0':
-    #    tf.compat.v1.disable_eager_execution()
+    if tf.__version__ >= '2.0.0':
+       tf.compat.v1.disable_eager_execution()
 
     model = YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=2, user_dnn_hidden_units=(16, 4))
     model.compile('adam', sampledsoftmaxloss)
