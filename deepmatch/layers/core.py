@@ -26,7 +26,6 @@ class PoolingLayer(Layer):
             seq_value_len_list = [seq_value_len_list]
         if len(seq_value_len_list) == 1:
             return seq_value_len_list[0]
-        # seq_value_len_list[1] = tf.squeeze(seq_value_len_list[1],axis=0)
         expand_seq_value_len_list = list(map(lambda x: tf.expand_dims(x, axis=-1), seq_value_len_list))
         a = concat_func(expand_seq_value_len_list)
         if self.mode == "mean":
@@ -46,8 +45,6 @@ class PoolingLayer(Layer):
 class SampledSoftmaxLayer(Layer):
     def __init__(self, num_sampled=5, **kwargs):
         self.num_sampled = num_sampled
-        # self.target_song_size = item_embedding.input_dim
-        # self.item_embedding = item_embedding
         super(SampledSoftmaxLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
@@ -57,9 +54,6 @@ class SampledSoftmaxLayer(Layer):
                                          dtype=tf.float32,
                                          trainable=False,
                                          name="bias")
-        # if not self.item_embedding.built:
-        #     self.item_embedding.build([])
-        # self.trainable_weights.append(self.item_embedding.embeddings)
         super(SampledSoftmaxLayer, self).build(input_shape)
 
     def call(self, inputs_with_label_idx, training=None, **kwargs):
