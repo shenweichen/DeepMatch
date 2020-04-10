@@ -56,18 +56,21 @@ if __name__ == "__main__":
     # 3.Define Model and train
 
     K.set_learning_phase(True)
+    import tensorflow as tf
+    if tf.__version__ >= '2.0.0':
+       tf.compat.v1.disable_eager_execution()
 
     model = YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5, user_dnn_hidden_units=(64, 16))
     # model = MIND(user_feature_columns,item_feature_columns,dynamic_k=True,p=1,k_max=2,num_sampled=5,user_dnn_hidden_units=(64,16),init_std=0.001)
 
-    model.compile(optimizer="adagrad", loss=sampledsoftmaxloss)  # "binary_crossentropy")
+    model.compile(optimizer="adam", loss=sampledsoftmaxloss)  # "binary_crossentropy")
 
     history = model.fit(train_model_input, train_label,  # train_label,
                         batch_size=256, epochs=1, verbose=1, validation_split=0.0, )
 
     # 4. Generate user features for testing and full item features for retrieval
     test_user_model_input = test_model_input
-    all_item_model_input = {"movie_id": item_profile['movie_id'].values, "movie_idx": item_profile['movie_id'].values}
+    all_item_model_input = {"movie_id": item_profile['movie_id'].values}
 
     user_embedding_model = Model(inputs=model.user_input, outputs=model.user_embedding)
     item_embedding_model = Model(inputs=model.item_input, outputs=model.item_embedding)

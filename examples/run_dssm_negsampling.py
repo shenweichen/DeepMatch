@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     # 2.count #unique features for each sparse field and generate feature config for sequence feature
 
-    embedding_dim = 16
+    embedding_dim = 8
 
     user_feature_columns = [SparseFeat('user_id', feature_max_idx['user_id'], embedding_dim),
                             SparseFeat("gender", feature_max_idx['gender'], embedding_dim),
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     # 4. Generate user features for testing and full item features for retrieval
     test_user_model_input = test_model_input
-    all_item_model_input = {"movie_id": item_profile['movie_id'].values, "movie_idx": item_profile['movie_id'].values}
+    all_item_model_input = {"movie_id": item_profile['movie_id'].values}
 
     user_embedding_model = Model(inputs=model.user_input, outputs=model.user_embedding)
     item_embedding_model = Model(inputs=model.item_input, outputs=model.item_embedding)

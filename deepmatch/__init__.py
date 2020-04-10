@@ -1,4 +1,4 @@
 from .utils import check_version
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 check_version(__version__)
