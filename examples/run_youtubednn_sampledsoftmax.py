@@ -63,7 +63,7 @@ if __name__ == "__main__":
     model = YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5, user_dnn_hidden_units=(64, 16))
     # model = MIND(user_feature_columns,item_feature_columns,dynamic_k=True,p=1,k_max=2,num_sampled=5,user_dnn_hidden_units=(64,16),init_std=0.001)
 
-    model.compile(optimizer="adagrad", loss=sampledsoftmaxloss)  # "binary_crossentropy")
+    model.compile(optimizer="adam", loss=sampledsoftmaxloss)  # "binary_crossentropy")
 
     history = model.fit(train_model_input, train_label,  # train_label,
                         batch_size=256, epochs=1, verbose=1, validation_split=0.0, )
