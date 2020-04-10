@@ -12,7 +12,7 @@ setuptools.setup(
     version="0.1.2",
     author="Weichen Shen",
     author_email="wcshen1994@163.com",
-    description="Deep matching model library for recommendations, advertising, and search. It's easy to train models and to **export representation vectors** for user and item which can be used for **ANN search**.",
+    description="Deep matching model library for recommendations, advertising. It's easy to train models and to **export representation vectors** for user and item which can be used for **ANN search**.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/shenweichen/deepmatch",
