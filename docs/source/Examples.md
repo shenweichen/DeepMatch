@@ -3,8 +3,7 @@
 
 ## Run YoutubeDNN on MovieLen1M on Google colab
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg
-)](https://colab.research.google.com/github/shenweichen/DeepMatch/blob/dev_shenweichen/examples/colab_MovieLen1M_YoutubeDNN.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shenweichen/DeepMatch/blob/master/examples/colab_MovieLen1M_YoutubeDNN.ipynb)
 
 
 ## YoutubeDNN with sampled softmax 
