@@ -58,6 +58,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     item_feature_column = item_feature_columns[0]
     item_feature_name = item_feature_column.name
     item_vocabulary_size = item_feature_columns[0].vocabulary_size
+    item_embedding_dim = item_feature_columns[0].embedding_dim
     #item_index = Input(tensor=tf.constant([list(range(item_vocabulary_size))]))
 
     history_feature_list = [item_feature_name]
@@ -78,7 +79,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
             history_feature_columns.append(fc)
         else:
             sparse_varlen_feature_columns.append(fc)
-
+    seq_max_len = history_feature_columns[0].maxlen
     inputs_list = list(features.values())
 
     embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding, init_std,
@@ -107,12 +108,12 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     history_emb = PoolingLayer()(NoMask()(keys_emb_list))
     target_emb = PoolingLayer()(NoMask()(query_emb_list))
 
-    target_emb_size = target_emb.get_shape()[-1].value
-    max_len = history_emb.get_shape()[1].value
+    #target_emb_size = target_emb.get_shape()[-1].value
+    #max_len = history_emb.get_shape()[1].value
     hist_len = features['hist_len']
 
-    high_capsule = CapsuleLayer(input_units=target_emb_size,
-                                out_units=target_emb_size, max_len=max_len,
+    high_capsule = CapsuleLayer(input_units=item_embedding_dim,
+                                out_units=item_embedding_dim, max_len=seq_max_len,
                                 k_max=k_max)((history_emb, hist_len))
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
