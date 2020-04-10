@@ -241,7 +241,7 @@ class CapsuleLayer(Layer):
             behavior_embdding_mapping = tf.tensordot(behavior_embddings, self.bilinear_mapping_matrix, axes=1)
             Z = tf.matmul(weight, behavior_embdding_mapping)
             interest_capsules = squash(Z)
-            delta_routing_logits = tf.reduce_sum(
+            delta_routing_logits = reduce_sum(
                 tf.matmul(interest_capsules, tf.transpose(behavior_embdding_mapping, perm=[0, 2, 1])),
                 axis=0, keep_dims=True
             )
