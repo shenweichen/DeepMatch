@@ -260,7 +260,7 @@ class CapsuleLayer(Layer):
 
 
 def squash(inputs):
-    vec_squared_norm = tf.reduce_sum(tf.square(inputs), axis=-1, keep_dims=True)
+    vec_squared_norm = reduce_sum(tf.square(inputs), axis=-1, keep_dims=True)
     scalar_factor = vec_squared_norm / (1 + vec_squared_norm) / tf.sqrt(vec_squared_norm + 1e-8)
     vec_squashed = scalar_factor * inputs
     return vec_squashed
