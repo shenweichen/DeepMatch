@@ -147,7 +147,7 @@ class LabelAwareAttention(Layer):
     def call(self, inputs, training=None, **kwargs):
         keys = inputs[0]
         query = inputs[1]
-        weight = tf.reduce_sum(keys * query, axis=-1, keep_dims=True)
+        weight = reduce_sum(keys * query, axis=-1, keep_dims=True)
         weight = tf.pow(weight, self.pow_p)  # [x,k_max,1]
 
         if len(inputs) == 3:
@@ -163,7 +163,7 @@ class LabelAwareAttention(Layer):
             weight = tf.where(seq_mask, weight, padding)
 
         weight = softmax(weight, dim=1, name="weight")
-        output = tf.reduce_sum(keys * weight, axis=1)
+        output = reduce_sum(keys * weight, axis=1)
 
         return output
 
