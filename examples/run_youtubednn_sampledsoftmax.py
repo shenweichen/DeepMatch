@@ -60,8 +60,8 @@ if __name__ == "__main__":
     if tf.__version__ >= '2.0.0':
        tf.compat.v1.disable_eager_execution()
 
-    model = YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5, user_dnn_hidden_units=(64, 16))
-    # model = MIND(user_feature_columns,item_feature_columns,dynamic_k=True,p=1,k_max=2,num_sampled=5,user_dnn_hidden_units=(64,16),init_std=0.001)
+    model = YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5, user_dnn_hidden_units=(64, embedding_dim))
+    # model = MIND(user_feature_columns,item_feature_columns,dynamic_k=False,p=1,k_max=2,num_sampled=5,user_dnn_hidden_units=(64, embedding_dim),init_std=0.001)
 
     model.compile(optimizer="adam", loss=sampledsoftmaxloss)  # "binary_crossentropy")
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     item_embedding_model = Model(inputs=model.item_input, outputs=model.item_embedding)
 
     user_embs = user_embedding_model.predict(test_user_model_input, batch_size=2 ** 12)
-    # user_embs = user_embs[:, i, :]  i in [0,k_max) if MIND
+    # user_embs = user_embs[:, i, :]  # i in [0,k_max) if MIND
     item_embs = item_embedding_model.predict(all_item_model_input, batch_size=2 ** 12)
 
     print(user_embs.shape)
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     # # faiss.normalize_L2(item_embs)
     # index.add(item_embs)
     # # faiss.normalize_L2(user_embs)
-    # D, I = index.search(user_embs, 50)
+    # D, I = index.search(np.ascontiguousarray(user_embs), 50)
     # s = []
     # hit = 0
     # for i, uid in tqdm(enumerate(test_user_model_input['user_id'])):
