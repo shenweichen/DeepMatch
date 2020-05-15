@@ -49,3 +49,21 @@ def gen_model_input(train_set,user_profile,seq_max_len):
         train_model_input[key] = user_profile.loc[train_model_input['user_id']][key].values
 
     return train_model_input,train_label
+
+def gen_model_input_sdm(train_set,user_profile, seq_short_len, seq_prefer_len):
+
+    train_uid = np.array([line[0] for line in train_set])
+    train_seq = [line[1] for line in train_set]
+    train_iid = np.array([line[2] for line in train_set])
+    train_label = np.array([line[3] for line in train_set])
+    train_hist_len = np.array([line[4] for line in train_set])
+
+    train_short_seq_pad = pad_sequences(train_seq, maxlen=seq_short_len, padding='post', truncating='post', value=0)
+    train_prefer_seq_pad = pad_sequences(train_seq, maxlen=seq_prefer_len, padding='post', truncating='post', value=0)
+    train_model_input = {"user_id": train_uid, "movie_id": train_iid, "short_movie_id": train_short_seq_pad, "prefer_movie_id": train_prefer_seq_pad,
+                         "prefer_sess_length": train_hist_len, 'short_sess_length': train_hist_len}
+
+    for key in ["gender", "age", "occupation", "zip"]:
+        train_model_input[key] = user_profile.loc[train_model_input['user_id']][key].values
+
+    return train_model_input,train_label
