@@ -114,7 +114,6 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, units=
     item_embedding_matrix = embedding_matrix_dict[item_feature_name]
     item_embedding_weight = NoMask()(item_embedding_matrix(item_index))
 
-
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
     output = SampledSoftmaxLayer(num_sampled=num_sampled)(
@@ -122,7 +121,7 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, units=
     model = Model(inputs=user_inputs_list + item_inputs_list, outputs=output)
 
     model.__setattr__("user_input", user_inputs_list)
-    model.__setattr__("user_embedding", gate_output)
+    model.__setattr__("user_embedding", gate_output_reshape)
 
     model.__setattr__("item_input", item_inputs_list)
     model.__setattr__("item_embedding", get_item_embedding(pooling_item_embedding_weight, item_features[item_feature_name]))

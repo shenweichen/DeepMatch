@@ -93,3 +93,31 @@ if __name__ == "__main__":
 
     print(user_embs.shape)
     print(item_embs.shape)
+
+    test_true_label = {line[0]: [line[2]] for line in test_set}
+
+    import numpy as np
+    import faiss
+    from tqdm import tqdm
+    from deepmatch.utils import recall_N
+
+    index = faiss.IndexFlatIP(embedding_dim)
+    # faiss.normalize_L2(item_embs)
+    index.add(item_embs)
+    # faiss.normalize_L2(user_embs)
+    D, I = index.search(np.ascontiguousarray(user_embs), 50)
+    s = []
+    hit = 0
+    for i, uid in tqdm(enumerate(test_user_model_input['user_id'])):
+        try:
+            pred = [item_profile['movie_id'].values[x] for x in I[i]]
+            filter_item = None
+            recall_score = recall_N(test_true_label[uid], pred, N=50)
+            s.append(recall_score)
+            if test_true_label[uid] in pred:
+                hit += 1
+        except:
+            print(i)
+    print("")
+    print("recall", np.mean(s))
+    print("hit rate", hit / len(test_user_model_input['user_id']))
