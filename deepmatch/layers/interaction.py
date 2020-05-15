@@ -13,7 +13,6 @@ class DotAttention(Layer):
     :param query: [batch_size, 1, C]
     :param key:   [batch_size, T, C]
     :return:      [batch_size, 1, T]
-        query_size should keep the same dim with key_size
     """
     def __init__(self, scale=True, **kwargs):
         self.scale = scale
@@ -28,7 +27,7 @@ class DotAttention(Layer):
         super(DotAttention, self).build(input_shape)
 
     def call(self, inputs, mask=None, **kwargs):
-        query, key = inputs  # [None, 1, 8], [None, 4, 8]
+        query, key = inputs
         output = tf.matmul(query, tf.transpose(key, [0, 2, 1]))
         if self.scale == True:
             output = output / (key.get_shape().as_list()[-1] ** 0.5)
@@ -133,10 +132,10 @@ class SoftmaxWeightedSum(Layer):
 
 class AttentionSequencePoolingLayer(Layer):
     """
-    Input shape:
-      query: A 3d tensor with shape of [batch_size, 1, C_q]
-      keys: A 3d tensor with shape of [batch_size, T, C_k]
-      keys_length: A 3d tensor with shape of [batch_size, T]
+    :param query:           [batch_size, 1, C_q]
+    :param keys:            [batch_size, T, C_k]
+    :param keys_length:      [batch_size, 1]
+    :return:                [batch_size, 1, C_k]
     """
     def __init__(self, dropout_rate=0, **kwargs):
         self.dropout_rate = dropout_rate
@@ -158,7 +157,6 @@ class AttentionSequencePoolingLayer(Layer):
         attention_score = self.concat_att([queries, keys])  # [batch_size, 1, units]
 
         outputs = self.softmax_weight_sum([attention_score, keys, key_masks])
-        # outputs = tf.squeeze(outputs, 1)
         # [batch_size, units]
         return outputs
 
@@ -176,9 +174,9 @@ class AttentionSequencePoolingLayer(Layer):
 
 class SelfAttention(Layer):
     """
-    Args:
-      inputs: A 3d tensor with shape of [batch_size, T_q, C]
-      key_masks: A 3d tensor with shape of [batch_size, T_q, T_k]
+      :param input: A 3d tensor with shape of  [batch_size, 1, C]
+      :param key_masks: A 3d tensor with shape of  [batch_size, 1]
+      :return: A 3d tensor with shape of  [batch_size, 1]
     """
     def __init__(self, scale=True, dropout_rate=0.2, future_binding=True, use_layer_norm=True, seed=2020, **kwargs):
         self.scale = scale
@@ -192,8 +190,6 @@ class SelfAttention(Layer):
         if not isinstance(input_shape, list) or len(input_shape) != 2:
             raise ValueError('A `SelfAttention` layer should be called '
                              'on a list of 2 tensors')
-        if input_shape[0][1] != input_shape[1][-1]:
-            raise ValueError('input time dim should keep the same dim with key masks')
         self.layer_norm = LayerNormalization()
         self.attention = DotAttention(scale=self.scale)
         self.softmax_weight_sum = SoftmaxWeightedSum(dropout_rate=self.dropout_rate, future_binding=self.future_binding, seed=self.seed)
@@ -209,7 +205,7 @@ class SelfAttention(Layer):
         return reduce_mean(output, 1, keep_dims=True)
 
     def compute_output_shape(self, input_shape):
-        return (None, 1, input_shape[1][1])
+        return (None, 1, input_shape[0][-1])
 
     def compute_mask(self, inputs, mask):
         return mask
@@ -217,9 +213,9 @@ class SelfAttention(Layer):
 
 class SelfMultiHeadAttention(Layer):
     """
-    Args:
-     inputs(input): A 3d tensor with shape of [batch_size, T, C].
-     inputs(key_masks): A 2d tensor with shape of [batch_size, key_seqlen]
+      :param query: A 3d tensor with shape of [batch_size, T, C]
+      :param key_masks: A 3d tensor with shape of [batch_size, 1]
+      :return: A 3d tensor with shape of  [batch_size, T, C]
     """
     def __init__(self, num_units=8, head_num=4, scale=True, dropout_rate=0.2, future_binding=True, use_layer_norm=True, use_res=True,
                  seed=2020, **kwargs):
@@ -293,7 +289,7 @@ class SelfMultiHeadAttention(Layer):
         return outputs
 
     def compute_output_shape(self, input_shape):
-        return (None, 1, self.num_units)
+        return (None, input_shape[0][1], self.num_units)
 
     def get_config(self, ):
         config = {'num_units':self.num_units, 'head_num':self.head_num, 'scale': self.scale, 'dropout_rate': self.dropout_rate,
@@ -307,12 +303,10 @@ class SelfMultiHeadAttention(Layer):
 
 class UserAttention(Layer):
     """
-    Args:
-        query :        [batch_size, num_units]
-        keys :         [batch_size, 1, num_units]
-        key_masks:       sequence mask, 2D tensor
-    Returns:
-        outputs :        [batch_size, 1, num_units]
+      :param query: A 3d tensor with shape of [batch_size, T, C]
+      :param keys: A 3d tensor with shape of [batch_size, T, C]
+      :param key_masks: A 3d tensor with shape of [batch_size, 1]
+      :return: A 3d tensor with shape of  [batch_size, 1, C]
     """
     def __init__(self, num_units=None, activation='tanh', use_res=True, dropout_rate=0, scale=True, seed=2020, **kwargs):
         self.scale = scale
@@ -349,7 +343,7 @@ class UserAttention(Layer):
         return reduce_mean(output, 1, keep_dims=True)
 
     def compute_output_shape(self, input_shape):
-        return (None, input_shape[1][1], input_shape[1][2])
+        return (None, 1, input_shape[1][2])
 
     def compute_mask(self, inputs, mask):
         return mask

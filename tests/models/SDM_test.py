@@ -26,4 +26,4 @@ def test_SDM():
 
 
 if __name__ == "__main__":
-    test_SDM()
+    pass
