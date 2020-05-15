@@ -2,12 +2,7 @@
 import itertools
 
 import tensorflow as tf
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.initializers import (Zeros, glorot_normal,
-                                                  glorot_uniform)
 from tensorflow.python.keras.layers import Layer
-from tensorflow.python.keras.regularizers import l2
-from tensorflow.python.layers import utils
 
 
 class DynamicMultiRNN(Layer):
@@ -34,9 +29,8 @@ class DynamicMultiRNN(Layer):
             single_cell = tf.nn.rnn_cell.GRUCell(self.num_units)
         else:
             raise ValueError("Unknown unit type %s!" % self.rnn_type)
-        dropout = self.dropout if tf.keras.backend.learning_phase() == 0 else 0
+        dropout = self.dropout if tf.keras.backend.learning_phase() == 1 else 0
         single_cell = tf.nn.rnn_cell.DropoutWrapper(cell=single_cell, input_keep_prob=(1.0 - dropout))
-        a = tf.keras.layers.LSTM
         cell_list = []
         for i in range(self.num_layers):
             residual = (i >= self.num_layers - self.num_residual_layers)
@@ -51,11 +45,11 @@ class DynamicMultiRNN(Layer):
             self.final_cell = tf.nn.rnn_cell.MultiRNNCell(cell_list)
         super(DynamicMultiRNN, self).build(input_shape)
 
-    def call(self, input_list, training=None):
+    def call(self, input_list, mask=None, training=None):
         rnn_input, sequence_length = input_list
-
-        rnn_output, hidden_state = tf.nn.dynamic_rnn(self.final_cell, inputs=rnn_input, sequence_length=sequence_length,
-                                                     dtype=tf.float32, scope=self.name)
+        with tf.name_scope("rnn"), tf.variable_scope("rnn", reuse=tf.AUTO_REUSE):
+            rnn_output, hidden_state = tf.nn.dynamic_rnn(self.final_cell, inputs=rnn_input, sequence_length=tf.squeeze(sequence_length),
+                                                         dtype=tf.float32, scope=self.name)
         if self.return_sequence:
             return rnn_output
         else:
@@ -70,7 +64,7 @@ class DynamicMultiRNN(Layer):
 
     def get_config(self, ):
         config = {'num_units': self.num_units, 'rnn_type': self.rnn_type, 'return_sequence':self.return_sequence, 'num_layers': self.num_layers,
-                  'num_residual_layers': self.num_residual_layers, 'dropout_rate': self.dropout, 'mode': self.mode}
+                  'num_residual_layers': self.num_residual_layers, 'dropout_rate': self.dropout}
         base_config = super(DynamicMultiRNN, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
