@@ -96,19 +96,12 @@ def gen_model_input_sdm(train_set, user_profile, seq_short_len, seq_prefer_len):
 
     train_short_item_pad = pad_sequences(short_train_seq, maxlen=seq_short_len, padding='post', truncating='post',
                                         value=0)
-    train_short_item_pad = np.array([i[::-1] for i in train_short_item_pad])
-
     train_prefer_item_pad = pad_sequences(prefer_train_seq, maxlen=seq_prefer_len, padding='post', truncating='post',
                                          value=0)
-    train_prefer_item_pad = np.array([i[::-1] for i in train_prefer_item_pad])
-
     train_short_genres_pad = pad_sequences(short_train_seq_genres, maxlen=seq_short_len, padding='post', truncating='post',
                                         value=0)
-    train_short_genres_pad = np.array([i[::-1] for i in train_short_genres_pad])
-
     train_prefer_genres_pad = pad_sequences(prefer_train_seq_genres, maxlen=seq_prefer_len, padding='post', truncating='post',
                                         value=0)
-    train_prefer_genres_pad = np.array([i[::-1] for i in train_prefer_genres_pad])
 
     train_model_input = {"user_id": train_uid, "movie_id": train_iid, "short_movie_id": train_short_item_pad,
         "prefer_movie_id": train_prefer_item_pad, "prefer_sess_length": train_short_len, "short_sess_length":

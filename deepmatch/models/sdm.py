@@ -23,6 +23,20 @@ from deepmatch.utils import get_item_embedding
 def SDM(user_feature_columns, item_feature_columns, history_feature_list, units=64, rnn_layers=2, dropout_rate=0.2,rnn_num_res=1,
         num_head=4, l2_reg_embedding=1e-6, dnn_activation='tanh', init_std=0.0001, seed=1024, num_sampled=5):
     """Instantiates the Sequential Deep Matching Model architecture.
+    :param user_feature_columns: An iterable containing user's features used by  the model.
+    :param item_feature_columns: An iterable containing item's features used by  the model.
+    :param history_feature_list: list,to indicate short and prefer sequence sparse field
+    :param units: int, dimension for each output layer
+    :param rnn_layers: int, layer number of rnn
+    :param dropout_rate: float in [0,1), the probability we will drop out a given DNN coordinate.
+    :param rnn_num_res: int. The number of residual layers in rnn layers
+    :param num_head: int int, the number of attention head
+    :param l2_reg_embedding: float. L2 regularizer strength applied to embedding vector
+    :param dnn_activation: Activation function to use in deep net
+    :param init_std: float,to use as the initialize std of embedding vector
+    :param seed: integer ,to use as random seed.
+    :param num_sampled: int, the number of classes to randomly sample per batch.
+    :return: A Keras model instance.
     """
 
     if len(item_feature_columns) > 1:
