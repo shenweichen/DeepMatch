@@ -78,7 +78,9 @@ if __name__ == "__main__":
     # units must be equal to item embedding dim!
     model = SDM(user_feature_columns, item_feature_columns, history_feature_list=['movie_id', 'genres'], units=embedding_dim, num_sampled=100,)
 
+    # 梯度裁剪
     optimizer = optimizers.Adam(lr=0.001, clipnorm=5.0)
+
     model.compile(optimizer=optimizer, loss=sampledsoftmaxloss)  # "binary_crossentropy")
     model.summary()
     history = model.fit(train_model_input, train_label,  # train_label,
@@ -100,7 +102,7 @@ if __name__ == "__main__":
     print(user_embs.shape)
     print(item_embs.shape)
 
-    test_true_label = {line[0]: [line[2]] for line in test_set}
+    test_true_label = {line[0]: [line[3]] for line in test_set}
 
     import numpy as np
     import faiss
