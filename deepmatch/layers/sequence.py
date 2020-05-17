@@ -62,9 +62,13 @@ class DynamicMultiRNN(Layer):
 
     def call(self, input_list, mask=None, training=None):
         rnn_input, sequence_length = input_list
-        with tf.name_scope("rnn"), tf.variable_scope("rnn", reuse=tf.AUTO_REUSE):
-            rnn_output, hidden_state = tf.nn.dynamic_rnn(self.final_cell, inputs=rnn_input, sequence_length=tf.squeeze(sequence_length),
-                                                         dtype=tf.float32, scope=self.name)
+        try:
+            with tf.name_scope("rnn"), tf.variable_scope("rnn", reuse=tf.AUTO_REUSE):
+                rnn_output, hidden_state = tf.nn.dynamic_rnn(self.final_cell, inputs=rnn_input, sequence_length=tf.squeeze(sequence_length),
+                                                             dtype=tf.float32, scope=self.name)
+        except:
+            rnn_output, hidden_state = tf.compat.v1.nn.dynamic_rnn(self.final_cell, inputs=rnn_input,sequence_length=tf.squeeze(sequence_length),
+                                                                   dtype=tf.float32, scope=self.name)
         if self.return_sequence:
             return rnn_output
         else:
