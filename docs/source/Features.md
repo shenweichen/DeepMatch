@@ -69,6 +69,17 @@
 
 [Neural Collaborative Filtering](https://arxiv.org/abs/1708.05031)
 
+### SDM (Sequential Deep Matching Model)
+
+
+
+[**SDM Model API**](./deepmatch.models.sdm.html)
+
+![MIND](../pics/sdm.jpg)
+
+[Multi-interest network with dynamic routing for recommendation at Tmall](https://arxiv.org/pdf/1904.08030)
+
+
 
 ### MIND (Multi-Interest Network with Dynamic routing)
 
