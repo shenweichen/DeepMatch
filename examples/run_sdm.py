@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # 2.count #unique features for each sparse field and generate feature config for sequence feature
 
     embedding_dim = 32
-
+    # for sdm,we must provide `VarLenSparseFeat` with name "prefer_xxx" and "short_xxx" and their length
     user_feature_columns = [SparseFeat('user_id', feature_max_idx['user_id'], 16),
                             SparseFeat("gender", feature_max_idx['gender'], 16),
                             SparseFeat("age", feature_max_idx['age'], 16),
@@ -74,7 +74,6 @@ if __name__ == "__main__":
     model = SDM(user_feature_columns, item_feature_columns, history_feature_list=['movie_id', 'genres'],
                 units=embedding_dim, num_sampled=100, )
 
-    # 梯度裁剪
     optimizer = optimizers.Adam(lr=0.001, clipnorm=5.0)
 
     model.compile(optimizer=optimizer, loss=sampledsoftmaxloss)  # "binary_crossentropy")
