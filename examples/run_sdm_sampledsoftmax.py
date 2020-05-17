@@ -10,16 +10,7 @@ from deepmatch.models import SDM
 from deepmatch.utils import sampledsoftmaxloss
 
 if __name__ == "__main__":
-    data_path = "./"
-    unames = ['user_id', 'gender', 'age', 'occupation', 'zip']
-    user = pd.read_csv(data_path + 'ml-1m/users.dat', sep='::', header=None, names=unames)
-    rnames = ['user_id', 'movie_id', 'rating', 'timestamp']
-    ratings = pd.read_csv(data_path + 'ml-1m/ratings.dat', sep='::', header=None, names=rnames)
-    mnames = ['movie_id', 'title', 'genres']
-    movies = pd.read_csv(data_path + 'ml-1m/movies.dat', sep='::', header=None, names=mnames)
-
-    data = pd.merge(pd.merge(ratings, movies), user)  # .iloc[:10000]
-
+    data = pd.read_csvdata = pd.read_csv("./movielens_sample.txt")
     sparse_features = ["movie_id", "user_id",
                        "gender", "age", "occupation", "zip", "genres"]
     SEQ_LEN_short = 5
@@ -84,8 +75,8 @@ if __name__ == "__main__":
     model.compile(optimizer=optimizer, loss=sampledsoftmaxloss)  # "binary_crossentropy")
     model.summary()
     history = model.fit(train_model_input, train_label,  # train_label,
-                        batch_size=512, epochs=20, verbose=1, validation_split=0.0, )
-    model.save_weights('SDM_weights.h5')
+                        batch_size=512, epochs=1, verbose=1, validation_split=0.0, )
+    # model.save_weights('SDM_weights.h5')
 
     K.set_learning_phase(False)
     # 4. Generate user features for testing and full item features for retrieval
@@ -102,30 +93,30 @@ if __name__ == "__main__":
     print(user_embs.shape)
     print(item_embs.shape)
 
-    test_true_label = {line[0]: [line[3]] for line in test_set}
-
-    import numpy as np
-    import faiss
-    from tqdm import tqdm
-    from deepmatch.utils import recall_N
-
-    index = faiss.IndexFlatIP(embedding_dim)
-    # faiss.normalize_L2(item_embs)
-    index.add(item_embs)
-    # faiss.normalize_L2(user_embs)
-    D, I = index.search(np.ascontiguousarray(user_embs), 50)
-    s = []
-    hit = 0
-    for i, uid in tqdm(enumerate(test_user_model_input['user_id'])):
-        try:
-            pred = [item_profile['movie_id'].values[x] for x in I[i]]
-            filter_item = None
-            recall_score = recall_N(test_true_label[uid], pred, N=50)
-            s.append(recall_score)
-            if test_true_label[uid] in pred:
-                hit += 1
-        except:
-            print(i)
-    print("")
-    print("recall", np.mean(s))
-    print("hit rate", hit / len(test_user_model_input['user_id']))
+    # test_true_label = {line[0]: [line[3]] for line in test_set}
+    #
+    # import numpy as np
+    # import faiss
+    # from tqdm import tqdm
+    # from deepmatch.utils import recall_N
+    #
+    # index = faiss.IndexFlatIP(embedding_dim)
+    # # faiss.normalize_L2(item_embs)
+    # index.add(item_embs)
+    # # faiss.normalize_L2(user_embs)
+    # D, I = index.search(np.ascontiguousarray(user_embs), 50)
+    # s = []
+    # hit = 0
+    # for i, uid in tqdm(enumerate(test_user_model_input['user_id'])):
+    #     try:
+    #         pred = [item_profile['movie_id'].values[x] for x in I[i]]
+    #         filter_item = None
+    #         recall_score = recall_N(test_true_label[uid], pred, N=50)
+    #         s.append(recall_score)
+    #         if test_true_label[uid] in pred:
+    #             hit += 1
+    #     except:
+    #         print(i)
+    # print("")
+    # print("recall", np.mean(s))
+    # print("hit rate", hit / len(test_user_model_input['user_id']))
