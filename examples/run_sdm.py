@@ -1,10 +1,10 @@
 import pandas as pd
 from deepctr.inputs import SparseFeat, VarLenSparseFeat
-from examples.preprocess import gen_data_set_sdm, gen_model_input_sdm
+from preprocess import gen_data_set_sdm, gen_model_input_sdm
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.models import Model
 from tensorflow.python.keras import optimizers
+from tensorflow.python.keras.models import Model
 
 from deepmatch.models import SDM
 from deepmatch.utils import sampledsoftmaxloss
@@ -41,20 +41,24 @@ if __name__ == "__main__":
     # 2.count #unique features for each sparse field and generate feature config for sequence feature
 
     embedding_dim = 32
-
+    # for sdm,we must provide `VarLenSparseFeat` with name "prefer_xxx" and "short_xxx" and their length
     user_feature_columns = [SparseFeat('user_id', feature_max_idx['user_id'], 16),
                             SparseFeat("gender", feature_max_idx['gender'], 16),
                             SparseFeat("age", feature_max_idx['age'], 16),
                             SparseFeat("occupation", feature_max_idx['occupation'], 16),
                             SparseFeat("zip", feature_max_idx['zip'], 16),
                             VarLenSparseFeat(SparseFeat('short_movie_id', feature_max_idx['movie_id'], embedding_dim,
-                                                        embedding_name="movie_id"), SEQ_LEN_short, 'mean', 'short_sess_length'),
+                                                        embedding_name="movie_id"), SEQ_LEN_short, 'mean',
+                                             'short_sess_length'),
                             VarLenSparseFeat(SparseFeat('prefer_movie_id', feature_max_idx['movie_id'], embedding_dim,
-                                                        embedding_name="movie_id"), SEQ_LEN_prefer, 'mean', 'prefer_sess_length'),
+                                                        embedding_name="movie_id"), SEQ_LEN_prefer, 'mean',
+                                             'prefer_sess_length'),
                             VarLenSparseFeat(SparseFeat('short_genres', feature_max_idx['genres'], embedding_dim,
-                                                        embedding_name="genres"), SEQ_LEN_short, 'mean', 'short_sess_length'),
+                                                        embedding_name="genres"), SEQ_LEN_short, 'mean',
+                                             'short_sess_length'),
                             VarLenSparseFeat(SparseFeat('prefer_genres', feature_max_idx['genres'], embedding_dim,
-                                                        embedding_name="genres"), SEQ_LEN_prefer, 'mean', 'prefer_sess_length'),
+                                                        embedding_name="genres"), SEQ_LEN_prefer, 'mean',
+                                             'prefer_sess_length'),
                             ]
 
     item_feature_columns = [SparseFeat('movie_id', feature_max_idx['movie_id'], embedding_dim)]
@@ -67,13 +71,13 @@ if __name__ == "__main__":
         tf.compat.v1.disable_eager_execution()
 
     # units must be equal to item embedding dim!
-    model = SDM(user_feature_columns, item_feature_columns, history_feature_list=['movie_id', 'genres'], units=embedding_dim, num_sampled=100,)
+    model = SDM(user_feature_columns, item_feature_columns, history_feature_list=['movie_id', 'genres'],
+                units=embedding_dim, num_sampled=100, )
 
-    # 梯度裁剪
     optimizer = optimizers.Adam(lr=0.001, clipnorm=5.0)
 
     model.compile(optimizer=optimizer, loss=sampledsoftmaxloss)  # "binary_crossentropy")
-    model.summary()
+
     history = model.fit(train_model_input, train_label,  # train_label,
                         batch_size=512, epochs=1, verbose=1, validation_split=0.0, )
     # model.save_weights('SDM_weights.h5')

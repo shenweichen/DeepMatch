@@ -14,7 +14,6 @@ if __name__ == "__main__":
     sparse_features = ["movie_id", "user_id",
                        "gender", "age", "occupation", "zip", ]
     SEQ_LEN = 50
-    negsample = 0
 
     # 1.Label Encoding for sparse features,and process sequence features with `gen_date_set` and `gen_model_input`
 
@@ -33,7 +32,7 @@ if __name__ == "__main__":
 
     user_item_list = data.groupby("user_id")['movie_id'].apply(list)
 
-    train_set, test_set = gen_data_set(data, negsample)
+    train_set, test_set = gen_data_set(data, 0)
 
     train_model_input, train_label = gen_model_input(train_set, user_profile, SEQ_LEN)
     test_model_input, test_label = gen_model_input(test_set, user_profile, SEQ_LEN)

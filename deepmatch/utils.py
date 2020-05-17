@@ -19,8 +19,10 @@ except ImportError:
 
 
 import tensorflow as tf
+
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.layers import Lambda
+
 
 def recall_N(y_true, y_pred, N=50):
     return len(set(y_pred[:N]) & set(y_true)) * 1.0 / len(y_true)

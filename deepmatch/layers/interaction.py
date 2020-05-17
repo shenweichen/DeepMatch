@@ -1,11 +1,8 @@
-import itertools
-
 import tensorflow as tf
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.initializers import TruncatedNormal
-from tensorflow.python.keras.layers import Layer, Dense, Dropout
 from deepctr.layers.normalization import LayerNormalization
 from deepctr.layers.utils import softmax, reduce_mean
+from tensorflow.python.keras.initializers import TruncatedNormal
+from tensorflow.python.keras.layers import Layer, Dense, Dropout
 
 
 class DotAttention(Layer):
@@ -14,6 +11,7 @@ class DotAttention(Layer):
     :param key:   [batch_size, T, C]
     :return:      [batch_size, 1, T]
     """
+
     def __init__(self, scale=True, **kwargs):
         self.scale = scale
         super(DotAttention, self).__init__(**kwargs)
@@ -47,6 +45,7 @@ class ConcatAttention(Layer):
     :return:      [batch_size, 1, T]
         query_size should keep the same dim with key_size
     """
+
     def __init__(self, scale=True, **kwargs):
         self.scale = scale
         super(ConcatAttention, self).__init__(**kwargs)
@@ -85,6 +84,7 @@ class SoftmaxWeightedSum(Layer):
     :return:                weighted sum vector
                             [batch_size, 1, units]
     """
+
     def __init__(self, dropout_rate=0.2, future_binding=False, seed=2020, **kwargs):
         self.dropout_rate = dropout_rate
         self.future_binding = future_binding
@@ -137,6 +137,7 @@ class AttentionSequencePoolingLayer(Layer):
     :param keys_length:      [batch_size, 1]
     :return:                [batch_size, 1, C_k]
     """
+
     def __init__(self, dropout_rate=0, **kwargs):
         self.dropout_rate = dropout_rate
         super(AttentionSequencePoolingLayer, self).__init__(**kwargs)
@@ -144,7 +145,7 @@ class AttentionSequencePoolingLayer(Layer):
     def build(self, input_shape):
         if not isinstance(input_shape, list) or len(input_shape) != 3:
             raise ValueError('A `SequenceFeatureMask` layer should be called '
-                                'on a list of 3 inputs')
+                             'on a list of 3 inputs')
         self.concat_att = ConcatAttention()
         self.softmax_weight_sum = SoftmaxWeightedSum(dropout_rate=self.dropout_rate, future_binding=False)
         super(AttentionSequencePoolingLayer, self).build(input_shape)
@@ -178,6 +179,7 @@ class SelfAttention(Layer):
       :param key_masks: A 3d tensor with shape of  [batch_size, 1]
       :return: A 3d tensor with shape of  [batch_size, 1]
     """
+
     def __init__(self, scale=True, dropout_rate=0.2, future_binding=True, use_layer_norm=True, seed=2020, **kwargs):
         self.scale = scale
         self.dropout_rate = dropout_rate
@@ -192,7 +194,8 @@ class SelfAttention(Layer):
                              'on a list of 2 tensors')
         self.layer_norm = LayerNormalization()
         self.attention = DotAttention(scale=self.scale)
-        self.softmax_weight_sum = SoftmaxWeightedSum(dropout_rate=self.dropout_rate, future_binding=self.future_binding, seed=self.seed)
+        self.softmax_weight_sum = SoftmaxWeightedSum(dropout_rate=self.dropout_rate, future_binding=self.future_binding,
+                                                     seed=self.seed)
         super(SelfAttention, self).build(input_shape)
 
     def call(self, inputs, mask=None, **kwargs):
@@ -217,7 +220,9 @@ class SelfMultiHeadAttention(Layer):
       :param key_masks: A 3d tensor with shape of [batch_size, 1]
       :return: A 3d tensor with shape of  [batch_size, T, C]
     """
-    def __init__(self, num_units=8, head_num=4, scale=True, dropout_rate=0.2, future_binding=True, use_layer_norm=True, use_res=True,
+
+    def __init__(self, num_units=8, head_num=4, scale=True, dropout_rate=0.2, future_binding=True, use_layer_norm=True,
+                 use_res=True,
                  seed=2020, **kwargs):
         if head_num <= 0:
             raise ValueError('head_num must be a int > 0')
@@ -240,16 +245,17 @@ class SelfMultiHeadAttention(Layer):
         embedding_size = int(input_shape[0][-1])
         if self.num_units == None:
             self.num_units = embedding_size
-        self.W = self.add_weight(name='Q_K_V', shape=[embedding_size, self.num_units*3],
-                                       dtype=tf.float32,
-                                       initializer=TruncatedNormal(seed=self.seed))
+        self.W = self.add_weight(name='Q_K_V', shape=[embedding_size, self.num_units * 3],
+                                 dtype=tf.float32,
+                                 initializer=TruncatedNormal(seed=self.seed))
         self.W_output = self.add_weight(name='output_W', shape=[self.num_units, self.num_units],
-                                       dtype=tf.float32,
-                                       initializer=TruncatedNormal(seed=self.seed))
+                                        dtype=tf.float32,
+                                        initializer=TruncatedNormal(seed=self.seed))
 
         self.layer_norm = LayerNormalization()
         self.attention = DotAttention(scale=self.scale)
-        self.softmax_weight_sum = SoftmaxWeightedSum(dropout_rate=self.dropout_rate, future_binding=self.future_binding, seed=self.seed)
+        self.softmax_weight_sum = SoftmaxWeightedSum(dropout_rate=self.dropout_rate, future_binding=self.future_binding,
+                                                     seed=self.seed)
         self.dropout = Dropout(self.dropout_rate, seed=self.seed)
         self.seq_len_max = int(input_shape[0][1])
         # Be sure to call this somewhere!
@@ -267,7 +273,7 @@ class SelfMultiHeadAttention(Layer):
 
         # head_num None F D
         querys = tf.concat(tf.split(querys, self.head_num, axis=2), axis=0)  # (h*N, T_q, C/h)
-        keys = tf.concat(tf.split(keys, self.head_num, axis=2), axis=0)      # (h*N, T_k, C/h)
+        keys = tf.concat(tf.split(keys, self.head_num, axis=2), axis=0)  # (h*N, T_k, C/h)
         values = tf.concat(tf.split(values, self.head_num, axis=2), axis=0)  # (h*N, T_k, C/h)
 
         # (h*N, T_q, T_k)
@@ -276,10 +282,10 @@ class SelfMultiHeadAttention(Layer):
         key_masks = tf.tile(key_masks, [self.head_num, 1])  # (h*N, T_k)
         key_masks = tf.tile(tf.expand_dims(key_masks, 1), [1, tf.shape(input_info)[1], 1])  # (h*N, T_q, T_k)
 
-        outputs = self.softmax_weight_sum([align, values, key_masks]) # (h*N, T_q, C/h)
-        outputs = tf.concat(tf.split(outputs, self.head_num, axis=0), axis=2) # (N, T_q, C)
+        outputs = self.softmax_weight_sum([align, values, key_masks])  # (h*N, T_q, C/h)
+        outputs = tf.concat(tf.split(outputs, self.head_num, axis=0), axis=2)  # (N, T_q, C)
 
-        outputs = tf.tensordot(outputs, self.W_output, axes=(-1, 0))# (N, T_q, C)
+        outputs = tf.tensordot(outputs, self.W_output, axes=(-1, 0))  # (N, T_q, C)
         outputs = self.dropout(outputs, training=training)
         if self.use_res:
             outputs += input_info
@@ -292,8 +298,10 @@ class SelfMultiHeadAttention(Layer):
         return (None, input_shape[0][1], self.num_units)
 
     def get_config(self, ):
-        config = {'num_units':self.num_units, 'head_num':self.head_num, 'scale': self.scale, 'dropout_rate': self.dropout_rate,
-                'future_binding': self.future_binding, 'use_layer_norm':self.use_layer_norm, 'use_res': self.use_res,'seed': self.seed}
+        config = {'num_units': self.num_units, 'head_num': self.head_num, 'scale': self.scale,
+                  'dropout_rate': self.dropout_rate,
+                  'future_binding': self.future_binding, 'use_layer_norm': self.use_layer_norm, 'use_res': self.use_res,
+                  'seed': self.seed}
         base_config = super(SelfMultiHeadAttention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
@@ -308,7 +316,9 @@ class UserAttention(Layer):
       :param key_masks: A 3d tensor with shape of [batch_size, 1]
       :return: A 3d tensor with shape of  [batch_size, 1, C]
     """
-    def __init__(self, num_units=None, activation='tanh', use_res=True, dropout_rate=0, scale=True, seed=2020, **kwargs):
+
+    def __init__(self, num_units=None, activation='tanh', use_res=True, dropout_rate=0, scale=True, seed=2020,
+                 **kwargs):
         self.scale = scale
         self.num_units = num_units
         self.activation = activation
@@ -347,3 +357,10 @@ class UserAttention(Layer):
 
     def compute_mask(self, inputs, mask):
         return mask
+
+    def get_config(self, ):
+        config = {'num_units': self.num_units, 'activation': self.activation, 'use_res': self.use_res,
+                  'dropout_rate': self.dropout_rate,
+                  'scale': self.scale, 'seed': self.seed, }
+        base_config = super(UserAttention, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
