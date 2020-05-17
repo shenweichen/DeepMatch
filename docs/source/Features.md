@@ -77,7 +77,7 @@
 
 ![MIND](../pics/sdm.jpg)
 
-[Multi-interest network with dynamic routing for recommendation at Tmall](https://arxiv.org/pdf/1904.08030)
+[Multi-interest network with dynamic routing for recommendation at Tmall](https://arxiv.org/abs/1909.00385)
 
 
 

@@ -7,8 +7,6 @@ Reference:
     [1] Lv, Fuyu, Jin, Taiwei, Yu, Changlong etc. SDM: Sequential Deep Matching Model for Online Large-scale Recommender System[J].
 """
 
-from collections import OrderedDict
-
 import tensorflow as tf
 from deepctr.inputs import build_input_features, SparseFeat, DenseFeat, get_varlen_pooling_list, VarLenSparseFeat, \
     create_embedding_matrix, embedding_lookup, varlen_embedding_lookup, concat_func
@@ -22,13 +20,15 @@ from ..layers.interaction import UserAttention, SelfMultiHeadAttention, Attentio
 from ..layers.sequence import DynamicMultiRNN
 
 
-def SDM(user_feature_columns, item_feature_columns, history_feature_list, units=64, rnn_layers=2, dropout_rate=0.2,
+def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sampled=5, units=64, rnn_layers=2, dropout_rate=0.2,
         rnn_num_res=1,
-        num_head=4, l2_reg_embedding=1e-6, dnn_activation='tanh', init_std=0.0001, seed=1024, num_sampled=5):
+        num_head=4, l2_reg_embedding=1e-6, dnn_activation='tanh', init_std=0.0001, seed=1024):
     """Instantiates the Sequential Deep Matching Model architecture.
+
     :param user_feature_columns: An iterable containing user's features used by  the model.
     :param item_feature_columns: An iterable containing item's features used by  the model.
     :param history_feature_list: list,to indicate short and prefer sequence sparse field
+    :param num_sampled: int, the number of classes to randomly sample per batch.
     :param units: int, dimension for each output layer
     :param rnn_layers: int, layer number of rnn
     :param dropout_rate: float in [0,1), the probability we will drop out a given DNN coordinate.
@@ -38,8 +38,8 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, units=
     :param dnn_activation: Activation function to use in deep net
     :param init_std: float,to use as the initialize std of embedding vector
     :param seed: integer ,to use as random seed.
-    :param num_sampled: int, the number of classes to randomly sample per batch.
     :return: A Keras model instance.
+
     """
 
     if len(item_feature_columns) > 1:
