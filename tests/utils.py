@@ -396,16 +396,16 @@ def get_xy_fd_sdm(hash_flag=False):
 
     user_feature_columns = [SparseFeat('user',3),
                             SparseFeat('gender', 2),
-                            VarLenSparseFeat(SparseFeat('prefer_item', vocabulary_size=100,embedding_dim=64,
+                            VarLenSparseFeat(SparseFeat('prefer_item', vocabulary_size=100,embedding_dim=8,
                                                         embedding_name='item'), maxlen=6, length_name="prefer_sess_length"),
-                            VarLenSparseFeat(SparseFeat('prefer_cate', vocabulary_size=100, embedding_dim=64,
+                            VarLenSparseFeat(SparseFeat('prefer_cate', vocabulary_size=100, embedding_dim=8,
                                                         embedding_name='cate'), maxlen=6, length_name="prefer_sess_length"),
-                            VarLenSparseFeat(SparseFeat('short_item', vocabulary_size=100,embedding_dim=64,
+                            VarLenSparseFeat(SparseFeat('short_item', vocabulary_size=100,embedding_dim=8,
                                                         embedding_name='item'), maxlen=4, length_name="short_sess_length"),
-                            VarLenSparseFeat(SparseFeat('short_cate', vocabulary_size=100, embedding_dim=64,
+                            VarLenSparseFeat(SparseFeat('short_cate', vocabulary_size=100, embedding_dim=8,
                                                         embedding_name='cate'), maxlen=4, length_name="short_sess_length"),
                             ]
-    item_feature_columns = [SparseFeat('item', 100, embedding_dim=64,)]
+    item_feature_columns = [SparseFeat('item', 100, embedding_dim=8,)]
 
 
     uid = np.array([0, 1, 2, 1])
