@@ -17,7 +17,7 @@ from tensorflow.python.keras.models import Model
 
 from deepmatch.utils import get_item_embedding
 from ..inputs import create_embedding_matrix
-from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention,SampledSoftmaxLayer,EmbeddingIndex
+from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, SampledSoftmaxLayer, EmbeddingIndex
 
 
 def shape_target(target_emb_tmp, target_emb_size):
@@ -59,7 +59,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     item_feature_name = item_feature_column.name
     item_vocabulary_size = item_feature_columns[0].vocabulary_size
     item_embedding_dim = item_feature_columns[0].embedding_dim
-    #item_index = Input(tensor=tf.constant([list(range(item_vocabulary_size))]))
+    # item_index = Input(tensor=tf.constant([list(range(item_vocabulary_size))]))
 
     history_feature_list = [item_feature_name]
 
@@ -82,8 +82,9 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     seq_max_len = history_feature_columns[0].maxlen
     inputs_list = list(features.values())
 
-    embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding, init_std,
-                                             seed, prefix="")
+    embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding,
+                                                    init_std,
+                                                    seed, prefix="")
 
     item_features = build_input_features(item_feature_columns)
 
@@ -108,8 +109,8 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     history_emb = PoolingLayer()(NoMask()(keys_emb_list))
     target_emb = PoolingLayer()(NoMask()(query_emb_list))
 
-    #target_emb_size = target_emb.get_shape()[-1].value
-    #max_len = history_emb.get_shape()[1].value
+    # target_emb_size = target_emb.get_shape()[-1].value
+    # max_len = history_emb.get_shape()[1].value
     hist_len = features['hist_len']
 
     high_capsule = CapsuleLayer(input_units=item_embedding_dim,
@@ -124,7 +125,6 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
         user_deep_input = Concatenate()([NoMask()(other_feature_tile), high_capsule])
     else:
         user_deep_input = high_capsule
-
 
     user_embeddings = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn,
                           dnn_dropout, dnn_use_bn, seed, name="user_embedding")(user_deep_input)
@@ -144,13 +144,14 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p, )((user_embeddings, target_emb))
 
     output = SampledSoftmaxLayer(num_sampled=num_sampled)(
-        inputs=(pooling_item_embedding_weight,user_embedding_final, item_features[item_feature_name]))
+        [pooling_item_embedding_weight, user_embedding_final, item_features[item_feature_name]])
     model = Model(inputs=inputs_list + item_inputs_list, outputs=output)
 
     model.__setattr__("user_input", inputs_list)
     model.__setattr__("user_embedding", user_embeddings)
 
     model.__setattr__("item_input", item_inputs_list)
-    model.__setattr__("item_embedding", get_item_embedding(pooling_item_embedding_weight, item_features[item_feature_name]))
+    model.__setattr__("item_embedding",
+                      get_item_embedding(pooling_item_embedding_weight, item_features[item_feature_name]))
 
     return model

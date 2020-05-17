@@ -338,7 +338,7 @@ def check_model(model, model_name, x, y, check_model_io=True):
     :return:
     """
 
-    model.fit(x, y, batch_size=10, epochs=10, validation_split=0.5)
+    model.fit(x, y, batch_size=10, epochs=2, validation_split=0.5)
 
 
 
