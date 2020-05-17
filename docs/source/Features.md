@@ -57,8 +57,6 @@
 
 [**YoutubeDNN Model API**](./deepmatch.models.youtubednn.html)
 
-[SDM example](https://github.com/shenweichen/DeepMatch/tree/master/examples/run_sdm.py)
-
 ![YoutubeDNN](../pics/youtubednn.jpg)
 
 [Deep Neural Networks for YouTube Recommendations](https://www.researchgate.net/publication/307573656_Deep_Neural_Networks_for_YouTube_Recommendations)
@@ -77,9 +75,11 @@
 
 [**SDM Model API**](./deepmatch.models.sdm.html)
 
-![MIND](../pics/sdm.jpg)
+![SDM](../pics/sdm.jpg)
 
-[Multi-interest network with dynamic routing for recommendation at Tmall](https://arxiv.org/abs/1909.00385)
+[SDM example](https://github.com/shenweichen/DeepMatch/tree/master/examples/run_sdm.py)
+
+[SDM: Sequential Deep Matching Model for Online Large-scale Recommender System](https://arxiv.org/abs/1909.00385)
 
 
 
