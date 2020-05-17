@@ -10,6 +10,7 @@ Submodules
    deepmatch.models.fm
    deepmatch.models.mind
    deepmatch.models.ncf
+   deepmatch.models.sdm
    deepmatch.models.youtubednn
 
 Module contents
