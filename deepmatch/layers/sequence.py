@@ -36,7 +36,10 @@ class DynamicMultiRNN(Layer):
         else:
             raise ValueError("Unknown unit type %s!" % self.rnn_type)
         dropout = self.dropout if tf.keras.backend.learning_phase() == 1 else 0
-        single_cell = tf.nn.rnn_cell.DropoutWrapper(cell=single_cell, input_keep_prob=(1.0 - dropout))
+        try:
+            single_cell = tf.nn.rnn_cell.DropoutWrapper(cell=single_cell, input_keep_prob=(1.0 - dropout))
+        except:
+            single_cell = tf.compat.v1.nn.rnn_cell.DropoutWrapper(cell=single_cell, input_keep_prob=(1.0 - dropout))
         cell_list = []
         for i in range(self.num_layers):
             residual = (i >= self.num_layers - self.num_residual_layers)
