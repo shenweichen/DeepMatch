@@ -338,7 +338,7 @@ def check_model(model, model_name, x, y, check_model_io=True):
     :return:
     """
 
-    model.fit(x, y, batch_size=10, epochs=1, validation_split=0.5)
+    model.fit(x, y, batch_size=10, epochs=10, validation_split=0.5)
 
 
 
@@ -390,3 +390,41 @@ def get_xy_fd(hash_flag=False):
     x = feature_dict
     y = np.array([1, 1, 1,1])
     return x, y, user_feature_columns,item_feature_columns
+
+
+def get_xy_fd_sdm(hash_flag=False):
+
+    user_feature_columns = [SparseFeat('user',3),
+                            SparseFeat('gender', 2),
+                            VarLenSparseFeat(SparseFeat('prefer_item', vocabulary_size=100,embedding_dim=64,
+                                                        embedding_name='item'), maxlen=6, length_name="prefer_sess_length"),
+                            VarLenSparseFeat(SparseFeat('prefer_cate', vocabulary_size=100, embedding_dim=64,
+                                                        embedding_name='cate'), maxlen=6, length_name="prefer_sess_length"),
+                            VarLenSparseFeat(SparseFeat('short_item', vocabulary_size=100,embedding_dim=64,
+                                                        embedding_name='item'), maxlen=4, length_name="short_sess_length"),
+                            VarLenSparseFeat(SparseFeat('short_cate', vocabulary_size=100, embedding_dim=64,
+                                                        embedding_name='cate'), maxlen=4, length_name="short_sess_length"),
+                            ]
+    item_feature_columns = [SparseFeat('item', 100, embedding_dim=64,)]
+
+
+    uid = np.array([0, 1, 2, 1])
+    ugender = np.array([0, 1, 0, 1])
+    iid = np.array([1, 2, 3, 1])  # 0 is mask value
+
+    prefer_iid = np.array([[1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 0], [1, 2, 3, 3, 0, 0], [1, 2, 4, 0, 0, 0]])
+    prefer_cate = np.array([[1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 0], [1, 2, 3, 3, 0, 0], [1, 2, 4, 0, 0, 0]])
+    short_iid = np.array([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 0, 0], [3, 0, 0, 0]])
+    short_cate = np.array([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 0, 0], [3, 0, 0, 0]])
+    prefer_len = np.array([6, 5, 4, 3])
+    short_len = np.array([3, 3, 2, 1])
+
+    feature_dict = {'user': uid, 'gender': ugender, 'item': iid, 'prefer_item': prefer_iid, "prefer_cate":prefer_cate,
+                    'short_item': short_iid, 'short_cate': short_cate, 'prefer_sess_length': prefer_len, 'short_sess_length':short_len}
+
+    #feature_names = get_feature_names(feature_columns)
+    x = feature_dict
+    y = np.array([1, 1, 1, 0])
+    history_feature_list = ['item', 'cate']
+
+    return x, y, user_feature_columns, item_feature_columns, history_feature_list
