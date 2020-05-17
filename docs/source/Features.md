@@ -57,6 +57,8 @@
 
 [**YoutubeDNN Model API**](./deepmatch.models.youtubednn.html)
 
+[SDM example](https://github.com/shenweichen/DeepMatch/tree/master/examples/run_sdm.py)
+
 ![YoutubeDNN](../pics/youtubednn.jpg)
 
 [Deep Neural Networks for YouTube Recommendations](https://www.researchgate.net/publication/307573656_Deep_Neural_Networks_for_YouTube_Recommendations)
