@@ -10,17 +10,20 @@ from deepmatch.models.gru4rec import GRU4REC, top1, bpr
 from preprocess import gen_model_input_gru4rec, gen_data_set
 
 if __name__ == "__main__":
-
-    data_path = "./data/"
-
-    unames = ['user_id', 'gender', 'age', 'occupation', 'zip']
-    user = pd.read_csv(data_path + 'ml-1m/users.dat', sep='::', header=None, names=unames)
-    rnames = ['user_id', 'movie_id', 'rating', 'timestamp']
-    ratings = pd.read_csv(data_path + 'ml-1m/ratings.dat', sep='::', header=None, names=rnames)
-    mnames = ['movie_id', 'title', 'genres']
-    movies = pd.read_csv(data_path + 'ml-1m/movies.dat', sep='::', header=None, names=mnames)
-
-    data = pd.merge(pd.merge(ratings, movies), user)[['user_id', 'movie_id', 'timestamp']]
+    debug = True
+    if debug:
+        data = pd.read_csvdata = pd.read_csv("./movielens_sample.txt")[['user_id', 'movie_id', 'timestamp']]
+        batch_size = 3
+    else:
+        data_path = "./"
+        unames = ['user_id', 'gender', 'age', 'occupation', 'zip']
+        user = pd.read_csv(data_path + 'ml-1m/users.dat', sep='::', header=None, names=unames)
+        rnames = ['user_id', 'movie_id', 'rating', 'timestamp']
+        ratings = pd.read_csv(data_path + 'ml-1m/ratings.dat', sep='::', header=None, names=rnames)
+        mnames = ['movie_id', 'title', 'genres']
+        movies = pd.read_csv(data_path + 'ml-1m/movies.dat', sep='::', header=None, names=mnames)
+        data = pd.merge(pd.merge(ratings, movies), user)[['user_id', 'movie_id', 'timestamp']]
+        batch_size = 512
 
     features = ['user_id', 'movie_id']
     feature_max_idx = {}
@@ -34,7 +37,6 @@ if __name__ == "__main__":
     train_set = data.loc[data['rank'] >= 2]
 
     epochs = 3
-    batch_size = 512
     embedding_dim = 128
     gru_units = (128,)
     n_classes = feature_max_idx['movie_id']
@@ -49,8 +51,7 @@ if __name__ == "__main__":
     if tf.__version__ >= '2.0.0':
         tf.compat.v1.disable_eager_execution()
 
-    model = GRU4REC(item_feature_columns, n_classes, gru_units, batch_size, l2_reg_embedding=1e-6,
-                    init_std=0.0001, seed=1024)
+    model = GRU4REC(item_feature_columns, n_classes, gru_units, batch_size)
 
     if loss_fn == 'CrossEntropy':
         model.compile(optimizer="adam", loss='sparse_categorical_crossentropy')
@@ -61,7 +62,7 @@ if __name__ == "__main__":
 
     model.summary()
 
-    for epoch in range(3):
+    for epoch in range(epochs):
         step = 0
         train_loader = gen_model_input_gru4rec(train_set, batch_size, 'user_id', 'movie_id', 'timestamp')
         for feat, target, mask in train_loader:
@@ -84,20 +85,20 @@ if __name__ == "__main__":
                 print(tr_loss)
             step += 1
 
-    s = []
-    hit = 0
-    total_sample = 0
-    n = 50
-    for feat, target, mask in test_loader:
-        feat = np.array(feat).reshape((-1, 1))
-        target = np.array(target).reshape((-1, 1))
-        pred = model.predict(feat, batch_size=batch_size)
-        pred = np.array(pred).argsort()[:, ::-1][:, :n]
-
-        for i in range(len(pred)):
-            s.append(recall_N(target[i], pred[i], n))
-            if target[i] in pred[i]:
-                hit += 1
-            total_sample +=1
-    print("recall", np.mean(s))
-    print("hit rate", hit / total_sample)
+    # s = []
+    # hit = 0
+    # total_sample = 0
+    # n = 50
+    # for feat, target, mask in test_loader:
+    #     feat = np.array(feat).reshape((-1, 1))
+    #     target = np.array(target).reshape((-1, 1))
+    #     pred = model.predict(feat, batch_size=batch_size)
+    #     pred = np.array(pred).argsort()[:, ::-1][:, :n]
+    #
+    #     for i in range(len(pred)):
+    #         s.append(recall_N(target[i], pred[i], n))
+    #         if target[i] in pred[i]:
+    #             hit += 1
+    #         total_sample += 1
+    # print("recall", np.mean(s))
+    # print("hit rate", hit / total_sample)
