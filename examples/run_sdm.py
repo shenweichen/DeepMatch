@@ -1,5 +1,5 @@
 import pandas as pd
-from deepctr.inputs import SparseFeat, VarLenSparseFeat
+from deepctr.feature_column import SparseFeat, VarLenSparseFeat
 from preprocess import gen_data_set_sdm, gen_model_input_sdm
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras import backend as K

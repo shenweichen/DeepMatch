@@ -7,11 +7,10 @@ Li C, Liu Z, Wu M, et al. Multi-interest network with dynamic routing for recomm
 """
 
 import tensorflow as tf
-from deepctr.inputs import SparseFeat, VarLenSparseFeat, DenseFeat, \
-    embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features, \
-    combined_dnn_input
+from deepctr.feature_column import SparseFeat, VarLenSparseFeat, DenseFeat, \
+    embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features
 from deepctr.layers.core import DNN
-from deepctr.layers.utils import NoMask
+from deepctr.layers.utils import NoMask, combined_dnn_input
 from tensorflow.python.keras.layers import Concatenate
 from tensorflow.python.keras.models import Model
 
@@ -83,8 +82,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     inputs_list = list(features.values())
 
     embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding,
-                                                    init_std,
-                                                    seed, prefix="")
+                                                    seed=seed, prefix="")
 
     item_features = build_input_features(item_feature_columns)
 

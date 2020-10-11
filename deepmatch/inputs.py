@@ -1,5 +1,5 @@
 from itertools import chain
-from deepctr.inputs import SparseFeat,VarLenSparseFeat,create_embedding_matrix,embedding_lookup,get_dense_input,varlen_embedding_lookup,get_varlen_pooling_list,mergeDict
+from deepctr.feature_column import SparseFeat,VarLenSparseFeat,create_embedding_matrix,embedding_lookup,get_dense_input,varlen_embedding_lookup,get_varlen_pooling_list,mergeDict
 
 def input_from_feature_columns(features, feature_columns, l2_reg, init_std, seed, prefix='', seq_mask_zero=True,
                                support_dense=True, support_group=False,embedding_matrix_dict=None):

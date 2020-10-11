@@ -5,8 +5,8 @@ Reference:
 Huang P S , He X , Gao J , et al. Learning deep structured semantic models for web search using clickthrough data[C]// Acm International Conference on Conference on Information & Knowledge Management. ACM, 2013.
 """
 
-from deepctr.inputs import build_input_features, combined_dnn_input, create_embedding_matrix
-from deepctr.layers.core import PredictionLayer, DNN
+from deepctr.feature_column import build_input_features, create_embedding_matrix
+from deepctr.layers import PredictionLayer, DNN, combined_dnn_input
 from tensorflow.python.keras.models import Model
 
 from ..inputs import input_from_feature_columns
@@ -35,8 +35,7 @@ def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 
 
     """
 
-    embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding,
-                                                    init_std, seed,
+    embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding, seed=seed,
                                                     seq_mask_zero=True)
 
     user_features = build_input_features(user_feature_columns)

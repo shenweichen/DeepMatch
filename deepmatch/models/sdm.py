@@ -8,10 +8,11 @@ Reference:
 """
 
 import tensorflow as tf
-from deepctr.inputs import build_input_features, SparseFeat, DenseFeat, get_varlen_pooling_list, VarLenSparseFeat, \
+from deepctr.feature_column import build_input_features, SparseFeat, DenseFeat, get_varlen_pooling_list, \
+    VarLenSparseFeat, \
     create_embedding_matrix, embedding_lookup, varlen_embedding_lookup, concat_func
 from deepctr.layers.utils import NoMask
-from tensorflow.python.keras.layers import Dense, Input, Lambda
+from tensorflow.python.keras.layers import Dense, Lambda
 from tensorflow.python.keras.models import Model
 
 from deepmatch.utils import get_item_embedding
@@ -20,7 +21,8 @@ from ..layers.interaction import UserAttention, SelfMultiHeadAttention, Attentio
 from ..layers.sequence import DynamicMultiRNN
 
 
-def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sampled=5, units=64, rnn_layers=2, dropout_rate=0.2,
+def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sampled=5, units=64, rnn_layers=2,
+        dropout_rate=0.2,
         rnn_num_res=1,
         num_head=4, l2_reg_embedding=1e-6, dnn_activation='tanh', init_std=0.0001, seed=1024):
     """Instantiates the Sequential Deep Matching Model architecture.
@@ -43,7 +45,7 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sa
     """
 
     if len(item_feature_columns) > 1:
-        raise ValueError("Now MIND only support 1 item feature like item_id")
+        raise ValueError("Now SDM only support 1 item feature like item_id")
     item_feature_column = item_feature_columns[0]
     item_feature_name = item_feature_column.name
     item_vocabulary_size = item_feature_columns[0].vocabulary_size
@@ -78,8 +80,7 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sa
             sparse_varlen_feature_columns.append(fc)
 
     embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding,
-                                                    init_std, seed,
-                                                    prefix="")
+                                                    seed=seed)
 
     item_features = build_input_features(item_feature_columns)
     item_inputs_list = list(item_features.values())
@@ -142,11 +143,22 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sa
         pooling_item_embedding_weight, gate_output_reshape, item_features[item_feature_name]])
     model = Model(inputs=user_inputs_list + item_inputs_list, outputs=output)
 
+    # model.user_input = user_inputs_list
+    # model.user_embedding = gate_output_reshape
+
     model.__setattr__("user_input", user_inputs_list)
     model.__setattr__("user_embedding", gate_output_reshape)
+
+    # model.item_input = item_inputs_list
+    # model.item_embedding = get_item_embedding(pooling_item_embedding_weight, item_features[item_feature_name])
 
     model.__setattr__("item_input", item_inputs_list)
     model.__setattr__("item_embedding",
                       get_item_embedding(pooling_item_embedding_weight, item_features[item_feature_name]))
 
     return model
+    # , Model(inputs=user_inputs_list, outputs=gate_output_reshape), Model(inputs=item_inputs_list,
+    #                                                                              outputs=get_item_embedding(
+    #                                                                                  pooling_item_embedding_weight,
+    #                                                                                  item_features[
+    #                                                                                      item_feature_name]))

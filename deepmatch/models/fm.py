@@ -1,4 +1,4 @@
-from deepctr.inputs import build_input_features
+from deepctr.feature_column import build_input_features
 from deepctr.layers.core import PredictionLayer
 from deepctr.layers.utils import concat_func, reduce_sum
 from tensorflow.python.keras.layers import Lambda
@@ -22,7 +22,7 @@ def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, init_s
     """
 
     embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding,
-                                                    init_std, seed,
+                                                    seed=seed,
                                                     seq_mask_zero=True)
 
     user_features = build_input_features(user_feature_columns)

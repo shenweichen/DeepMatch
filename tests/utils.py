@@ -11,7 +11,7 @@ from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.layers import Input, Masking
 from tensorflow.python.keras.models import Model, load_model, save_model
 
-from deepctr.inputs import SparseFeat, DenseFeat, VarLenSparseFeat,DEFAULT_GROUP_NAME
+from deepctr.feature_column import SparseFeat,DenseFeat,VarLenSparseFeat,DEFAULT_GROUP_NAME
 from deepmatch.layers import custom_objects
 
 SAMPLE_SIZE = 8
@@ -366,6 +366,19 @@ def check_model(model, model_name, x, y, check_model_io=True):
         print(model_name + " test save load model pass!")
 
     print(model_name + " test pass!")
+        # print(1)
+        #
+        # save_model(item_embedding_model, model_name + '.user.h5')
+        # print(2)
+        #
+        # item_embedding_model = load_model(model_name + '.user.h5', custom_objects)
+        # print(3)
+        #
+        # item_embs = item_embedding_model.predict(x, batch_size=2 ** 12)
+        # print(item_embs)
+        # print("go")
+
+
 
 
 def get_xy_fd(hash_flag=False):

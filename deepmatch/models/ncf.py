@@ -8,8 +8,8 @@ He X, Liao L, Zhang H, et al. Neural collaborative filtering[C]//Proceedings of 
 
 import math
 
-from deepctr.inputs import input_from_feature_columns, build_input_features, combined_dnn_input, SparseFeat
-from deepctr.layers.core import DNN
+from deepctr.feature_column import input_from_feature_columns, build_input_features, SparseFeat
+from deepctr.layers import DNN, combined_dnn_input
 from tensorflow.python.keras.layers import Lambda, Concatenate, Multiply
 from tensorflow.python.keras.models import Model
 

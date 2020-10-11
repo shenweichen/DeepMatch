@@ -4,9 +4,9 @@ Author:
 Reference:
 Covington P, Adams J, Sargin E. Deep neural networks for youtube recommendations[C]//Proceedings of the 10th ACM conference on recommender systems. 2016: 191-198.
 """
-from deepctr.inputs import input_from_feature_columns, build_input_features, combined_dnn_input, create_embedding_matrix
+from deepctr.feature_column import input_from_feature_columns, build_input_features, create_embedding_matrix
 from deepctr.layers.core import DNN
-from deepctr.layers.utils import NoMask
+from deepctr.layers.utils import NoMask, combined_dnn_input
 from tensorflow.python.keras.models import Model
 
 from deepmatch.layers import PoolingLayer
@@ -42,7 +42,7 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
     item_vocabulary_size = item_feature_columns[0].vocabulary_size
 
     embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding,
-                                                    init_std, seed, prefix="")
+                                                    seed=seed)
 
     user_features = build_input_features(user_feature_columns)
     user_inputs_list = list(user_features.values())

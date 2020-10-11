@@ -104,8 +104,8 @@ def gen_model_input_sdm(train_set, user_profile, seq_short_len, seq_prefer_len):
                                         value=0)
 
     train_model_input = {"user_id": train_uid, "movie_id": train_iid, "short_movie_id": train_short_item_pad,
-        "prefer_movie_id": train_prefer_item_pad, "prefer_sess_length": train_short_len, "short_sess_length":
-        train_prefer_len, 'short_genres': train_short_genres_pad, 'prefer_genres': train_prefer_genres_pad}
+        "prefer_movie_id": train_prefer_item_pad, "prefer_sess_length": train_prefer_len, "short_sess_length":
+        train_short_len, 'short_genres': train_short_genres_pad, 'prefer_genres': train_prefer_genres_pad}
 
     for key in ["gender", "age", "occupation", "zip"]:
         train_model_input[key] = user_profile.loc[train_model_input['user_id']][key].values
