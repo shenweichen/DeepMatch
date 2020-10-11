@@ -4,13 +4,13 @@ Author:
 Reference:
 Covington P, Adams J, Sargin E. Deep neural networks for youtube recommendations[C]//Proceedings of the 10th ACM conference on recommender systems. 2016: 191-198.
 """
-from deepctr.feature_column import input_from_feature_columns, build_input_features, create_embedding_matrix
+from deepctr.feature_column import build_input_features
 from deepctr.layers.utils import NoMask, combined_dnn_input
 from tensorflow.python.keras.models import Model
 
 from deepmatch.layers import PoolingLayer
 from deepmatch.utils import get_item_embedding
-from ..inputs import input_from_feature_columns
+from ..inputs import input_from_feature_columns, create_embedding_matrix
 from ..layers.core import SampledSoftmaxLayer, EmbeddingIndex, DNN
 
 
@@ -29,8 +29,8 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
     :param l2_reg_dnn: float. L2 regularizer strength applied to DNN
     :param l2_reg_embedding: float. L2 regularizer strength applied to embedding vector
     :param dnn_dropout: float in [0,1), the probability we will drop out a given DNN coordinate.
-    :param init_std: float,to use as the initialize std of embedding vector
     :param seed: integer ,to use as random seed.
+    :param output_activation: Activation function to use in output layer
     :return: A Keras model instance.
 
     """
@@ -45,9 +45,9 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
 
     user_features = build_input_features(user_feature_columns)
     user_inputs_list = list(user_features.values())
-    user_sparse_embedding_list, user_dense_value_list = input_from_feature_columns(user_features,
-                                                                                   user_feature_columns,
-                                                                                   l2_reg_embedding, seed=seed)
+    user_sparse_embedding_list, user_dense_value_list = input_from_feature_columns(user_features, user_feature_columns,
+                                                                                   l2_reg_embedding, seed=seed,
+                                                                                   embedding_matrix_dict=embedding_matrix_dict)
     user_dnn_input = combined_dnn_input(user_sparse_embedding_list, user_dense_value_list)
 
     item_features = build_input_features(item_feature_columns)

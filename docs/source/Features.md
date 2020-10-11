@@ -2,15 +2,17 @@
 
 ## Feature Columns
 ### SparseFeat
-``SparseFeat`` is a namedtuple with signature ``SparseFeat(name, vocabulary_size, embedding_dim, use_hash, dtype,embedding_name, group_name)``
+``SparseFeat`` is a namedtuple with signature ``SparseFeat(name, vocabulary_size, embedding_dim, use_hash, dtype, embeddings_initializer, embedding_name, group_name, trainable)``
 
 - name : feature name
 - vocabulary_size : number of unique feature values for sprase feature or hashing space when `use_hash=True`
 - embedding_dim : embedding dimension
 - use_hash : defualt `False`.If `True` the input will be hashed to space of size `vocabulary_size`.
-- dtype : default `float32`.dtype of input tensor.
+- dtype : default `int32`.dtype of input tensor.
+- embeddings_initializer : initializer for the `embeddings` matrix.
 - embedding_name : default `None`. If None, the embedding_name will be same as `name`.
 - group_name : feature group of this feature.
+- trainable: default `True`.Whether or not the embedding is trainable.
 
 ### DenseFeat
 ``DenseFeat`` is a namedtuple with signature ``DenseFeat(name, dimension, dtype)``
@@ -29,6 +31,7 @@
 - length_name : feature length name,if `None`, value 0 in feature is for padding.
 - weight_name : default `None`. If not None, the sequence feature will be multiplyed by the feature whose name is `weight_name`.
 - weight_norm : default `True`. Whether normalize the weight score or not.
+
 
 ## Models
 
