@@ -24,7 +24,7 @@ from ..layers.sequence import DynamicMultiRNN
 def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sampled=5, units=64, rnn_layers=2,
         dropout_rate=0.2,
         rnn_num_res=1,
-        num_head=4, l2_reg_embedding=1e-6, dnn_activation='tanh', init_std=0.0001, seed=1024):
+        num_head=4, l2_reg_embedding=1e-6, dnn_activation='tanh', seed=1024):
     """Instantiates the Sequential Deep Matching Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.

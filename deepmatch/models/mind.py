@@ -9,14 +9,13 @@ Li C, Liu Z, Wu M, et al. Multi-interest network with dynamic routing for recomm
 import tensorflow as tf
 from deepctr.feature_column import SparseFeat, VarLenSparseFeat, DenseFeat, \
     embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features
-from deepctr.layers.core import DNN
 from deepctr.layers.utils import NoMask, combined_dnn_input
 from tensorflow.python.keras.layers import Concatenate
 from tensorflow.python.keras.models import Model
 
 from deepmatch.utils import get_item_embedding
 from ..inputs import create_embedding_matrix
-from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, SampledSoftmaxLayer, EmbeddingIndex
+from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, SampledSoftmaxLayer, EmbeddingIndex, DNN
 
 
 def shape_target(target_emb_tmp, target_emb_size):
@@ -29,8 +28,7 @@ def tile_user_otherfeat(user_other_feature, k_max):
 
 def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1.0, dynamic_k=False,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
-         dnn_dropout=0,
-         init_std=0.0001, seed=1024):
+         dnn_dropout=0, output_activation='linear', seed=1024):
     """Instantiates the MIND Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
@@ -125,7 +123,8 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
         user_deep_input = high_capsule
 
     user_embeddings = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn,
-                          dnn_dropout, dnn_use_bn, seed, name="user_embedding")(user_deep_input)
+                          dnn_dropout, dnn_use_bn, seed, output_activation=output_activation, name="user_embedding")(
+        user_deep_input)
     item_inputs_list = list(item_features.values())
 
     item_embedding_matrix = embedding_matrix_dict[item_feature_name]

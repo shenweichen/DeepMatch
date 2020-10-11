@@ -5,20 +5,19 @@ Reference:
 Covington P, Adams J, Sargin E. Deep neural networks for youtube recommendations[C]//Proceedings of the 10th ACM conference on recommender systems. 2016: 191-198.
 """
 from deepctr.feature_column import input_from_feature_columns, build_input_features, create_embedding_matrix
-from deepctr.layers.core import DNN
 from deepctr.layers.utils import NoMask, combined_dnn_input
 from tensorflow.python.keras.models import Model
 
 from deepmatch.layers import PoolingLayer
 from deepmatch.utils import get_item_embedding
 from ..inputs import input_from_feature_columns
-from ..layers.core import SampledSoftmaxLayer, EmbeddingIndex
+from ..layers.core import SampledSoftmaxLayer, EmbeddingIndex, DNN
 
 
 def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
                user_dnn_hidden_units=(64, 32),
                dnn_activation='relu', dnn_use_bn=False,
-               l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0, init_std=0.0001, seed=1024, ):
+               l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0, output_activation='linear', seed=1024, ):
     """Instantiates the YoutubeDNN Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
@@ -48,14 +47,13 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
     user_inputs_list = list(user_features.values())
     user_sparse_embedding_list, user_dense_value_list = input_from_feature_columns(user_features,
                                                                                    user_feature_columns,
-                                                                                   l2_reg_embedding, init_std, seed,
-                                                                                   embedding_matrix_dict=embedding_matrix_dict)
+                                                                                   l2_reg_embedding, seed=seed)
     user_dnn_input = combined_dnn_input(user_sparse_embedding_list, user_dense_value_list)
 
     item_features = build_input_features(item_feature_columns)
     item_inputs_list = list(item_features.values())
     user_dnn_out = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn, dnn_dropout,
-                       dnn_use_bn, seed, )(user_dnn_input)
+                       dnn_use_bn, seed, output_activation=output_activation)(user_dnn_input)
 
     item_index = EmbeddingIndex(list(range(item_vocabulary_size)))(item_features[item_feature_name])
 
