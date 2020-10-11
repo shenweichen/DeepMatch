@@ -10,12 +10,13 @@ import tensorflow as tf
 from deepctr.feature_column import SparseFeat, VarLenSparseFeat, DenseFeat, \
     embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features
 from deepctr.layers.utils import NoMask, combined_dnn_input
+from deepctr.layers import DNN
 from tensorflow.python.keras.layers import Concatenate
 from tensorflow.python.keras.models import Model
 
 from deepmatch.utils import get_item_embedding
 from ..inputs import create_embedding_matrix
-from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, SampledSoftmaxLayer, EmbeddingIndex, DNN
+from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, SampledSoftmaxLayer, EmbeddingIndex
 
 
 def shape_target(target_emb_tmp, target_emb_size):
@@ -123,7 +124,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
         user_deep_input = high_capsule
 
     user_embeddings = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn,
-                          dnn_dropout, dnn_use_bn, seed, output_activation=output_activation, name="user_embedding")(
+                          dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed, name="user_embedding")(
         user_deep_input)
     item_inputs_list = list(item_features.values())
 

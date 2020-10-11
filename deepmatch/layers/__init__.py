@@ -1,7 +1,7 @@
 from deepctr.layers import custom_objects
 from deepctr.layers.utils import reduce_sum
 
-from .core import PoolingLayer, Similarity, LabelAwareAttention, CapsuleLayer, SampledSoftmaxLayer, EmbeddingIndex, DNN
+from .core import PoolingLayer, Similarity, LabelAwareAttention, CapsuleLayer, SampledSoftmaxLayer, EmbeddingIndex
 from .interaction import DotAttention, ConcatAttention, SoftmaxWeightedSum, AttentionSequencePoolingLayer, \
     SelfAttention, \
     SelfMultiHeadAttention, UserAttention
@@ -23,8 +23,7 @@ _custom_objects = {'PoolingLayer': PoolingLayer,
                    'SelfAttention': SelfAttention,
                    'SelfMultiHeadAttention': SelfMultiHeadAttention,
                    'UserAttention': UserAttention,
-                   'DynamicMultiRNN': DynamicMultiRNN,
-                   'DNN': DNN
+                   'DynamicMultiRNN': DynamicMultiRNN
                    }
 
 custom_objects = dict(custom_objects, **_custom_objects)

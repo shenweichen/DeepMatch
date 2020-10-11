@@ -54,10 +54,10 @@ def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 
     item_dnn_input = combined_dnn_input(item_sparse_embedding_list, item_dense_value_list)
 
     user_dnn_out = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn, dnn_dropout,
-                       dnn_use_bn, seed, )(user_dnn_input)
+                       dnn_use_bn, seed=seed)(user_dnn_input)
 
     item_dnn_out = DNN(item_dnn_hidden_units, dnn_activation, l2_reg_dnn, dnn_dropout,
-                       dnn_use_bn, seed)(item_dnn_input)
+                       dnn_use_bn, seed=seed)(item_dnn_input)
 
     score = Similarity(type=metric)([user_dnn_out, item_dnn_out])
 
