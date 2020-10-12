@@ -86,6 +86,6 @@ class DynamicMultiRNN(Layer):
     def get_config(self, ):
         config = {'num_units': self.num_units, 'rnn_type': self.rnn_type, 'return_sequence': self.return_sequence,
                   'num_layers': self.num_layers,
-                  'num_residual_layers': self.num_residual_layers, 'dropout_rate': self.dropout}
+                  'num_residual_layers': self.num_residual_layers, 'dropout_rate': self.dropout, 'forget_bias':self.forget_bias}
         base_config = super(DynamicMultiRNN, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))

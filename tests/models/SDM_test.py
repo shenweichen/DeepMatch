@@ -3,11 +3,8 @@ from tensorflow.python.keras import backend as K
 
 from deepmatch.models import SDM
 from deepmatch.utils import sampledsoftmaxloss
-from tests.utils import check_model, get_xy_fd_sdm
+from ..utils import check_model, get_xy_fd_sdm
 
-
-# @pytest.mark.xfail(reason="There is a bug when save model use Dice")
-# @pytest.mark.skip(reason="misunderstood the API")
 
 
 def test_SDM():
