@@ -5,8 +5,8 @@ Reference:
 Covington P, Adams J, Sargin E. Deep neural networks for youtube recommendations[C]//Proceedings of the 10th ACM conference on recommender systems. 2016: 191-198.
 """
 from deepctr.feature_column import build_input_features
-from deepctr.layers.utils import NoMask, combined_dnn_input
 from deepctr.layers import DNN
+from deepctr.layers.utils import NoMask, combined_dnn_input
 from tensorflow.python.keras.models import Model
 
 from deepmatch.layers import PoolingLayer

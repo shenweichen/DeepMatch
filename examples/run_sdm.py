@@ -74,9 +74,7 @@ if __name__ == "__main__":
     model = SDM(user_feature_columns, item_feature_columns, history_feature_list=['movie_id', 'genres'],
                 units=embedding_dim, num_sampled=100, )
 
-    optimizer = optimizers.Adam(lr=0.001, clipnorm=5.0)
-
-    model.compile(optimizer=optimizer, loss=sampledsoftmaxloss)  # "binary_crossentropy")
+    model.compile(optimizer='adam', loss=sampledsoftmaxloss)  # "binary_crossentropy")
 
     history = model.fit(train_model_input, train_label,  # train_label,
                         batch_size=512, epochs=1, verbose=1, validation_split=0.0, )
