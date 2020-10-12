@@ -78,10 +78,9 @@ if __name__ == "__main__":
 
     history = model.fit(train_model_input, train_label,  # train_label,
                         batch_size=512, epochs=1, verbose=1, validation_split=0.0, )
-    # model.save_weights('SDM_weights.h5')
 
     K.set_learning_phase(False)
-    # 4. Generate user features for testing and full item features for retrieval
+    # 3.Define Model,train,predict and evaluate
     test_user_model_input = test_model_input
     all_item_model_input = {"movie_id": item_profile['movie_id'].values, }
 
