@@ -1,14 +1,17 @@
 from itertools import chain
-from deepctr.inputs import SparseFeat,VarLenSparseFeat,create_embedding_matrix,embedding_lookup,get_dense_input,varlen_embedding_lookup,get_varlen_pooling_list,mergeDict
 
-def input_from_feature_columns(features, feature_columns, l2_reg, init_std, seed, prefix='', seq_mask_zero=True,
-                               support_dense=True, support_group=False,embedding_matrix_dict=None):
+from deepctr.feature_column import SparseFeat, VarLenSparseFeat, create_embedding_matrix, embedding_lookup, \
+    get_dense_input, varlen_embedding_lookup, get_varlen_pooling_list, mergeDict
+
+
+def input_from_feature_columns(features, feature_columns, l2_reg, seed, prefix='', seq_mask_zero=True,
+                               support_dense=True, support_group=False, embedding_matrix_dict=None):
     sparse_feature_columns = list(
         filter(lambda x: isinstance(x, SparseFeat), feature_columns)) if feature_columns else []
     varlen_sparse_feature_columns = list(
         filter(lambda x: isinstance(x, VarLenSparseFeat), feature_columns)) if feature_columns else []
-    if embedding_matrix_dict is  None:
-        embedding_matrix_dict = create_embedding_matrix(feature_columns, l2_reg, init_std, seed, prefix=prefix,
+    if embedding_matrix_dict is None:
+        embedding_matrix_dict = create_embedding_matrix(feature_columns, l2_reg, seed, prefix=prefix,
                                                         seq_mask_zero=seq_mask_zero)
 
     group_sparse_embedding_dict = embedding_lookup(embedding_matrix_dict, features, sparse_feature_columns)

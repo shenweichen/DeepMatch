@@ -1,5 +1,5 @@
 import pandas as pd
-from deepctr.inputs import SparseFeat, VarLenSparseFeat
+from deepctr.feature_column import SparseFeat, VarLenSparseFeat
 from preprocess import gen_data_set, gen_model_input
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras import backend as K
@@ -60,7 +60,7 @@ if __name__ == "__main__":
        tf.compat.v1.disable_eager_execution()
 
     model = YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5, user_dnn_hidden_units=(64, embedding_dim))
-    # model = MIND(user_feature_columns,item_feature_columns,dynamic_k=False,p=1,k_max=2,num_sampled=5,user_dnn_hidden_units=(64, embedding_dim),init_std=0.001)
+    #model = MIND(user_feature_columns,item_feature_columns,dynamic_k=False,p=1,k_max=2,num_sampled=5,user_dnn_hidden_units=(64, embedding_dim))
 
     model.compile(optimizer="adam", loss=sampledsoftmaxloss)  # "binary_crossentropy")
 

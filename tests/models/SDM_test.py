@@ -1,12 +1,10 @@
+import tensorflow as tf
+from tensorflow.python.keras import backend as K
+
 from deepmatch.models import SDM
 from deepmatch.utils import sampledsoftmaxloss
-from tensorflow.python.keras import backend as K
-from tests.utils import check_model, get_xy_fd_sdm
-import tensorflow as tf
+from ..utils import check_model, get_xy_fd_sdm
 
-
-#@pytest.mark.xfail(reason="There is a bug when save model use Dice")
-#@pytest.mark.skip(reason="misunderstood the API")
 
 
 def test_SDM():
@@ -16,10 +14,10 @@ def test_SDM():
     K.set_learning_phase(True)
 
     if tf.__version__ >= '2.0.0':
-       tf.compat.v1.disable_eager_execution()
+        tf.compat.v1.disable_eager_execution()
 
     model = SDM(user_feature_columns, item_feature_columns, history_feature_list, units=8)
-    #model.summary()
+    # model.summary()
 
     model.compile('adam', sampledsoftmaxloss)
     check_model(model, model_name, x, y)

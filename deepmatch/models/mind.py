@@ -7,11 +7,10 @@ Li C, Liu Z, Wu M, et al. Multi-interest network with dynamic routing for recomm
 """
 
 import tensorflow as tf
-from deepctr.inputs import SparseFeat, VarLenSparseFeat, DenseFeat, \
-    embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features, \
-    combined_dnn_input
-from deepctr.layers.core import DNN
-from deepctr.layers.utils import NoMask
+from deepctr.feature_column import SparseFeat, VarLenSparseFeat, DenseFeat, \
+    embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features
+from deepctr.layers import DNN
+from deepctr.layers.utils import NoMask, combined_dnn_input
 from tensorflow.python.keras.layers import Concatenate
 from tensorflow.python.keras.models import Model
 
@@ -30,8 +29,7 @@ def tile_user_otherfeat(user_other_feature, k_max):
 
 def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1.0, dynamic_k=False,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
-         dnn_dropout=0,
-         init_std=0.0001, seed=1024):
+         dnn_dropout=0, output_activation='linear', seed=1024):
     """Instantiates the MIND Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
@@ -47,8 +45,8 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     :param l2_reg_dnn:  L2 regularizer strength applied to DNN
     :param l2_reg_embedding: float. L2 regularizer strength applied to embedding vector
     :param dnn_dropout:  float in [0,1), the probability we will drop out a given DNN coordinate.
-    :param init_std: float,to use as the initialize std of embedding vector
     :param seed: integer ,to use as random seed.
+    :param output_activation: Activation function to use in output layer
     :return: A Keras model instance.
 
     """
@@ -83,8 +81,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     inputs_list = list(features.values())
 
     embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding,
-                                                    init_std,
-                                                    seed, prefix="")
+                                                    seed=seed, prefix="")
 
     item_features = build_input_features(item_feature_columns)
 
@@ -127,7 +124,9 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
         user_deep_input = high_capsule
 
     user_embeddings = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn,
-                          dnn_dropout, dnn_use_bn, seed, name="user_embedding")(user_deep_input)
+                          dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
+                          name="user_embedding")(
+        user_deep_input)
     item_inputs_list = list(item_features.values())
 
     item_embedding_matrix = embedding_matrix_dict[item_feature_name]
