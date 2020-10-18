@@ -61,10 +61,31 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
   </tbody>
 </table>
 
-## DisscussionGroup  
+## DisscussionGroup & Related Projects
 
-Please follow our wechat to join group:  
-- 公众号：**浅梦的学习笔记**  
-- wechat ID: **deepctrbot**
-
-  ![wechat](./docs/pics/code.png)
+<html>
+    <table style="margin-left: 20px; margin-right: auto;">
+        <tr>
+            <td>
+                公众号：<b>浅梦的学习笔记</b><br><br>
+                <a href="https://github.com/shenweichen/deepmatch">
+  <img align="center" src="./docs/pics/code.png" />
+</a>
+            </td>
+            <td>
+                微信：<b>deepctrbot</b><br><br>
+ <a href="https://github.com/shenweichen/deepmatch">
+  <img align="center" src="./docs/pics/deepctrbot.png" />
+</a>
+            </td>
+            <td>
+<ul>
+<li><a href="https://github.com/shenweichen/AlgoNotes">AlgoNotes</a></li>
+<li><a href="https://github.com/shenweichen/DeepCTR">DeepCTR</a></li>
+<li><a href="https://github.com/shenweichen/DeepCTR-Torch">DeepMatch-Torch</a></li>
+<li><a href="https://github.com/shenweichen/GraphEmbedding">GraphEmbedding</a></li>
+</ul>
+            </td>
+        </tr>
+    </table>
+</html>
