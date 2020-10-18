@@ -82,7 +82,7 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
 <ul>
 <li><a href="https://github.com/shenweichen/AlgoNotes">AlgoNotes</a></li>
 <li><a href="https://github.com/shenweichen/DeepCTR">DeepCTR</a></li>
-<li><a href="https://github.com/shenweichen/DeepCTR-Torch">DeepMatch-Torch</a></li>
+<li><a href="https://github.com/shenweichen/DeepCTR-Torch">DeepCTR-Torch</a></li>
 <li><a href="https://github.com/shenweichen/GraphEmbedding">GraphEmbedding</a></li>
 </ul>
             </td>
