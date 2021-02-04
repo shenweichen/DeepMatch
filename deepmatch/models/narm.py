@@ -8,7 +8,7 @@ Reference:
 
 import tensorflow as tf
 from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.layers import Dense,Dropout
+from tensorflow.keras.layers import Dense,Dropout
 from deepctr.feature_column import build_input_features, create_embedding_matrix, varlen_embedding_lookup
 from deepctr.layers.sequence import DynamicGRU
 from deepctr.layers.utils import NoMask, concat_func
