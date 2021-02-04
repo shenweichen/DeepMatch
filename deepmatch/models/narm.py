@@ -60,7 +60,7 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
     user_varlen_sparse_embedding_dict = varlen_embedding_lookup(embedding_matrix_dict, user_features,
                                                                 user_feature_columns)
     user_varlen_sparse_embedding = user_varlen_sparse_embedding_dict[user_feature_columns[0].name]
-    user_varlen_sparse_embedding = tf.keras.layers.Dropout(rate=emb_dropout_rate,seed=seed)(user_varlen_sparse_embedding)
+    user_varlen_sparse_embedding = tf.keras.layers.Dropout(emb_dropout_rate,seed=seed)(user_varlen_sparse_embedding)
 
     user_gru_output = user_varlen_sparse_embedding
     for i in range(len(gru_hidden_units)):
@@ -86,7 +86,7 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
     user_local_output = tf.reduce_sum(tf.multiply(attn_weights, user_gru_output), axis=1)
 
     user_output = concat_func([user_global_output, user_local_output], axis=1)
-    user_output = tf.keras.layers.Dropout(rate=output_dropout_rate)(user_output)
+    user_output = tf.keras.layers.Dropout(output_dropout_rate,seed=seed)(user_output)
     user_output = tf.keras.layers.Dense(item_feature_columns[0].embedding_dim, activation=None)(user_output)
 
     output = SampledSoftmaxLayer(num_sampled=num_sampled)(
