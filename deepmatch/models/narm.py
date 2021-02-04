@@ -8,7 +8,6 @@ Reference:
 
 import tensorflow as tf
 from tensorflow.python.keras.models import Model
-from tensorflow.keras.layers import Dense,Dropout
 from deepctr.feature_column import build_input_features, create_embedding_matrix, varlen_embedding_lookup
 from deepctr.layers.sequence import DynamicGRU
 from deepctr.layers.utils import NoMask, concat_func
@@ -61,7 +60,7 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
     user_varlen_sparse_embedding_dict = varlen_embedding_lookup(embedding_matrix_dict, user_features,
                                                                 user_feature_columns)
     user_varlen_sparse_embedding = user_varlen_sparse_embedding_dict[user_feature_columns[0].name]
-    user_varlen_sparse_embedding = Dropout(rate=emb_dropout_rate)(user_varlen_sparse_embedding)
+    user_varlen_sparse_embedding = tf.keras.layers.Dropout(rate=emb_dropout_rate,seed=seed)(user_varlen_sparse_embedding)
 
     user_gru_output = user_varlen_sparse_embedding
     for i in range(len(gru_hidden_units)):
@@ -72,14 +71,14 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
 
     # local encoder
     user_gru_output_shape = user_gru_output.get_shape().as_list()
-    q_1 = Dense(units=gru_hidden_units[-1], use_bias=False)(
+    q_1 = tf.keras.layers.Dense(units=gru_hidden_units[-1], use_bias=False)(
         tf.reshape(user_gru_output, shape=[-1, gru_hidden_units[-1]]))
     q_1 = tf.reshape(q_1, shape=[-1, user_gru_output_shape[1], user_gru_output_shape[2]])
 
-    q_2 = Dense(units=gru_hidden_units[-1], use_bias=False)(user_global_output)
+    q_2 = tf.keras.layers.Dense(units=gru_hidden_units[-1], use_bias=False)(user_global_output)
     q_2 = tf.tile(tf.expand_dims(q_2, axis=1), multiples=[1, user_gru_output_shape[1], 1])
 
-    attn_weights = Dense(1, use_bias=False)(
+    attn_weights = tf.keras.layers.Dense(1, use_bias=False)(
         tf.reshape(tf.nn.sigmoid(q_1 + q_2), shape=[-1, gru_hidden_units[-1]]))
     attn_weights = tf.reshape(attn_weights, shape=[-1, user_gru_output_shape[1]])
     attn_weights = tf.tile(tf.expand_dims(attn_weights, axis=-1), multiples=[1, 1, gru_hidden_units[-1]])
@@ -87,8 +86,8 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
     user_local_output = tf.reduce_sum(tf.multiply(attn_weights, user_gru_output), axis=1)
 
     user_output = concat_func([user_global_output, user_local_output], axis=1)
-    user_output = Dropout(rate=output_dropout_rate)(user_output)
-    user_output = Dense(item_feature_columns[0].embedding_dim, activation=None)(user_output)
+    user_output = tf.keras.layers.Dropout(rate=output_dropout_rate)(user_output)
+    user_output = tf.keras.layers.Dense(item_feature_columns[0].embedding_dim, activation=None)(user_output)
 
     output = SampledSoftmaxLayer(num_sampled=num_sampled)(
         [pooling_item_embedding_weight, user_output, item_features[item_feature_name]])
