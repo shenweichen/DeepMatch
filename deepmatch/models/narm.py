@@ -8,11 +8,13 @@ Reference:
 
 import tensorflow as tf
 from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.layers import Dense, Dropout, GlobalMaxPool1D
 from deepctr.feature_column import build_input_features, create_embedding_matrix, varlen_embedding_lookup
 from deepctr.layers.sequence import DynamicGRU
 from deepctr.layers.utils import NoMask, concat_func
 from ..layers.core import EmbeddingIndex
 from ..layers import PoolingLayer, SampledSoftmaxLayer
+from ..layers.interaction import LocalEncoderLayer
 from ..utils import get_item_embedding
 
 
@@ -48,7 +50,8 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
     item_features = build_input_features(item_feature_columns)
     item_inputs_list = list(item_features.values())
 
-    embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding, seed)
+    embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding, seed,
+                                                    seq_mask_zero=False)
 
     # item embedding
     item_index = EmbeddingIndex(list(range(item_vocabulary_size)))(item_features[item_feature_name])
@@ -60,34 +63,20 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
     user_varlen_sparse_embedding_dict = varlen_embedding_lookup(embedding_matrix_dict, user_features,
                                                                 user_feature_columns)
     user_varlen_sparse_embedding = user_varlen_sparse_embedding_dict[user_feature_columns[0].name]
-    user_varlen_sparse_embedding = tf.keras.layers.Dropout(emb_dropout_rate,seed=seed)(user_varlen_sparse_embedding)
+    user_varlen_sparse_embedding = Dropout(emb_dropout_rate, seed=seed)(user_varlen_sparse_embedding)
 
     user_gru_output = user_varlen_sparse_embedding
     for i in range(len(gru_hidden_units)):
-        user_gru_output = DynamicGRU(num_units=gru_hidden_units[i])(
-            [user_gru_output, user_sess_length])
+        user_gru_output = DynamicGRU(num_units=gru_hidden_units[i])([user_gru_output, user_sess_length])
 
-    user_global_output = user_gru_output[:, -1, :]
+    user_global_output = GlobalMaxPool1D()(user_gru_output)
 
     # local encoder
-    user_gru_output_shape = user_gru_output.get_shape().as_list()
-    q_1 = tf.keras.layers.Dense(units=gru_hidden_units[-1], use_bias=False)(
-        tf.reshape(user_gru_output, shape=[-1, gru_hidden_units[-1]]))
-    q_1 = tf.reshape(q_1, shape=[-1, user_gru_output_shape[1], user_gru_output_shape[2]])
-
-    q_2 = tf.keras.layers.Dense(units=gru_hidden_units[-1], use_bias=False)(user_global_output)
-    q_2 = tf.tile(tf.expand_dims(q_2, axis=1), multiples=[1, user_gru_output_shape[1], 1])
-
-    attn_weights = tf.keras.layers.Dense(1, use_bias=False)(
-        tf.reshape(tf.nn.sigmoid(q_1 + q_2), shape=[-1, gru_hidden_units[-1]]))
-    attn_weights = tf.reshape(attn_weights, shape=[-1, user_gru_output_shape[1]])
-    attn_weights = tf.tile(tf.expand_dims(attn_weights, axis=-1), multiples=[1, 1, gru_hidden_units[-1]])
-
-    user_local_output = tf.reduce_sum(tf.multiply(attn_weights, user_gru_output), axis=1)
+    user_local_output = LocalEncoderLayer()([user_gru_output, user_global_output])
 
     user_output = concat_func([user_global_output, user_local_output], axis=1)
-    user_output = tf.keras.layers.Dropout(output_dropout_rate,seed=seed)(user_output)
-    user_output = tf.keras.layers.Dense(item_feature_columns[0].embedding_dim, activation=None)(user_output)
+    user_output = Dropout(output_dropout_rate, seed=seed)(user_output)
+    user_output = Dense(item_feature_columns[0].embedding_dim, activation=None)(user_output)
 
     output = SampledSoftmaxLayer(num_sampled=num_sampled)(
         [pooling_item_embedding_weight, user_output, item_features[item_feature_name]])

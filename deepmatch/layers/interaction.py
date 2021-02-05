@@ -1,6 +1,6 @@
 import tensorflow as tf
 from deepctr.layers.normalization import LayerNormalization
-from deepctr.layers.utils import softmax, reduce_mean
+from deepctr.layers.utils import softmax, reduce_mean, reduce_sum
 from tensorflow.python.keras.initializers import TruncatedNormal
 from tensorflow.python.keras.layers import Layer, Dense, Dropout
 
@@ -364,3 +364,42 @@ class UserAttention(Layer):
                   'scale': self.scale, 'seed': self.seed, }
         base_config = super(UserAttention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
+
+class LocalEncoderLayer(Layer):
+    """
+    :param user_gru_output: A 3d tensor with shape of [batch_size, T, C]
+    :param user_global_output: A 2d tensor with shape of [batch_size, C]
+    :return: A 2d tensor with shape of  [batch_size,  C]
+    """
+    def __init__(self, **kwargs):
+        super(LocalEncoderLayer, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        hidden_units = [input_shape[0][-1], input_shape[0][-1], 1]
+        self.dense_layers = [Dense(units=hidden_unit, use_bias=False) for hidden_unit in hidden_units]
+
+        super(LocalEncoderLayer, self).build(input_shape)
+
+    def call(self, inputs, **kwargs):
+        user_gru_output, user_global_output = inputs
+        user_gru_output_shape = user_gru_output.get_shape().as_list()
+        last_gru_hidden_unit = user_gru_output_shape[-1]
+        q_1 = self.dense_layers[0](tf.reshape(user_gru_output, shape=[-1, last_gru_hidden_unit]))
+        q_1 = tf.reshape(q_1, shape=[-1, user_gru_output_shape[1], user_gru_output_shape[2]])
+        q_2 = self.dense_layers[1](user_global_output)
+        q_2 = tf.tile(tf.expand_dims(q_2, axis=1), multiples=[1, user_gru_output_shape[1], 1])
+        attn_weights = self.dense_layers[2](tf.reshape(tf.nn.sigmoid(q_1 + q_2), shape=[-1, last_gru_hidden_unit]))
+        attn_weights = tf.reshape(attn_weights, shape=[-1, user_gru_output_shape[1]])
+        attn_weights = tf.tile(tf.expand_dims(attn_weights, axis=-1), multiples=[1, 1, last_gru_hidden_unit])
+
+        user_local_output = reduce_sum(tf.multiply(attn_weights, user_gru_output), axis=1, keep_dims=False)
+
+        return user_local_output
+
+    def compute_output_shape(self, input_shape):
+        return (None, input_shape[0][-1])
+
+    def get_config(self):
+        base_config = super(LocalEncoderLayer, self).get_config()
+        return dict(list(base_config.items()))
