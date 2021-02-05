@@ -367,8 +367,14 @@ class UserAttention(Layer):
 
 
 class LocalEncoderLayer(Layer):
+    """
+     :param user_gru_output: A 3d tensor with shape of [batch_size, T, C]
+     :param user_global_output: A 2d tensor with shape of [batch_size, C]
+     :return: A 2d tensor with shape of  [batch_size, C]
+    """
+
     def __init__(self, **kwargs):
-        super(LocalEncoderLayer, self).__init__()
+        super(LocalEncoderLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
         hidden_units = [input_shape[0][-1], input_shape[0][-1], 1]

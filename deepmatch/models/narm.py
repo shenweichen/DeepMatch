@@ -38,13 +38,11 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
     if len(item_feature_columns) > 1:
         raise ValueError("Now NARM only support 1 item feature like item_id")
 
-    # for user
     user_features = build_input_features(user_feature_columns)
     user_inputs_list = list(user_features.values())
 
     user_sess_length = user_features[user_feature_columns[0].length_name]
 
-    # for item id
     item_feature_name = item_feature_columns[0].name
     item_vocabulary_size = item_feature_columns[0].vocabulary_size
     item_features = build_input_features(item_feature_columns)
@@ -53,7 +51,6 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
     embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding, seed,
                                                     seq_mask_zero=False)
 
-    # item embedding
     item_index = EmbeddingIndex(list(range(item_vocabulary_size)))(item_features[item_feature_name])
     item_embedding_matrix = embedding_matrix_dict[item_feature_name]
     item_embedding_weight = NoMask()(item_embedding_matrix(item_index))
