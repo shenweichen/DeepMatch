@@ -18,7 +18,7 @@ def test_NARM():
     model=NARM(user_feature_columns,item_feature_columns,num_sampled=2,gru_hidden_units=(20,))
     model.compile('adam', sampledsoftmaxloss)
 
-    check_model(model, model_name, x, y, check_model_io=True)
+    check_model(model, model_name, x, y)
 
 
 if __name__ == "__main__":
