@@ -18,7 +18,7 @@ def test_YoutubeDNN():
     model = YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=2, user_dnn_hidden_units=(16, 4))
     model.compile('adam', sampledsoftmaxloss)
 
-    check_model(model, model_name, x, y, check_model_io=True)
+    check_model(model, model_name, x, y)
 
 
 if __name__ == "__main__":
