@@ -31,7 +31,10 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
     :param output_dropout_rate: float in [0,1), this dropout layer is used before the final user output.
     :param l2_reg_embedding: L2 regularizer strength applied to embedding vector.
     :param seed: int, to use as random seed.
+    :return: A Keras model instance.
+
     """
+
     if len(user_feature_columns) > 1:
         raise ValueError(
             "NARM only accept user behavior sequence as user feature.")
