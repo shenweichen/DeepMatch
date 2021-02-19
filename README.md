@@ -28,6 +28,7 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
 | DSSM | [CIKM 2013][Deep Structured Semantic Models for Web Search using Clickthrough Data](https://www.microsoft.com/en-us/research/publication/learning-deep-structured-semantic-models-for-web-search-using-clickthrough-data/)    |
 | YoutubeDNN     | [RecSys 2016][Deep Neural Networks for YouTube Recommendations](https://www.researchgate.net/publication/307573656_Deep_Neural_Networks_for_YouTube_Recommendations)            |
 | NCF  | [WWW 2017][Neural Collaborative Filtering](https://arxiv.org/abs/1708.05031)       |
+| NARM | [CIKM 2017][Neural Attentive Session-based Recommendation](https://arxiv.org/abs/1711.04725) |
 | SDM  | [CIKM 2019][SDM: Sequential Deep Matching Model for Online Large-scale Recommender System](https://arxiv.org/abs/1909.00385)  |
 | MIND | [CIKM 2019][Multi-interest network with dynamic routing for recommendation at Tmall](https://arxiv.org/pdf/1904.08030)  |
 
