@@ -1,6 +1,6 @@
 import pandas as pd
 from deepctr.feature_column import SparseFeat, VarLenSparseFeat
-from preprocess import gen_data_set, gen_model_input_narm
+from preprocess import gen_data_set, gen_model_input
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.models import Model
@@ -36,8 +36,8 @@ if __name__ == "__main__":
 
     train_set, test_set = gen_data_set(data, 0)
 
-    train_model_input, train_label = gen_model_input_narm(train_set, SEQ_LEN)
-    test_model_input, test_label = gen_model_input_narm(test_set, SEQ_LEN)
+    train_model_input, train_label = gen_model_input(train_set, user_profile, SEQ_LEN)
+    test_model_input, test_label = gen_model_input(test_set, user_profile, SEQ_LEN)
 
     # 2.count #unique features for each sparse field and generate feature config for sequence feature
 
@@ -52,10 +52,11 @@ if __name__ == "__main__":
 
     K.set_learning_phase(True)
     import tensorflow as tf
+
     if tf.__version__ >= '2.0.0':
         tf.compat.v1.disable_eager_execution()
 
-    model=NARM(user_feature_columns,item_feature_columns,gru_hidden_units=(20,))
+    model = NARM(user_feature_columns, item_feature_columns, gru_hidden_units=(20,))
 
     model.compile(optimizer="adam", loss=sampledsoftmaxloss)  # "binary_crossentropy")
 
