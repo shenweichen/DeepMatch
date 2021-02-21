@@ -404,3 +404,26 @@ class LocalEncoderLayer(Layer):
     def get_config(self):
         base_config = super(LocalEncoderLayer, self).get_config()
         return dict(list(base_config.items()))
+
+
+class GlobalEncoderLayer(Layer):
+    """
+    inputs:  A 3d tensor with shape of  [batch_size, T, C]
+    return:  A 2d tensor with shape of  [batch_size, C]
+    """
+
+    def __init__(self, **kwargs):
+        super(GlobalEncoderLayer, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        super(GlobalEncoderLayer, self).build(input_shape)
+
+    def call(self, inputs, **kwargs):
+        return inputs[:, -1, :]
+
+    def compute_output_shape(self, input_shape):
+        return (None, input_shape[-1])
+
+    def get_config(self):
+        base_config = super(GlobalEncoderLayer, self).get_config()
+        return dict(list(base_config.items()))

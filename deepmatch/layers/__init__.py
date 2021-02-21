@@ -4,7 +4,7 @@ from deepctr.layers.utils import reduce_sum
 from .core import PoolingLayer, Similarity, LabelAwareAttention, CapsuleLayer, SampledSoftmaxLayer, EmbeddingIndex
 from .interaction import DotAttention, ConcatAttention, SoftmaxWeightedSum, AttentionSequencePoolingLayer, \
     SelfAttention, \
-    SelfMultiHeadAttention, UserAttention, LocalEncoderLayer
+    SelfMultiHeadAttention, UserAttention, LocalEncoderLayer, GlobalEncoderLayer
 from .sequence import DynamicMultiRNN
 from ..utils import sampledsoftmaxloss
 
@@ -24,7 +24,8 @@ _custom_objects = {'PoolingLayer': PoolingLayer,
                    'SelfMultiHeadAttention': SelfMultiHeadAttention,
                    'UserAttention': UserAttention,
                    'DynamicMultiRNN': DynamicMultiRNN,
-                   'LocalEncoderLayer': LocalEncoderLayer
+                   'LocalEncoderLayer': LocalEncoderLayer,
+                   'GlobalEncoderLayer': GlobalEncoderLayer
                    }
 
 custom_objects = dict(custom_objects, **_custom_objects)

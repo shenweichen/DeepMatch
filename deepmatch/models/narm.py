@@ -8,17 +8,17 @@ Reference:
 
 import tensorflow as tf
 from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.layers import Dense, Dropout, GlobalMaxPool1D
+from tensorflow.python.keras.layers import Dense, Dropout
 from deepctr.feature_column import build_input_features, create_embedding_matrix, varlen_embedding_lookup
 from deepctr.layers.sequence import DynamicGRU
 from deepctr.layers.utils import NoMask, concat_func
 from ..layers.core import EmbeddingIndex
 from ..layers import PoolingLayer, SampledSoftmaxLayer
-from ..layers.interaction import LocalEncoderLayer
+from ..layers.interaction import LocalEncoderLayer, GlobalEncoderLayer
 from ..utils import get_item_embedding
 
 
-def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_units=(100,), emb_dropout_rate=0,
+def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_units=(64,), emb_dropout_rate=0,
          output_dropout_rate=0, l2_reg_embedding=1e-6, seed=2021):
     """
     Instantiates the NARM Model architecture.
@@ -59,7 +59,6 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
     item_embedding_weight = NoMask()(item_embedding_matrix(item_index))
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
-    # global encoder
     user_varlen_sparse_embedding_dict = varlen_embedding_lookup(embedding_matrix_dict, user_features,
                                                                 user_feature_columns)
     user_varlen_sparse_embedding = user_varlen_sparse_embedding_dict[user_feature_columns[0].name]
@@ -69,14 +68,15 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
     for i in range(len(gru_hidden_units)):
         user_gru_output = DynamicGRU(num_units=gru_hidden_units[i])([user_gru_output, user_sess_length])
 
-    user_global_output = GlobalMaxPool1D()(user_gru_output)
+    # global encoder
+    user_global_output = GlobalEncoderLayer()(user_gru_output)
 
     # local encoder
     user_local_output = LocalEncoderLayer()([user_gru_output, user_global_output])
 
     user_output = concat_func([user_global_output, user_local_output], axis=1)
     user_output = Dropout(output_dropout_rate, seed=seed)(user_output)
-    user_output = Dense(item_feature_columns[0].embedding_dim, activation=None)(user_output)
+    user_output = Dense(item_feature_columns[0].embedding_dim, activation=None, use_bias=False)(user_output)
 
     output = SampledSoftmaxLayer(num_sampled=num_sampled)(
         [pooling_item_embedding_weight, user_output, item_features[item_feature_name]])
