@@ -18,8 +18,8 @@ from ..layers.interaction import LocalEncoderLayer
 from ..utils import get_item_embedding
 
 
-def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_units=(100,), emb_dropout_rate=0.25,
-         output_dropout_rate=0.5, l2_reg_embedding=1e-6, seed=2021):
+def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_units=(100,), emb_dropout_rate=0,
+         output_dropout_rate=0, l2_reg_embedding=1e-6, seed=2021):
     """
     Instantiates the NARM Model architecture.
 

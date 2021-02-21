@@ -56,7 +56,7 @@ if __name__ == "__main__":
     if tf.__version__ >= '2.0.0':
         tf.compat.v1.disable_eager_execution()
 
-    model = NARM(user_feature_columns, item_feature_columns, gru_hidden_units=(20,))
+    model = NARM(user_feature_columns, item_feature_columns, num_sampled=100, gru_hidden_units=(20,))
 
     model.compile(optimizer="adam", loss=sampledsoftmaxloss)  # "binary_crossentropy")
 
