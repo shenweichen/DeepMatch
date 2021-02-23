@@ -446,8 +446,9 @@ class NARMEncoderLayer(Layer):
     :return:  A 2d tensor with shape of  [batch_size, 2*last_gru_hidden_unit]
     """
 
-    def __init__(self, gru_hidden_units=(64,), **kwargs):
+    def __init__(self, gru_hidden_units=(64,), seed=2021, **kwargs):
         self.gru_hidden_units = gru_hidden_units
+        self.seed = seed
         super(NARMEncoderLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
@@ -459,7 +460,7 @@ class NARMEncoderLayer(Layer):
                 self.gru_cell = tf.compat.v1.nn.rnn_cell.GRUCell(self.gru_hidden_units[i])
             self.gru_cells.append(self.gru_cell)
         self.local_encoder_layer = AdditiveAttention(hidden_units=self.gru_hidden_units[-1], use_bias=False,
-                                                     activation="sigmoid")
+                                                     activation="sigmoid", dropout_rate=0, seed=self.seed)
         super(NARMEncoderLayer, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
@@ -487,6 +488,6 @@ class NARMEncoderLayer(Layer):
         return (None, 2 * self.gru_hidden_units[-1])
 
     def get_config(self):
-        config = {'gru_hidden_units': self.gru_hidden_units}
+        config = {'gru_hidden_units': self.gru_hidden_units, 'seed': self.seed}
         base_config = super(NARMEncoderLayer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
