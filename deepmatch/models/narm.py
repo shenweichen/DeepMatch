@@ -13,7 +13,7 @@ from deepctr.feature_column import build_input_features, create_embedding_matrix
 from deepctr.layers.utils import NoMask, concat_func
 from ..layers.core import EmbeddingIndex
 from ..layers import PoolingLayer, SampledSoftmaxLayer
-from ..layers.interaction import LocalEncoderLayer
+from ..layers.interaction import LocalEncoderLayer, NARMEncoderLayer
 from ..layers.sequence import DynamicMultiRNN
 from ..utils import get_item_embedding
 
@@ -65,13 +65,7 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
     user_varlen_sparse_embedding = Dropout(emb_dropout_rate, seed=seed)(user_varlen_sparse_embedding)
     user_gru_output = user_varlen_sparse_embedding
 
-    for i in range(len(gru_hidden_units)):
-        user_gru_output,hidden_state=DynamicMultiRNN(num_units=gru_hidden_units[i], rnn_type='GRU', return_sequence=False, num_layers=1, num_residual_layers=0,
-                                                     dropout_rate=0.0)([user_gru_output, user_sess_length])
-
-    user_global_output=hidden_state
-    user_local_output=LocalEncoderLayer()([user_gru_output,user_global_output])
-    user_output=concat_func([user_global_output,user_local_output])
+    user_output=NARMEncoderLayer(gru_hidden_units)([user_gru_output,user_sess_length])
     user_output = Dropout(output_dropout_rate, seed=seed)(user_output)
     user_output = Dense(item_feature_columns[0].embedding_dim, use_bias=False)(user_output)
 

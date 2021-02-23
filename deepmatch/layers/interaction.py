@@ -3,6 +3,7 @@ from deepctr.layers.normalization import LayerNormalization
 from deepctr.layers.utils import softmax, reduce_mean, reduce_sum
 from tensorflow.python.keras.initializers import TruncatedNormal
 from tensorflow.python.keras.layers import Layer, Dense, Dropout
+from .sequence import DynamicMultiRNN
 
 
 class DotAttention(Layer):
@@ -366,7 +367,6 @@ class UserAttention(Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
 
-
 class LocalEncoderLayer(Layer):
     """
      :param user_gru_output: A 3d tensor with shape of [batch_size, T, C]
@@ -419,13 +419,12 @@ class NARMEncoderLayer(Layer):
         super(NARMEncoderLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.gru_cells = []
+        self.gru_layers = []
         for i in range(len(self.gru_hidden_units)):
-            try:
-                self.gru_cell = tf.nn.rnn_cell.GRUCell(self.gru_hidden_units[i])
-            except:
-                self.gru_cell = tf.compat.v1.nn.rnn_cell.GRUCell(self.gru_hidden_units[i])
-            self.gru_cells.append(self.gru_cell)
+            gru_layer = DynamicMultiRNN(num_units=self.gru_hidden_units[i], rnn_type='GRU',
+                                                            return_sequence=True, num_layers=1, num_residual_layers=0,
+                                                            dropout_rate=0.0)
+            self.gru_layers.append(gru_layer)
 
         hidden_units = [self.gru_hidden_units[-1], self.gru_hidden_units[-1], 1]
         self.dense_layers = [Dense(units=hidden_unit, use_bias=False) for hidden_unit in hidden_units]
@@ -436,20 +435,18 @@ class NARMEncoderLayer(Layer):
         seq_mask = tf.sequence_mask(sequence_length, rnn_input.shape[1], dtype=tf.float32)
         seq_mask = tf.squeeze(seq_mask, axis=1)
 
+        rnn_output=rnn_input
         for i in range(len(self.gru_hidden_units)):
-            try:
-                with tf.name_scope("rnn"), tf.variable_scope("rnn", reuse=tf.AUTO_REUSE):
-                    rnn_output, hidden_state = tf.nn.dynamic_rnn(self.gru_cells[i], inputs=rnn_input,
-                                                                 sequence_length=tf.squeeze(sequence_length),
-                                                                 dtype=tf.float32, scope=self.name)
-            except AttributeError:
-                with tf.name_scope("rnn"), tf.compat.v1.variable_scope("rnn", reuse=tf.compat.v1.AUTO_REUSE):
-                    rnn_output, hidden_state = tf.compat.v1.nn.dynamic_rnn(self.gru_cells[i], inputs=rnn_input,
-                                                                           sequence_length=tf.squeeze(sequence_length),
-                                                                           dtype=tf.float32, scope=self.name)
-        user_global_output = hidden_state
+            rnn_output=self.gru_layers[i]([rnn_output,sequence_length])
+
+        bsz=tf.shape(rnn_input)[0]
+        range_ = tf.expand_dims(tf.range(0,bsz),axis=-1)
+        idx = tf.concat([range_,sequence_length-1],axis=-1)
+
+        user_global_output = tf.gather_nd(rnn_output,idx)
+        print(user_global_output.shape)
         user_local_output = self._local_encoder_layer(rnn_output, user_global_output, seq_mask)
-        user_output = tf.concat([user_global_output, user_local_output],axis=-1)
+        user_output = tf.concat([user_global_output, user_local_output], axis=-1)
 
         return user_output
 
