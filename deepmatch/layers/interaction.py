@@ -369,16 +369,17 @@ class UserAttention(Layer):
 
 class AdditiveAttention(Layer):
     """
-    :param query: [batch_size, 1, C]
-    :param key:   [batch_size, T, C]
-    :param seq_mask: [batch_size,T]
+    :param query: [batch_size, T_q, C]
+    :param key:   [batch_size, T_k, C]
+    :param seq_mask: [batch_size, 1]
     :return:      [batch_size, C]
     """
 
-    def __init__(self, hidden_units=64, use_bias=True, activation="tanh", seed=2020, **kwargs):
+    def __init__(self, hidden_units=64, use_bias=True, activation="tanh", dropout_rate=0, seed=2020, **kwargs):
         self.hidden_units = hidden_units
         self.use_bias = use_bias
         self.activation = activation
+        self.dropout_rate = dropout_rate
         self.seed = seed
         super(AdditiveAttention, self).__init__(**kwargs)
 
@@ -396,38 +397,44 @@ class AdditiveAttention(Layer):
             self.b = self.add_weight(name='b', shape=[self.hidden_units],
                                      dtype=tf.float32, initializer=TruncatedNormal(seed=self.seed))
         self.activation_layer = activation_layer(self.activation)
+        self.softmax_weighted_sum = SoftmaxWeightedSum(dropout_rate=self.dropout_rate, seed=self.seed)
         super(AdditiveAttention, self).build(input_shape)
 
-    def call(self, inputs, **kwargs):
-        queries, keys, seq_mask = inputs
+    def call(self, inputs, mask=None, **kwargs):
+        queries, keys, sequence_length = inputs
         values = keys
-        timesteps, hidden_units = keys.get_shape().as_list()[1:]
+        queries_len = queries.get_shape().as_list()[1]
+        keys_len, hidden_units = keys.get_shape().as_list()[1:]
+
+        seq_mask = tf.sequence_mask(sequence_length, keys_len)
+        seq_mask = tf.tile(seq_mask, multiples=[1, queries_len, 1])
 
         keys = tf.tensordot(tf.reshape(keys, shape=[-1, hidden_units]), self.W_k, axes=(-1, 0))
-        keys_reshaped = tf.reshape(keys, shape=[-1, timesteps, hidden_units])
+        keys_reshaped = tf.reshape(keys, shape=[-1, 1, keys_len, hidden_units])
 
         queries = tf.tensordot(tf.reshape(queries, shape=[-1, hidden_units]), self.W_q, axes=(-1, 0))
-        queries_reshaped = tf.tile(tf.expand_dims(queries, axis=1), multiples=[1, timesteps, 1])
-        seq_mask = tf.expand_dims(seq_mask, axis=-1)
-        queries_reshaped = tf.multiply(seq_mask, queries_reshaped)
+        queries_reshaped = tf.reshape(queries, shape=[-1, queries_len, 1, hidden_units])
 
         if self.use_bias is True:
             attn_value = self.activation_layer(tf.nn.bias_add(keys_reshaped + queries_reshaped, self.b))
         else:
             attn_value = self.activation_layer(keys_reshaped + queries_reshaped)
 
-        attn_weights = tf.tensordot(tf.reshape(attn_value, shape=[-1, hidden_units]), self.v, axes=(-1, 0))
-        attn_weights = tf.reshape(attn_weights, shape=[-1, timesteps])
-        attn_weights = tf.tile(tf.expand_dims(attn_weights, axis=-1), multiples=[1, 1, hidden_units])
-        outputs = reduce_sum(tf.multiply(attn_weights, values), axis=1, keep_dims=False)
+        scores = tf.tensordot(tf.reshape(attn_value, shape=[-1, hidden_units]), self.v, axes=(-1, 0))
+        scores = tf.reshape(scores, shape=[-1, queries_len, keys_len])
 
+        outputs = self.softmax_weighted_sum([scores, values, seq_mask])
         return outputs
 
     def compute_output_shape(self, input_shape):
-        return (None, input_shape[0][-1])
+        return input_shape[0]
+
+    def compute_mask(self, inputs, mask=None):
+        return mask
 
     def get_config(self):
-        config = {'use_bias': self.use_bias, 'activation': self.activation_layer, 'seed': self.seed}
+        config = {'use_bias': self.use_bias, 'activation': self.activation_layer, 'dropout_rate': self.dropout_rate,
+                  'seed': self.seed}
         base_config = super(AdditiveAttention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
@@ -457,9 +464,6 @@ class NARMEncoderLayer(Layer):
 
     def call(self, inputs, **kwargs):
         rnn_input, sequence_length = inputs
-        seq_mask = tf.sequence_mask(sequence_length, inputs[0].shape[1], dtype=tf.float32)
-        seq_mask = tf.squeeze(seq_mask, axis=1)
-
         for i in range(len(self.gru_hidden_units)):
             try:
                 with tf.name_scope("rnn"), tf.variable_scope("rnn", reuse=tf.AUTO_REUSE):
@@ -473,7 +477,8 @@ class NARMEncoderLayer(Layer):
                                                                            dtype=tf.float32, scope=self.name)
         user_global_output = hidden_state
         hidden_state = tf.expand_dims(hidden_state, axis=1)
-        user_local_output = self.local_encoder_layer([hidden_state, rnn_output, seq_mask])
+        user_local_output = self.local_encoder_layer([rnn_output, hidden_state, sequence_length])
+        user_local_output = reduce_sum(user_local_output, axis=1)
         user_output = tf.concat([user_global_output, user_local_output], axis=-1)
 
         return user_output
