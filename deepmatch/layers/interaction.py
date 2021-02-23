@@ -375,26 +375,26 @@ class AdditiveAttention(Layer):
     :return:      [batch_size, C]
     """
 
-    def __init__(self, use_bias=True, activation="tanh", seed=2020, **kwargs):
+    def __init__(self, hidden_units=64, use_bias=True, activation="tanh", seed=2020, **kwargs):
+        self.hidden_units = hidden_units
         self.use_bias = use_bias
         self.activation = activation
         self.seed = seed
         super(AdditiveAttention, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.W_q = self.add_weight(name='W_q', shape=[input_shape[0][-1], input_shape[0][-1]],
-                                   dtype=tf.float32,
-                                   initializer=TruncatedNormal(seed=self.seed))
-        self.W_k = self.add_weight(name='W_k', shape=[input_shape[0][-1], input_shape[0][-1]],
-                                   dtype=tf.float32,
-                                   initializer=TruncatedNormal(seed=self.seed))
-        self.v = self.add_weight(name='v', shape=[input_shape[0][-1], 1],
-                                 dtype=tf.float32,
-                                 initializer=TruncatedNormal(seed=self.seed))
+        if self.hidden_units != input_shape[0][-1] or self.hidden_units != input_shape[1][-1]:
+            raise ValueError("The hidden units must be equal to the last dimension of queries and keys!")
+
+        self.W_q = self.add_weight(name='W_q', shape=[self.hidden_units, self.hidden_units],
+                                   dtype=tf.float32, initializer=TruncatedNormal(seed=self.seed))
+        self.W_k = self.add_weight(name='W_k', shape=[self.hidden_units, self.hidden_units],
+                                   dtype=tf.float32, initializer=TruncatedNormal(seed=self.seed))
+        self.v = self.add_weight(name='v', shape=[self.hidden_units, 1],
+                                 dtype=tf.float32, initializer=TruncatedNormal(seed=self.seed))
         if self.use_bias is True:
-            self.b = self.add_weight(name='b', shape=[input_shape[0][-1]],
-                                     dtype=tf.float32,
-                                     initializer=TruncatedNormal(seed=self.seed))
+            self.b = self.add_weight(name='b', shape=[self.hidden_units],
+                                     dtype=tf.float32, initializer=TruncatedNormal(seed=self.seed))
         self.activation_layer = activation_layer(self.activation)
         super(AdditiveAttention, self).build(input_shape)
 
@@ -451,7 +451,8 @@ class NARMEncoderLayer(Layer):
             except:
                 self.gru_cell = tf.compat.v1.nn.rnn_cell.GRUCell(self.gru_hidden_units[i])
             self.gru_cells.append(self.gru_cell)
-        self.local_encoder_layer = AdditiveAttention(use_bias=False, activation="sigmoid")
+        self.local_encoder_layer = AdditiveAttention(hidden_units=self.gru_hidden_units[-1], use_bias=False,
+                                                     activation="sigmoid")
         super(NARMEncoderLayer, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
@@ -471,7 +472,8 @@ class NARMEncoderLayer(Layer):
                                                                            sequence_length=tf.squeeze(sequence_length),
                                                                            dtype=tf.float32, scope=self.name)
         user_global_output = hidden_state
-        user_local_output = self.local_encoder_layer([user_global_output, rnn_output, seq_mask])
+        hidden_state = tf.expand_dims(hidden_state, axis=1)
+        user_local_output = self.local_encoder_layer([hidden_state, rnn_output, seq_mask])
         user_output = tf.concat([user_global_output, user_local_output], axis=-1)
 
         return user_output
