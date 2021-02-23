@@ -10,11 +10,10 @@ import tensorflow as tf
 from tensorflow.python.keras.models import Model
 from tensorflow.python.keras.layers import Dense, Dropout
 from deepctr.feature_column import build_input_features, create_embedding_matrix, varlen_embedding_lookup
-from deepctr.layers.sequence import DynamicGRU
-from deepctr.layers.utils import NoMask, concat_func
+from deepctr.layers.utils import NoMask
 from ..layers.core import EmbeddingIndex
 from ..layers import PoolingLayer, SampledSoftmaxLayer
-from ..layers.interaction import LocalEncoderLayer, GlobalEncoderLayer
+from ..layers.interaction import NARMEncoderLayer
 from ..utils import get_item_embedding
 
 
@@ -63,20 +62,11 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
                                                                 user_feature_columns)
     user_varlen_sparse_embedding = user_varlen_sparse_embedding_dict[user_feature_columns[0].name]
     user_varlen_sparse_embedding = Dropout(emb_dropout_rate, seed=seed)(user_varlen_sparse_embedding)
-
     user_gru_output = user_varlen_sparse_embedding
-    for i in range(len(gru_hidden_units)):
-        user_gru_output = DynamicGRU(num_units=gru_hidden_units[i])([user_gru_output, user_sess_length])
 
-    # global encoder
-    user_global_output = GlobalEncoderLayer()(user_gru_output)
-
-    # local encoder
-    user_local_output = LocalEncoderLayer()([user_gru_output, user_global_output])
-
-    user_output = concat_func([user_global_output, user_local_output], axis=1)
+    user_output = NARMEncoderLayer(gru_hidden_units)([user_gru_output, user_sess_length])
     user_output = Dropout(output_dropout_rate, seed=seed)(user_output)
-    user_output = Dense(item_feature_columns[0].embedding_dim, activation=None, use_bias=False)(user_output)
+    user_output = Dense(item_feature_columns[0].embedding_dim, use_bias=False)(user_output)
 
     output = SampledSoftmaxLayer(num_sampled=num_sampled)(
         [pooling_item_embedding_weight, user_output, item_features[item_feature_name]])

@@ -366,30 +366,65 @@ class UserAttention(Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
 
-class LocalEncoderLayer(Layer):
+class NARMEncoderLayer(Layer):
     """
-     :param user_gru_output: A 3d tensor with shape of [batch_size, T, C]
-     :param user_global_output: A 2d tensor with shape of [batch_size, C]
-     :return: A 2d tensor with shape of  [batch_size, C]
+    :inputs:  A 3d tensor with shape of  [batch_size, T, C]
+    :param gru_hidden_units: tuple, hidden units of GRU layers.
+    :return:  A 2d tensor with shape of  [batch_size, 2*last_gru_hidden_unit]
     """
 
-    def __init__(self, **kwargs):
-        super(LocalEncoderLayer, self).__init__(**kwargs)
+    def __init__(self, gru_hidden_units=(64,), **kwargs):
+        self.gru_hidden_units = gru_hidden_units
+        super(NARMEncoderLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        hidden_units = [input_shape[0][-1], input_shape[0][-1], 1]
-        self.dense_layers = [Dense(units=hidden_unit, use_bias=False) for hidden_unit in hidden_units]
+        self.gru_cells = []
+        for i in range(len(self.gru_hidden_units)):
+            try:
+                self.gru_cell = tf.nn.rnn_cell.GRUCell(self.gru_hidden_units[i])
+            except:
+                self.gru_cell = tf.compat.v1.nn.rnn_cell.GRUCell(self.gru_hidden_units[i])
+            self.gru_cells.append(self.gru_cell)
 
-        super(LocalEncoderLayer, self).build(input_shape)
+        hidden_units = [self.gru_hidden_units[-1], self.gru_hidden_units[-1], 1]
+        self.dense_layers = [Dense(units=hidden_unit, use_bias=False) for hidden_unit in hidden_units]
+        self.concat_layer = tf.keras.layers.Concatenate(axis=-1)
+        super(NARMEncoderLayer, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
-        user_gru_output, user_global_output = inputs
+        rnn_input, sequence_length = inputs
+        seq_mask = tf.sequence_mask(sequence_length, inputs[0].shape[1], dtype=tf.float32)
+        seq_mask = tf.squeeze(seq_mask, axis=1)
+
+        for i in range(len(self.gru_hidden_units)):
+            try:
+                with tf.name_scope("rnn"), tf.variable_scope("rnn", reuse=tf.AUTO_REUSE):
+                    rnn_output, hidden_state = tf.nn.dynamic_rnn(self.gru_cells[i], inputs=rnn_input,
+                                                                 sequence_length=tf.squeeze(sequence_length),
+                                                                 dtype=tf.float32, scope=self.name)
+            except AttributeError:
+                with tf.name_scope("rnn"), tf.compat.v1.variable_scope("rnn", reuse=tf.compat.v1.AUTO_REUSE):
+                    rnn_output, hidden_state = tf.compat.v1.nn.dynamic_rnn(self.gru_cells[i], inputs=rnn_input,
+                                                                           sequence_length=tf.squeeze(sequence_length),
+                                                                           dtype=tf.float32, scope=self.name)
+        user_global_output = hidden_state
+        user_local_output = self._local_encoder_layer(rnn_output, user_global_output, seq_mask)
+        user_output = self.concat_layer([user_global_output, user_local_output])
+
+        return user_output
+
+    def _local_encoder_layer(self, user_gru_output, user_global_output, seq_mask):
+
         user_gru_output_shape = user_gru_output.get_shape().as_list()
         last_gru_hidden_unit = user_gru_output_shape[-1]
+
         q_1 = self.dense_layers[0](tf.reshape(user_gru_output, shape=[-1, last_gru_hidden_unit]))
         q_1 = tf.reshape(q_1, shape=[-1, user_gru_output_shape[1], user_gru_output_shape[2]])
         q_2 = self.dense_layers[1](user_global_output)
+        seq_mask = tf.expand_dims(seq_mask, axis=-1)
         q_2 = tf.tile(tf.expand_dims(q_2, axis=1), multiples=[1, user_gru_output_shape[1], 1])
+        q_2 = tf.multiply(seq_mask, q_2)
+
         attn_weights = self.dense_layers[2](tf.reshape(tf.nn.sigmoid(q_1 + q_2), shape=[-1, last_gru_hidden_unit]))
         attn_weights = tf.reshape(attn_weights, shape=[-1, user_gru_output_shape[1]])
         attn_weights = tf.tile(tf.expand_dims(attn_weights, axis=-1), multiples=[1, 1, last_gru_hidden_unit])
@@ -399,31 +434,9 @@ class LocalEncoderLayer(Layer):
         return user_local_output
 
     def compute_output_shape(self, input_shape):
-        return (None, input_shape[0][-1])
+        return (None, 2 * self.gru_hidden_units[-1])
 
     def get_config(self):
-        base_config = super(LocalEncoderLayer, self).get_config()
-        return dict(list(base_config.items()))
-
-
-class GlobalEncoderLayer(Layer):
-    """
-    inputs:  A 3d tensor with shape of  [batch_size, T, C]
-    return:  A 2d tensor with shape of  [batch_size, C]
-    """
-
-    def __init__(self, **kwargs):
-        super(GlobalEncoderLayer, self).__init__(**kwargs)
-
-    def build(self, input_shape):
-        super(GlobalEncoderLayer, self).build(input_shape)
-
-    def call(self, inputs, **kwargs):
-        return inputs[:, -1, :]
-
-    def compute_output_shape(self, input_shape):
-        return (None, input_shape[-1])
-
-    def get_config(self):
-        base_config = super(GlobalEncoderLayer, self).get_config()
-        return dict(list(base_config.items()))
+        config = {'gru_hidden_units': self.gru_hidden_units}
+        base_config = super(NARMEncoderLayer, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
