@@ -366,6 +366,47 @@ class UserAttention(Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
 
+
+class LocalEncoderLayer(Layer):
+    """
+     :param user_gru_output: A 3d tensor with shape of [batch_size, T, C]
+     :param user_global_output: A 2d tensor with shape of [batch_size, C]
+     :return: A 2d tensor with shape of  [batch_size, C]
+    """
+
+    def __init__(self, **kwargs):
+        super(LocalEncoderLayer, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        hidden_units = [input_shape[0][-1], input_shape[0][-1], 1]
+        self.dense_layers = [Dense(units=hidden_unit, use_bias=False) for hidden_unit in hidden_units]
+
+        super(LocalEncoderLayer, self).build(input_shape)
+
+    def call(self, inputs, **kwargs):
+        user_gru_output, user_global_output = inputs
+        user_gru_output_shape = user_gru_output.get_shape().as_list()
+        last_gru_hidden_unit = user_gru_output_shape[-1]
+        q_1 = self.dense_layers[0](tf.reshape(user_gru_output, shape=[-1, last_gru_hidden_unit]))
+        q_1 = tf.reshape(q_1, shape=[-1, user_gru_output_shape[1], user_gru_output_shape[2]])
+        q_2 = self.dense_layers[1](user_global_output)
+        q_2 = tf.tile(tf.expand_dims(q_2, axis=1), multiples=[1, user_gru_output_shape[1], 1])
+        attn_weights = self.dense_layers[2](tf.reshape(tf.nn.sigmoid(q_1 + q_2), shape=[-1, last_gru_hidden_unit]))
+        attn_weights = tf.reshape(attn_weights, shape=[-1, user_gru_output_shape[1]])
+        attn_weights = tf.tile(tf.expand_dims(attn_weights, axis=-1), multiples=[1, 1, last_gru_hidden_unit])
+
+        user_local_output = reduce_sum(tf.multiply(attn_weights, user_gru_output), axis=1, keep_dims=False)
+
+        return user_local_output
+
+    def compute_output_shape(self, input_shape):
+        return (None, input_shape[0][-1])
+
+    def get_config(self):
+        base_config = super(LocalEncoderLayer, self).get_config()
+        return dict(list(base_config.items()))
+
+
 class NARMEncoderLayer(Layer):
     """
     :inputs:  A 3d tensor with shape of  [batch_size, T, C]
@@ -388,12 +429,11 @@ class NARMEncoderLayer(Layer):
 
         hidden_units = [self.gru_hidden_units[-1], self.gru_hidden_units[-1], 1]
         self.dense_layers = [Dense(units=hidden_unit, use_bias=False) for hidden_unit in hidden_units]
-        self.concat_layer = tf.keras.layers.Concatenate(axis=-1)
         super(NARMEncoderLayer, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
         rnn_input, sequence_length = inputs
-        seq_mask = tf.sequence_mask(sequence_length, inputs[0].shape[1], dtype=tf.float32)
+        seq_mask = tf.sequence_mask(sequence_length, rnn_input.shape[1], dtype=tf.float32)
         seq_mask = tf.squeeze(seq_mask, axis=1)
 
         for i in range(len(self.gru_hidden_units)):
@@ -409,7 +449,7 @@ class NARMEncoderLayer(Layer):
                                                                            dtype=tf.float32, scope=self.name)
         user_global_output = hidden_state
         user_local_output = self._local_encoder_layer(rnn_output, user_global_output, seq_mask)
-        user_output = self.concat_layer([user_global_output, user_local_output])
+        user_output = tf.concat([user_global_output, user_local_output],axis=-1)
 
         return user_output
 

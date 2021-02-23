@@ -28,9 +28,9 @@ class DynamicMultiRNN(Layer):
                 single_cell = tf.compat.v1.nn.rnn_cell.BasicLSTMCell(self.num_units, forget_bias=self.forget_bias)
         elif self.rnn_type == "GRU":
             try:
-                single_cell = tf.nn.rnn_cell.GRUCell(self.num_units, forget_bias=self.forget_bias)
+                single_cell = tf.nn.rnn_cell.GRUCell(self.num_units)
             except AttributeError:
-                single_cell = tf.compat.v1.nn.rnn_cell.GRUCell(self.num_units, forget_bias=self.forget_bias)
+                single_cell = tf.compat.v1.nn.rnn_cell.GRUCell(self.num_units)
         else:
             raise ValueError("Unknown unit type %s!" % self.rnn_type)
         dropout = self.dropout if tf.keras.backend.learning_phase() == 1 else 0
@@ -74,14 +74,14 @@ class DynamicMultiRNN(Layer):
         if self.return_sequence:
             return rnn_output
         else:
-            return tf.expand_dims(hidden_state, axis=1)
+            return [rnn_output,hidden_state]
 
     def compute_output_shape(self, input_shape):
         rnn_input_shape = input_shape[0]
         if self.return_sequence:
             return rnn_input_shape
         else:
-            return (None, 1, rnn_input_shape[2])
+            return [rnn_input_shape,(None, rnn_input_shape[2])]
 
     def get_config(self, ):
         config = {'num_units': self.num_units, 'rnn_type': self.rnn_type, 'return_sequence': self.return_sequence,
