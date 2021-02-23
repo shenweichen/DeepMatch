@@ -1,6 +1,7 @@
 import tensorflow as tf
 from deepctr.layers.normalization import LayerNormalization
 from deepctr.layers.utils import softmax, reduce_mean, reduce_sum
+from deepctr.layers.interaction import activation_layer
 from tensorflow.python.keras.initializers import TruncatedNormal
 from tensorflow.python.keras.layers import Layer, Dense, Dropout
 
@@ -366,6 +367,71 @@ class UserAttention(Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
 
+class AdditiveAttention(Layer):
+    """
+    :param query: [batch_size, 1, C]
+    :param key:   [batch_size, T, C]
+    :param seq_mask: [batch_size,T]
+    :return:      [batch_size, C]
+    """
+
+    def __init__(self, use_bias=True, activation="tanh", seed=2020, **kwargs):
+        self.use_bias = use_bias
+        self.activation = activation
+        self.seed = seed
+        super(AdditiveAttention, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        self.W_q = self.add_weight(name='W_q', shape=[input_shape[0][-1], input_shape[0][-1]],
+                                   dtype=tf.float32,
+                                   initializer=TruncatedNormal(seed=self.seed))
+        self.W_k = self.add_weight(name='W_k', shape=[input_shape[0][-1], input_shape[0][-1]],
+                                   dtype=tf.float32,
+                                   initializer=TruncatedNormal(seed=self.seed))
+        self.v = self.add_weight(name='v', shape=[input_shape[0][-1], 1],
+                                 dtype=tf.float32,
+                                 initializer=TruncatedNormal(seed=self.seed))
+        if self.use_bias is True:
+            self.b = self.add_weight(name='b', shape=[input_shape[0][-1]],
+                                     dtype=tf.float32,
+                                     initializer=TruncatedNormal(seed=self.seed))
+        self.activation_layer = activation_layer(self.activation)
+        super(AdditiveAttention, self).build(input_shape)
+
+    def call(self, inputs, **kwargs):
+        queries, keys, seq_mask = inputs
+        values = keys
+        timesteps, hidden_units = keys.get_shape().as_list()[1:]
+
+        keys = tf.tensordot(tf.reshape(keys, shape=[-1, hidden_units]), self.W_k, axes=(-1, 0))
+        keys_reshaped = tf.reshape(keys, shape=[-1, timesteps, hidden_units])
+
+        queries = tf.tensordot(tf.reshape(queries, shape=[-1, hidden_units]), self.W_q, axes=(-1, 0))
+        queries_reshaped = tf.tile(tf.expand_dims(queries, axis=1), multiples=[1, timesteps, 1])
+        seq_mask = tf.expand_dims(seq_mask, axis=-1)
+        queries_reshaped = tf.multiply(seq_mask, queries_reshaped)
+
+        if self.use_bias is True:
+            attn_value = self.activation_layer(tf.nn.bias_add(keys_reshaped + queries_reshaped, self.b))
+        else:
+            attn_value = self.activation_layer(keys_reshaped + queries_reshaped)
+
+        attn_weights = tf.tensordot(tf.reshape(attn_value, shape=[-1, hidden_units]), self.v, axes=(-1, 0))
+        attn_weights = tf.reshape(attn_weights, shape=[-1, timesteps])
+        attn_weights = tf.tile(tf.expand_dims(attn_weights, axis=-1), multiples=[1, 1, hidden_units])
+        outputs = reduce_sum(tf.multiply(attn_weights, values), axis=1, keep_dims=False)
+
+        return outputs
+
+    def compute_output_shape(self, input_shape):
+        return (None, input_shape[0][-1])
+
+    def get_config(self):
+        config = {'use_bias': self.use_bias, 'activation': self.activation_layer, 'seed': self.seed}
+        base_config = super(AdditiveAttention, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+
 class NARMEncoderLayer(Layer):
     """
     :inputs:  A 3d tensor with shape of  [batch_size, T, C]
@@ -385,10 +451,7 @@ class NARMEncoderLayer(Layer):
             except:
                 self.gru_cell = tf.compat.v1.nn.rnn_cell.GRUCell(self.gru_hidden_units[i])
             self.gru_cells.append(self.gru_cell)
-
-        hidden_units = [self.gru_hidden_units[-1], self.gru_hidden_units[-1], 1]
-        self.dense_layers = [Dense(units=hidden_unit, use_bias=False) for hidden_unit in hidden_units]
-        self.concat_layer = tf.keras.layers.Concatenate(axis=-1)
+        self.local_encoder_layer = AdditiveAttention(use_bias=False, activation="sigmoid")
         super(NARMEncoderLayer, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
@@ -408,30 +471,10 @@ class NARMEncoderLayer(Layer):
                                                                            sequence_length=tf.squeeze(sequence_length),
                                                                            dtype=tf.float32, scope=self.name)
         user_global_output = hidden_state
-        user_local_output = self._local_encoder_layer(rnn_output, user_global_output, seq_mask)
-        user_output = self.concat_layer([user_global_output, user_local_output])
+        user_local_output = self.local_encoder_layer([user_global_output, rnn_output, seq_mask])
+        user_output = tf.concat([user_global_output, user_local_output], axis=-1)
 
         return user_output
-
-    def _local_encoder_layer(self, user_gru_output, user_global_output, seq_mask):
-
-        user_gru_output_shape = user_gru_output.get_shape().as_list()
-        last_gru_hidden_unit = user_gru_output_shape[-1]
-
-        q_1 = self.dense_layers[0](tf.reshape(user_gru_output, shape=[-1, last_gru_hidden_unit]))
-        q_1 = tf.reshape(q_1, shape=[-1, user_gru_output_shape[1], user_gru_output_shape[2]])
-        q_2 = self.dense_layers[1](user_global_output)
-        seq_mask = tf.expand_dims(seq_mask, axis=-1)
-        q_2 = tf.tile(tf.expand_dims(q_2, axis=1), multiples=[1, user_gru_output_shape[1], 1])
-        q_2 = tf.multiply(seq_mask, q_2)
-
-        attn_weights = self.dense_layers[2](tf.reshape(tf.nn.sigmoid(q_1 + q_2), shape=[-1, last_gru_hidden_unit]))
-        attn_weights = tf.reshape(attn_weights, shape=[-1, user_gru_output_shape[1]])
-        attn_weights = tf.tile(tf.expand_dims(attn_weights, axis=-1), multiples=[1, 1, last_gru_hidden_unit])
-
-        user_local_output = reduce_sum(tf.multiply(attn_weights, user_gru_output), axis=1, keep_dims=False)
-
-        return user_local_output
 
     def compute_output_shape(self, input_shape):
         return (None, 2 * self.gru_hidden_units[-1])

@@ -62,9 +62,9 @@ def NARM(user_feature_columns, item_feature_columns, num_sampled=5, gru_hidden_u
                                                                 user_feature_columns)
     user_varlen_sparse_embedding = user_varlen_sparse_embedding_dict[user_feature_columns[0].name]
     user_varlen_sparse_embedding = Dropout(emb_dropout_rate, seed=seed)(user_varlen_sparse_embedding)
-    user_gru_output = user_varlen_sparse_embedding
+    user_gru_input = user_varlen_sparse_embedding
 
-    user_output = NARMEncoderLayer(gru_hidden_units)([user_gru_output, user_sess_length])
+    user_output = NARMEncoderLayer(gru_hidden_units)([user_gru_input, user_sess_length])
     user_output = Dropout(output_dropout_rate, seed=seed)(user_output)
     user_output = Dense(item_feature_columns[0].embedding_dim, use_bias=False)(user_output)
 
