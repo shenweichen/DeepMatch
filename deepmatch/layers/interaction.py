@@ -4,6 +4,7 @@ from deepctr.layers.utils import softmax, reduce_mean, reduce_sum
 from deepctr.layers.interaction import activation_layer
 from tensorflow.python.keras.initializers import TruncatedNormal
 from tensorflow.python.keras.layers import Layer, Dense, Dropout
+from .sequence import DynamicMultiRNN
 
 
 class DotAttention(Layer):
@@ -452,32 +453,27 @@ class NARMEncoderLayer(Layer):
         super(NARMEncoderLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.gru_cells = []
+        self.gru_layers = []
         for i in range(len(self.gru_hidden_units)):
-            try:
-                self.gru_cell = tf.nn.rnn_cell.GRUCell(self.gru_hidden_units[i])
-            except:
-                self.gru_cell = tf.compat.v1.nn.rnn_cell.GRUCell(self.gru_hidden_units[i])
-            self.gru_cells.append(self.gru_cell)
+            gru_layer = DynamicMultiRNN(num_units=self.gru_hidden_units[i], rnn_type='GRU',
+                                        return_sequence=True, num_layers=1, num_residual_layers=0,
+                                        dropout_rate=0)
+            self.gru_layers.append(gru_layer)
         self.local_encoder_layer = AdditiveAttention(hidden_units=self.gru_hidden_units[-1], use_bias=False,
                                                      activation="sigmoid", dropout_rate=0, seed=self.seed)
         super(NARMEncoderLayer, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
         rnn_input, sequence_length = inputs
+        rnn_output = rnn_input
         for i in range(len(self.gru_hidden_units)):
-            try:
-                with tf.name_scope("rnn"), tf.variable_scope("rnn", reuse=tf.AUTO_REUSE):
-                    rnn_output, hidden_state = tf.nn.dynamic_rnn(self.gru_cells[i], inputs=rnn_input,
-                                                                 sequence_length=tf.squeeze(sequence_length),
-                                                                 dtype=tf.float32, scope=self.name)
-            except AttributeError:
-                with tf.name_scope("rnn"), tf.compat.v1.variable_scope("rnn", reuse=tf.compat.v1.AUTO_REUSE):
-                    rnn_output, hidden_state = tf.compat.v1.nn.dynamic_rnn(self.gru_cells[i], inputs=rnn_input,
-                                                                           sequence_length=tf.squeeze(sequence_length),
-                                                                           dtype=tf.float32, scope=self.name)
-        user_global_output = hidden_state
-        hidden_state = tf.expand_dims(hidden_state, axis=1)
+            rnn_output = self.gru_layers[i]([rnn_output, sequence_length])
+
+        range_ = tf.expand_dims(tf.range(0, tf.shape(rnn_input)[0]), axis=-1)
+        idx = tf.concat([range_, sequence_length - 1], axis=-1)
+        user_global_output = tf.gather_nd(rnn_output, idx)
+
+        hidden_state = tf.expand_dims(user_global_output, axis=1)
         user_local_output = self.local_encoder_layer([rnn_output, hidden_state, sequence_length])
         user_local_output = reduce_sum(user_local_output, axis=1)
         user_output = tf.concat([user_global_output, user_local_output], axis=-1)
