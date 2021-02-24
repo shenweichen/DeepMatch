@@ -440,6 +440,7 @@ class NARMEncoderLayer(Layer):
             rnn_output=self.gru_layers[i]([rnn_output,sequence_length])
 
         bsz=tf.shape(rnn_input)[0]
+        print(bsz)
         range_ = tf.expand_dims(tf.range(0,bsz),axis=-1)
         idx = tf.concat([range_,sequence_length-1],axis=-1)
 
