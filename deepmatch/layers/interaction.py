@@ -370,21 +370,22 @@ class UserAttention(Layer):
 
 class AdditiveAttention(Layer):
     """
-    :param query: [batch_size, T_q, C]
-    :param key:   [batch_size, T_k, C]
-    :param seq_mask: [batch_size, 1]
-    :return:      [batch_size, C]
+    :param query: [batch_size, 1, C]
+    :param key:   [batch_size, T, C]
+    :return:      [batch_size, 1, T]
     """
 
-    def __init__(self, hidden_units=64, use_bias=True, activation="tanh", dropout_rate=0, seed=2020, **kwargs):
+    def __init__(self, hidden_units=64, use_bias=True, activation="tanh", seed=2020, **kwargs):
         self.hidden_units = hidden_units
         self.use_bias = use_bias
         self.activation = activation
-        self.dropout_rate = dropout_rate
         self.seed = seed
         super(AdditiveAttention, self).__init__(**kwargs)
 
     def build(self, input_shape):
+        if not isinstance(input_shape, list) or len(input_shape) != 2:
+            raise ValueError('A `AdditiveAttention` layer should be called '
+                             'on a list of 2 tensors')
         if self.hidden_units != input_shape[0][-1] or self.hidden_units != input_shape[1][-1]:
             raise ValueError("The hidden units must be equal to the last dimension of queries and keys!")
 
@@ -398,17 +399,12 @@ class AdditiveAttention(Layer):
             self.b = self.add_weight(name='b', shape=[self.hidden_units],
                                      dtype=tf.float32, initializer=TruncatedNormal(seed=self.seed))
         self.activation_layer = activation_layer(self.activation)
-        self.softmax_weighted_sum = SoftmaxWeightedSum(dropout_rate=self.dropout_rate, seed=self.seed)
         super(AdditiveAttention, self).build(input_shape)
 
     def call(self, inputs, mask=None, **kwargs):
-        queries, keys, sequence_length = inputs
-        values = keys
+        queries, keys = inputs
         queries_len = queries.get_shape().as_list()[1]
         keys_len, hidden_units = keys.get_shape().as_list()[1:]
-
-        seq_mask = tf.sequence_mask(sequence_length, keys_len)
-        seq_mask = tf.tile(seq_mask, multiples=[1, queries_len, 1])
 
         keys = tf.tensordot(tf.reshape(keys, shape=[-1, hidden_units]), self.W_k, axes=(-1, 0))
         keys_reshaped = tf.reshape(keys, shape=[-1, 1, keys_len, hidden_units])
@@ -422,20 +418,18 @@ class AdditiveAttention(Layer):
             attn_value = self.activation_layer(keys_reshaped + queries_reshaped)
 
         scores = tf.tensordot(tf.reshape(attn_value, shape=[-1, hidden_units]), self.v, axes=(-1, 0))
-        scores = tf.reshape(scores, shape=[-1, queries_len, keys_len])
+        output = tf.reshape(scores, shape=[-1, queries_len, keys_len])
 
-        outputs = self.softmax_weighted_sum([scores, values, seq_mask])
-        return outputs
+        return output
 
     def compute_output_shape(self, input_shape):
-        return input_shape[0]
+        return (None, 1, input_shape[1][1])
 
-    def compute_mask(self, inputs, mask=None):
+    def compute_mask(self, inputs, mask):
         return mask
 
     def get_config(self):
-        config = {'use_bias': self.use_bias, 'activation': self.activation_layer, 'dropout_rate': self.dropout_rate,
-                  'seed': self.seed}
+        config = {'use_bias': self.use_bias, 'activation': self.activation_layer, 'seed': self.seed}
         base_config = super(AdditiveAttention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
@@ -447,8 +441,9 @@ class NARMEncoderLayer(Layer):
     :return:  A 2d tensor with shape of  [batch_size, 2*last_gru_hidden_unit]
     """
 
-    def __init__(self, gru_hidden_units=(64,), seed=2021, **kwargs):
+    def __init__(self, gru_hidden_units=(64,), dropout_rate=0, seed=2021, **kwargs):
         self.gru_hidden_units = gru_hidden_units
+        self.dropout_rate = dropout_rate
         self.seed = seed
         super(NARMEncoderLayer, self).__init__(**kwargs)
 
@@ -459,8 +454,9 @@ class NARMEncoderLayer(Layer):
                                         return_sequence=True, num_layers=1, num_residual_layers=0,
                                         dropout_rate=0)
             self.gru_layers.append(gru_layer)
-        self.local_encoder_layer = AdditiveAttention(hidden_units=self.gru_hidden_units[-1], use_bias=False,
-                                                     activation="sigmoid", dropout_rate=0, seed=self.seed)
+        self.additive_attention = AdditiveAttention(hidden_units=self.gru_hidden_units[-1], use_bias=False,
+                                                    activation="sigmoid", seed=self.seed)
+        self.softmax_weighted_sum = SoftmaxWeightedSum(dropout_rate=self.dropout_rate, seed=self.seed)
         super(NARMEncoderLayer, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
@@ -474,7 +470,12 @@ class NARMEncoderLayer(Layer):
         user_global_output = tf.gather_nd(rnn_output, idx)
 
         hidden_state = tf.expand_dims(user_global_output, axis=1)
-        user_local_output = self.local_encoder_layer([rnn_output, hidden_state, sequence_length])
+        queries_len = rnn_output.get_shape().as_list()[1]
+        keys_len = hidden_state.get_shape().as_list()[1]
+        seq_mask = tf.sequence_mask(sequence_length, keys_len)
+        seq_mask = tf.tile(seq_mask, multiples=[1, queries_len, 1])
+        attention_scores = self.additive_attention([rnn_output, hidden_state])
+        user_local_output = self.softmax_weighted_sum([attention_scores, hidden_state, seq_mask])
         user_local_output = reduce_sum(user_local_output, axis=1)
         user_output = tf.concat([user_global_output, user_local_output], axis=-1)
 
@@ -484,6 +485,6 @@ class NARMEncoderLayer(Layer):
         return (None, 2 * self.gru_hidden_units[-1])
 
     def get_config(self):
-        config = {'gru_hidden_units': self.gru_hidden_units, 'seed': self.seed}
+        config = {'gru_hidden_units': self.gru_hidden_units, 'dropout_rate': self.dropout_rate, 'seed': self.seed}
         base_config = super(NARMEncoderLayer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
