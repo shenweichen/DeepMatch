@@ -459,3 +459,25 @@ def get_xy_fd_sdm(hash_flag=False):
     history_feature_list = ['item', 'cate']
 
     return x, y, user_feature_columns, item_feature_columns, history_feature_list
+
+
+def get_xy_fd_narm(hash_flag=False):
+    user_feature_columns = [VarLenSparseFeat(
+        SparseFeat('hist_item', vocabulary_size=3 + 1, embedding_dim=4, embedding_name='item'), maxlen=4,
+        length_name="hist_len")]
+    item_feature_columns = [SparseFeat('item', 3 + 1, embedding_dim=4, )]
+
+    uid = np.array([0, 1, 2, 1])
+    ugender = np.array([0, 1, 0, 1])
+    iid = np.array([1, 2, 3, 1])  # 0 is mask value
+
+    hist_iid = np.array([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 0, 0], [3, 0, 0, 0]])
+    hist_len = np.array([3, 3, 2, 1])
+
+    feature_dict = {'user': uid, 'gender': ugender, 'item': iid,
+                    'hist_item': hist_iid, "hist_len": hist_len}
+
+    # feature_names = get_feature_names(feature_columns)
+    x = feature_dict
+    y = np.array([1, 1, 1, 1])
+    return x, y, user_feature_columns, item_feature_columns

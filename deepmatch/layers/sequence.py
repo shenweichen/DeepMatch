@@ -28,9 +28,9 @@ class DynamicMultiRNN(Layer):
                 single_cell = tf.compat.v1.nn.rnn_cell.BasicLSTMCell(self.num_units, forget_bias=self.forget_bias)
         elif self.rnn_type == "GRU":
             try:
-                single_cell = tf.nn.rnn_cell.GRUCell(self.num_units, forget_bias=self.forget_bias)
+                single_cell = tf.nn.rnn_cell.GRUCell(self.num_units)
             except AttributeError:
-                single_cell = tf.compat.v1.nn.rnn_cell.GRUCell(self.num_units, forget_bias=self.forget_bias)
+                single_cell = tf.compat.v1.nn.rnn_cell.GRUCell(self.num_units)
         else:
             raise ValueError("Unknown unit type %s!" % self.rnn_type)
         dropout = self.dropout if tf.keras.backend.learning_phase() == 1 else 0

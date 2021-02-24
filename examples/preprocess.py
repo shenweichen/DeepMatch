@@ -75,7 +75,7 @@ def gen_model_input(train_set,user_profile,seq_max_len):
 
     train_seq_pad = pad_sequences(train_seq, maxlen=seq_max_len, padding='post', truncating='post', value=0)
     train_model_input = {"user_id": train_uid, "movie_id": train_iid, "hist_movie_id": train_seq_pad,
-                         "hist_len": train_hist_len}
+                         "hist_len": np.minimum(train_hist_len, seq_max_len)}
 
     for key in ["gender", "age", "occupation", "zip"]:
         train_model_input[key] = user_profile.loc[train_model_input['user_id']][key].values

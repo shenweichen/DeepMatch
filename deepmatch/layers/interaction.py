@@ -1,8 +1,10 @@
 import tensorflow as tf
 from deepctr.layers.normalization import LayerNormalization
-from deepctr.layers.utils import softmax, reduce_mean
+from deepctr.layers.utils import softmax, reduce_mean, reduce_sum
+from deepctr.layers.interaction import activation_layer
 from tensorflow.python.keras.initializers import TruncatedNormal
 from tensorflow.python.keras.layers import Layer, Dense, Dropout
+from .sequence import DynamicMultiRNN
 
 
 class DotAttention(Layer):
@@ -363,4 +365,126 @@ class UserAttention(Layer):
                   'dropout_rate': self.dropout_rate,
                   'scale': self.scale, 'seed': self.seed, }
         base_config = super(UserAttention, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+
+class AdditiveAttention(Layer):
+    """
+    :param query: [batch_size, 1, C]
+    :param key:   [batch_size, T, C]
+    :return:      [batch_size, 1, T]
+    """
+
+    def __init__(self, hidden_units=64, use_bias=True, activation="tanh", seed=2020, **kwargs):
+        self.hidden_units = hidden_units
+        self.use_bias = use_bias
+        self.activation = activation
+        self.seed = seed
+        super(AdditiveAttention, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        if not isinstance(input_shape, list) or len(input_shape) != 2:
+            raise ValueError('A `AdditiveAttention` layer should be called '
+                             'on a list of 2 tensors')
+        if self.hidden_units != input_shape[0][-1] or self.hidden_units != input_shape[1][-1]:
+            raise ValueError("The hidden units must be equal to the last dimension of queries and keys!")
+
+        self.W_q = self.add_weight(name='W_q', shape=[self.hidden_units, self.hidden_units],
+                                   dtype=tf.float32, initializer=TruncatedNormal(seed=self.seed))
+        self.W_k = self.add_weight(name='W_k', shape=[self.hidden_units, self.hidden_units],
+                                   dtype=tf.float32, initializer=TruncatedNormal(seed=self.seed))
+        self.v = self.add_weight(name='v', shape=[self.hidden_units, 1],
+                                 dtype=tf.float32, initializer=TruncatedNormal(seed=self.seed))
+        if self.use_bias is True:
+            self.b = self.add_weight(name='b', shape=[self.hidden_units],
+                                     dtype=tf.float32, initializer=TruncatedNormal(seed=self.seed))
+        self.activation_layer = activation_layer(self.activation)
+        super(AdditiveAttention, self).build(input_shape)
+
+    def call(self, inputs, mask=None, **kwargs):
+        queries, keys = inputs
+        queries_len = queries.get_shape().as_list()[1]
+        keys_len, hidden_units = keys.get_shape().as_list()[1:]
+
+        keys = tf.tensordot(tf.reshape(keys, shape=[-1, hidden_units]), self.W_k, axes=(-1, 0))
+        keys_reshaped = tf.reshape(keys, shape=[-1, 1, keys_len, hidden_units])
+
+        queries = tf.tensordot(tf.reshape(queries, shape=[-1, hidden_units]), self.W_q, axes=(-1, 0))
+        queries_reshaped = tf.reshape(queries, shape=[-1, queries_len, 1, hidden_units])
+
+        if self.use_bias is True:
+            attn_value = self.activation_layer(tf.nn.bias_add(keys_reshaped + queries_reshaped, self.b))
+        else:
+            attn_value = self.activation_layer(keys_reshaped + queries_reshaped)
+
+        scores = tf.tensordot(tf.reshape(attn_value, shape=[-1, hidden_units]), self.v, axes=(-1, 0))
+        output = tf.reshape(scores, shape=[-1, queries_len, keys_len])
+
+        return output
+
+    def compute_output_shape(self, input_shape):
+        return (None, 1, input_shape[1][1])
+
+    def compute_mask(self, inputs, mask):
+        return mask
+
+    def get_config(self):
+        config = {'use_bias': self.use_bias, 'activation': self.activation_layer, 'seed': self.seed}
+        base_config = super(AdditiveAttention, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+
+class NARMEncoderLayer(Layer):
+    """
+    :inputs:  A 3d tensor with shape of  [batch_size, T, C]
+    :param gru_hidden_units: tuple, hidden units of GRU layers.
+    :return:  A 2d tensor with shape of  [batch_size, 2*last_gru_hidden_unit]
+    """
+
+    def __init__(self, gru_hidden_units=(64,), dropout_rate=0, seed=2021, **kwargs):
+        self.gru_hidden_units = gru_hidden_units
+        self.dropout_rate = dropout_rate
+        self.seed = seed
+        super(NARMEncoderLayer, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        self.gru_layers = []
+        for i in range(len(self.gru_hidden_units)):
+            gru_layer = DynamicMultiRNN(num_units=self.gru_hidden_units[i], rnn_type='GRU',
+                                        return_sequence=True, num_layers=1, num_residual_layers=0,
+                                        dropout_rate=0)
+            self.gru_layers.append(gru_layer)
+        self.additive_attention = AdditiveAttention(hidden_units=self.gru_hidden_units[-1], use_bias=False,
+                                                    activation="sigmoid", seed=self.seed)
+        self.softmax_weighted_sum = SoftmaxWeightedSum(dropout_rate=self.dropout_rate, seed=self.seed)
+        super(NARMEncoderLayer, self).build(input_shape)
+
+    def call(self, inputs, **kwargs):
+        rnn_input, sequence_length = inputs
+        rnn_output = rnn_input
+        for i in range(len(self.gru_hidden_units)):
+            rnn_output = self.gru_layers[i]([rnn_output, sequence_length])
+
+        range_ = tf.expand_dims(tf.range(0, tf.shape(rnn_input)[0]), axis=-1)
+        idx = tf.concat([range_, sequence_length - 1], axis=-1)
+        user_global_output = tf.gather_nd(rnn_output, idx)
+
+        hidden_state = tf.expand_dims(user_global_output, axis=1)
+        queries_len = rnn_output.get_shape().as_list()[1]
+        keys_len = hidden_state.get_shape().as_list()[1]
+        seq_mask = tf.sequence_mask(sequence_length, keys_len)
+        seq_mask = tf.tile(seq_mask, multiples=[1, queries_len, 1])
+        attention_scores = self.additive_attention([rnn_output, hidden_state])
+        user_local_output = self.softmax_weighted_sum([attention_scores, hidden_state, seq_mask])
+        user_local_output = reduce_sum(user_local_output, axis=1)
+        user_output = tf.concat([user_global_output, user_local_output], axis=-1)
+
+        return user_output
+
+    def compute_output_shape(self, input_shape):
+        return (None, 2 * self.gru_hidden_units[-1])
+
+    def get_config(self):
+        config = {'gru_hidden_units': self.gru_hidden_units, 'dropout_rate': self.dropout_rate, 'seed': self.seed}
+        base_config = super(NARMEncoderLayer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
