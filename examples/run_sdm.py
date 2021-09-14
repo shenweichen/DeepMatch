@@ -1,5 +1,5 @@
 import pandas as pd
-from deepctr.inputs import SparseFeat, VarLenSparseFeat
+from deepctr.feature_column import SparseFeat, VarLenSparseFeat
 from preprocess import gen_data_set_sdm, gen_model_input_sdm
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras import backend as K
@@ -74,16 +74,13 @@ if __name__ == "__main__":
     model = SDM(user_feature_columns, item_feature_columns, history_feature_list=['movie_id', 'genres'],
                 units=embedding_dim, num_sampled=100, )
 
-    optimizer = optimizers.Adam(lr=0.001, clipnorm=5.0)
-
-    model.compile(optimizer=optimizer, loss=sampledsoftmaxloss)  # "binary_crossentropy")
+    model.compile(optimizer='adam', loss=sampledsoftmaxloss)  # "binary_crossentropy")
 
     history = model.fit(train_model_input, train_label,  # train_label,
                         batch_size=512, epochs=1, verbose=1, validation_split=0.0, )
-    # model.save_weights('SDM_weights.h5')
 
     K.set_learning_phase(False)
-    # 4. Generate user features for testing and full item features for retrieval
+    # 3.Define Model,train,predict and evaluate
     test_user_model_input = test_model_input
     all_item_model_input = {"movie_id": item_profile['movie_id'].values, }
 

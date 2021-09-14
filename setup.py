@@ -4,12 +4,12 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 REQUIRED_PACKAGES = [
-    'h5py','requests',"deepctr==0.7.5"
+    'h5py', 'requests', "deepctr==0.8.2"
 ]
 
 setuptools.setup(
     name="deepmatch",
-    version="0.1.3",
+    version="0.2.0",
     author="Weichen Shen",
     author_email="wcshen1994@163.com",
     description="Deep matching model library for recommendations, advertising. It's easy to train models and to **export representation vectors** for user and item which can be used for **ANN search**.",
@@ -45,6 +45,6 @@ setuptools.setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ),
     license="Apache-2.0",
-    keywords=['match', 'matching','recommendation'
-              'deep learning', 'tensorflow', 'tensor', 'keras'],
+    keywords=['match', 'matching', 'recommendation'
+                                   'deep learning', 'tensorflow', 'tensor', 'keras'],
 )

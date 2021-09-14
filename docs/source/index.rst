@@ -18,18 +18,18 @@ You can read the latest code at https://github.com/shenweichen/DeepMatch
 News
 -----
 
+10/12/2020 : Support different initializers for different embedding weights and loading pretrained embeddings. `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.2.0>`_
+
 05/17/2020 : Add ``SDM`` model. `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.1.3>`_
 
 04/10/2020 : Support `saving and loading model <./FAQ.html#save-or-load-weights-models>`_  . `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.1.2>`_
-
-04/06/2020 : DeepMatch first version .
 
 DisscussionGroup
 -----------------------
 
 公众号：**浅梦的学习笔记**  wechat ID: **deepctrbot**
 
-.. image:: ../pics/weichennote.png
+.. image:: ../pics/code.png
 
 .. toctree::
    :maxdepth: 2

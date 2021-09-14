@@ -6,12 +6,12 @@ import sys
 
 import numpy as np
 import tensorflow as tf
+from deepctr.feature_column import SparseFeat, DenseFeat, VarLenSparseFeat, DEFAULT_GROUP_NAME
 from numpy.testing import assert_allclose
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.layers import Input, Masking
 from tensorflow.python.keras.models import Model, load_model, save_model
 
-from deepctr.inputs import SparseFeat, DenseFeat, VarLenSparseFeat,DEFAULT_GROUP_NAME
 from deepmatch.layers import custom_objects
 
 SAMPLE_SIZE = 8
@@ -44,12 +44,13 @@ def get_test_data(sample_size=1000, embedding_size=4, sparse_feature_num=1, dens
 
     for i in range(sparse_feature_num):
         if use_group:
-            group_name = str(i%3)
+            group_name = str(i % 3)
         else:
             group_name = DEFAULT_GROUP_NAME
         dim = np.random.randint(1, 10)
         feature_columns.append(
-            SparseFeat(prefix + 'sparse_feature_' + str(i), dim, embedding_size, use_hash=hash_flag, dtype=tf.int32,group_name=group_name))
+            SparseFeat(prefix + 'sparse_feature_' + str(i), dim, embedding_size, use_hash=hash_flag, dtype=tf.int32,
+                       group_name=group_name))
 
     for i in range(dense_feature_num):
         feature_columns.append(DenseFeat(prefix + 'dense_feature_' + str(i), 1, dtype=tf.float32))
@@ -340,10 +341,7 @@ def check_model(model, model_name, x, y, check_model_io=True):
 
     model.fit(x, y, batch_size=10, epochs=2, validation_split=0.5)
 
-
-
     print(model_name + " test train valid pass!")
-
 
     user_embedding_model = Model(inputs=model.user_input, outputs=model.user_embedding)
     item_embedding_model = Model(inputs=model.item_input, outputs=model.item_embedding)
@@ -366,47 +364,79 @@ def check_model(model, model_name, x, y, check_model_io=True):
         print(model_name + " test save load model pass!")
 
     print(model_name + " test pass!")
+    # print(1)
+    #
+    # save_model(item_embedding_model, model_name + '.user.h5')
+    # print(2)
+    #
+    # item_embedding_model = load_model(model_name + '.user.h5', custom_objects)
+    # print(3)
+    #
+    # item_embs = item_embedding_model.predict(x, batch_size=2 ** 12)
+    # print(item_embs)
+    # print("go")
 
 
 def get_xy_fd(hash_flag=False):
+    user_feature_columns = [SparseFeat('user', 3), SparseFeat(
+        'gender', 2), VarLenSparseFeat(
+        SparseFeat('hist_item', vocabulary_size=3 + 1, embedding_dim=4, embedding_name='item'), maxlen=4,
+        length_name="hist_len")]
+    item_feature_columns = [SparseFeat('item', 3 + 1, embedding_dim=4, )]
 
+    uid = np.array([0, 1, 2, 1])
+    ugender = np.array([0, 1, 0, 1])
+    iid = np.array([1, 2, 3, 1])  # 0 is mask value
 
-    user_feature_columns = [SparseFeat('user',3),SparseFeat(
-        'gender', 2),VarLenSparseFeat(SparseFeat('hist_item', vocabulary_size=3 + 1,embedding_dim=4,embedding_name='item'), maxlen=4,length_name="hist_len") ]
-    item_feature_columns = [SparseFeat('item', 3 + 1,embedding_dim=4,)]
-
-
-    uid = np.array([0, 1, 2,1])
-    ugender = np.array([0, 1, 0,1])
-    iid = np.array([1, 2, 3,1])  # 0 is mask value
-
-    hist_iid = np.array([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 0, 0],[3, 0, 0, 0]])
-    hist_len = np.array([3,3,2,1])
+    hist_iid = np.array([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 0, 0], [3, 0, 0, 0]])
+    hist_len = np.array([3, 3, 2, 1])
 
     feature_dict = {'user': uid, 'gender': ugender, 'item': iid,
-                    'hist_item': hist_iid, "hist_len":hist_len}
+                    'hist_item': hist_iid, "hist_len": hist_len}
 
-    #feature_names = get_feature_names(feature_columns)
+    # feature_names = get_feature_names(feature_columns)
     x = feature_dict
-    y = np.array([1, 1, 1,1])
-    return x, y, user_feature_columns,item_feature_columns
+    y = np.array([1, 1, 1, 1])
+    return x, y, user_feature_columns, item_feature_columns
+
+
+def get_xy_fd_ncf(hash_flag=False):
+    user_feature_columns = {"user": 3, "gender": 2, }
+    item_feature_columns = {"item": 4}
+
+    uid = np.array([0, 1, 2, 1])
+    ugender = np.array([0, 1, 0, 1])
+    iid = np.array([1, 2, 3, 1])  # 0 is mask value
+
+    hist_iid = np.array([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 0, 0], [3, 0, 0, 0]])
+    hist_len = np.array([3, 3, 2, 1])
+
+    feature_dict = {'user': uid, 'gender': ugender, 'item': iid,
+                    'hist_item': hist_iid, "hist_len": hist_len}
+
+    # feature_names = get_feature_names(feature_columns)
+    x = feature_dict
+    y = np.array([1, 1, 1, 1])
+    return x, y, user_feature_columns, item_feature_columns
 
 
 def get_xy_fd_sdm(hash_flag=False):
-
-    user_feature_columns = [SparseFeat('user',3),
+    user_feature_columns = [SparseFeat('user', 3),
                             SparseFeat('gender', 2),
-                            VarLenSparseFeat(SparseFeat('prefer_item', vocabulary_size=100,embedding_dim=8,
-                                                        embedding_name='item'), maxlen=6, length_name="prefer_sess_length"),
+                            VarLenSparseFeat(SparseFeat('prefer_item', vocabulary_size=100, embedding_dim=8,
+                                                        embedding_name='item'), maxlen=6,
+                                             length_name="prefer_sess_length"),
                             VarLenSparseFeat(SparseFeat('prefer_cate', vocabulary_size=100, embedding_dim=8,
-                                                        embedding_name='cate'), maxlen=6, length_name="prefer_sess_length"),
-                            VarLenSparseFeat(SparseFeat('short_item', vocabulary_size=100,embedding_dim=8,
-                                                        embedding_name='item'), maxlen=4, length_name="short_sess_length"),
+                                                        embedding_name='cate'), maxlen=6,
+                                             length_name="prefer_sess_length"),
+                            VarLenSparseFeat(SparseFeat('short_item', vocabulary_size=100, embedding_dim=8,
+                                                        embedding_name='item'), maxlen=4,
+                                             length_name="short_sess_length"),
                             VarLenSparseFeat(SparseFeat('short_cate', vocabulary_size=100, embedding_dim=8,
-                                                        embedding_name='cate'), maxlen=4, length_name="short_sess_length"),
+                                                        embedding_name='cate'), maxlen=4,
+                                             length_name="short_sess_length"),
                             ]
-    item_feature_columns = [SparseFeat('item', 100, embedding_dim=8,)]
-
+    item_feature_columns = [SparseFeat('item', 100, embedding_dim=8, )]
 
     uid = np.array([0, 1, 2, 1])
     ugender = np.array([0, 1, 0, 1])
@@ -419,10 +449,11 @@ def get_xy_fd_sdm(hash_flag=False):
     prefer_len = np.array([6, 5, 4, 3])
     short_len = np.array([3, 3, 2, 1])
 
-    feature_dict = {'user': uid, 'gender': ugender, 'item': iid, 'prefer_item': prefer_iid, "prefer_cate":prefer_cate,
-                    'short_item': short_iid, 'short_cate': short_cate, 'prefer_sess_length': prefer_len, 'short_sess_length':short_len}
+    feature_dict = {'user': uid, 'gender': ugender, 'item': iid, 'prefer_item': prefer_iid, "prefer_cate": prefer_cate,
+                    'short_item': short_iid, 'short_cate': short_cate, 'prefer_sess_length': prefer_len,
+                    'short_sess_length': short_len}
 
-    #feature_names = get_feature_names(feature_columns)
+    # feature_names = get_feature_names(feature_columns)
     x = feature_dict
     y = np.array([1, 1, 1, 0])
     history_feature_list = ['item', 'cate']

@@ -20,7 +20,7 @@ This example shows how to use ``YoutubeDNN`` to solve a matching task. You can g
 
 ```python
 import pandas as pd
-from deepctr.inputs import SparseFeat, VarLenSparseFeat
+from deepctr.feature_column import SparseFeat, VarLenSparseFeat
 from preprocess import gen_data_set, gen_model_input
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras import backend as K
@@ -292,7 +292,7 @@ This example shows how to use ``DSSM`` to solve a matching task. You can get the
 
 ```python
 import pandas as pd
-from deepctr.inputs import SparseFeat, VarLenSparseFeat
+from deepctr.feature_column import SparseFeat, VarLenSparseFeat
 from preprocess import gen_data_set, gen_model_input
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras.models import Model

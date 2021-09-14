@@ -2,9 +2,6 @@ from deepmatch.models import DSSM
 from ..utils import check_model, get_xy_fd
 
 
-# @pytest.mark.xfail(reason="There is a bug when save model use Dice")
-# @pytest.mark.skip(reason="misunderstood the API")
-
 
 def test_DSSM():
     model_name = "DSSM"

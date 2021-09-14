@@ -5,8 +5,8 @@ Reference:
 Huang P S , He X , Gao J , et al. Learning deep structured semantic models for web search using clickthrough data[C]// Acm International Conference on Conference on Information & Knowledge Management. ACM, 2013.
 """
 
-from deepctr.inputs import build_input_features, combined_dnn_input, create_embedding_matrix
-from deepctr.layers.core import PredictionLayer, DNN
+from deepctr.feature_column import build_input_features, create_embedding_matrix
+from deepctr.layers import PredictionLayer, DNN, combined_dnn_input
 from tensorflow.python.keras.models import Model
 
 from ..inputs import input_from_feature_columns
@@ -16,7 +16,7 @@ from ..layers.core import Similarity
 def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 32),
          item_dnn_hidden_units=(64, 32),
          dnn_activation='tanh', dnn_use_bn=False,
-         l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0, init_std=0.0001, seed=1024, metric='cos'):
+         l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0, seed=1024, metric='cos'):
     """Instantiates the Deep Structured Semantic Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
@@ -28,7 +28,6 @@ def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 
     :param l2_reg_dnn: float. L2 regularizer strength applied to DNN
     :param l2_reg_embedding: float. L2 regularizer strength applied to embedding vector
     :param dnn_dropout: float in [0,1), the probability we will drop out a given DNN coordinate.
-    :param init_std: float,to use as the initialize std of embedding vector
     :param seed: integer ,to use as random seed.
     :param metric: str, ``"cos"`` for  cosine  or  ``"ip"`` for inner product
     :return: A Keras model instance.
@@ -36,14 +35,14 @@ def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 
     """
 
     embedding_matrix_dict = create_embedding_matrix(user_feature_columns + item_feature_columns, l2_reg_embedding,
-                                                    init_std, seed,
+                                                    seed=seed,
                                                     seq_mask_zero=True)
 
     user_features = build_input_features(user_feature_columns)
     user_inputs_list = list(user_features.values())
     user_sparse_embedding_list, user_dense_value_list = input_from_feature_columns(user_features,
                                                                                    user_feature_columns,
-                                                                                   l2_reg_embedding, init_std, seed,
+                                                                                   l2_reg_embedding, seed=seed,
                                                                                    embedding_matrix_dict=embedding_matrix_dict)
     user_dnn_input = combined_dnn_input(user_sparse_embedding_list, user_dense_value_list)
 
@@ -51,15 +50,15 @@ def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 
     item_inputs_list = list(item_features.values())
     item_sparse_embedding_list, item_dense_value_list = input_from_feature_columns(item_features,
                                                                                    item_feature_columns,
-                                                                                   l2_reg_embedding, init_std, seed,
+                                                                                   l2_reg_embedding, seed=seed,
                                                                                    embedding_matrix_dict=embedding_matrix_dict)
     item_dnn_input = combined_dnn_input(item_sparse_embedding_list, item_dense_value_list)
 
     user_dnn_out = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn, dnn_dropout,
-                       dnn_use_bn, seed, )(user_dnn_input)
+                       dnn_use_bn, seed=seed)(user_dnn_input)
 
     item_dnn_out = DNN(item_dnn_hidden_units, dnn_activation, l2_reg_dnn, dnn_dropout,
-                       dnn_use_bn, seed)(item_dnn_input)
+                       dnn_use_bn, seed=seed)(item_dnn_input)
 
     score = Similarity(type=metric)([user_dnn_out, item_dnn_out])
 

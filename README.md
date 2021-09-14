@@ -45,7 +45,7 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
       <td>
          <a href="https://github.com/wangzhegeek"><img width="70" height="70" src="https://github.com/wangzhegeek.png?s=40" alt="pic"></a><br>
          <a href="https://github.com/wangzhegeek">Wang Zhe</a> ​
-        <p>Jingdong Group  </p>​
+        <p>Baidu Inc.  </p>​
       </td>
       <td>
         ​ <a href="https://github.com/LeoCai"><img width="70" height="70" src="https://github.com/LeoCai.png?s=40" alt="pic"></a><br>
@@ -55,16 +55,37 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
       <td>
         ​ <a href="https://github.com/yangjieyu"><img width="70" height="70" src="https://github.com/yangjieyu.png?s=40" alt="pic"></a><br>
         ​ <a href="https://github.com/yangjieyu">Yang Jieyu</a>
-        <p> Zhejiang University   </p>​
+        <p> Ant Group    </p>​
       </td>
     </tr>
   </tbody>
 </table>
 
-## DisscussionGroup  
+## DisscussionGroup & Related Projects
 
-Please follow our wechat to join group:  
-- 公众号：**浅梦的学习笔记**  
-- wechat ID: **deepctrbot**
-
-  ![wechat](./docs/pics/weichennote.png)
+<html>
+    <table style="margin-left: 20px; margin-right: auto;">
+        <tr>
+            <td>
+                公众号：<b>浅梦的学习笔记</b><br><br>
+                <a href="https://github.com/shenweichen/deepmatch">
+  <img align="center" src="./docs/pics/code.png" />
+</a>
+            </td>
+            <td>
+                微信：<b>deepctrbot</b><br><br>
+ <a href="https://github.com/shenweichen/deepmatch">
+  <img align="center" src="./docs/pics/deepctrbot.png" />
+</a>
+            </td>
+            <td>
+<ul>
+<li><a href="https://github.com/shenweichen/AlgoNotes">AlgoNotes</a></li>
+<li><a href="https://github.com/shenweichen/DeepCTR">DeepCTR</a></li>
+<li><a href="https://github.com/shenweichen/DeepCTR-Torch">DeepCTR-Torch</a></li>
+<li><a href="https://github.com/shenweichen/GraphEmbedding">GraphEmbedding</a></li>
+</ul>
+            </td>
+        </tr>
+    </table>
+</html>

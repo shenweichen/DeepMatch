@@ -24,19 +24,19 @@ class DynamicMultiRNN(Layer):
         if self.rnn_type == "LSTM":
             try:
                 single_cell = tf.nn.rnn_cell.BasicLSTMCell(self.num_units, forget_bias=self.forget_bias)
-            except:
+            except AttributeError:
                 single_cell = tf.compat.v1.nn.rnn_cell.BasicLSTMCell(self.num_units, forget_bias=self.forget_bias)
         elif self.rnn_type == "GRU":
             try:
                 single_cell = tf.nn.rnn_cell.GRUCell(self.num_units, forget_bias=self.forget_bias)
-            except:
+            except AttributeError:
                 single_cell = tf.compat.v1.nn.rnn_cell.GRUCell(self.num_units, forget_bias=self.forget_bias)
         else:
             raise ValueError("Unknown unit type %s!" % self.rnn_type)
         dropout = self.dropout if tf.keras.backend.learning_phase() == 1 else 0
         try:
             single_cell = tf.nn.rnn_cell.DropoutWrapper(cell=single_cell, input_keep_prob=(1.0 - dropout))
-        except:
+        except AttributeError:
             single_cell = tf.compat.v1.nn.rnn_cell.DropoutWrapper(cell=single_cell, input_keep_prob=(1.0 - dropout))
         cell_list = []
         for i in range(self.num_layers):
@@ -44,7 +44,7 @@ class DynamicMultiRNN(Layer):
             if residual:
                 try:
                     single_cell_residual = tf.nn.rnn_cell.ResidualWrapper(single_cell)
-                except:
+                except AttributeError:
                     single_cell_residual = tf.compat.v1.nn.rnn_cell.ResidualWrapper(single_cell)
                 cell_list.append(single_cell_residual)
             else:
@@ -54,7 +54,7 @@ class DynamicMultiRNN(Layer):
         else:
             try:
                 self.final_cell = tf.nn.rnn_cell.MultiRNNCell(cell_list)
-            except:
+            except AttributeError:
                 self.final_cell = tf.compat.v1.nn.rnn_cell.MultiRNNCell(cell_list)
         super(DynamicMultiRNN, self).build(input_shape)
 
@@ -66,7 +66,7 @@ class DynamicMultiRNN(Layer):
                 rnn_output, hidden_state = tf.nn.dynamic_rnn(self.final_cell, inputs=rnn_input,
                                                              sequence_length=tf.squeeze(sequence_length),
                                                              dtype=tf.float32, scope=self.name)
-        except:
+        except AttributeError:
             with tf.name_scope("rnn"), tf.compat.v1.variable_scope("rnn", reuse=tf.compat.v1.AUTO_REUSE):
                 rnn_output, hidden_state = tf.compat.v1.nn.dynamic_rnn(self.final_cell, inputs=rnn_input,
                                                                        sequence_length=tf.squeeze(sequence_length),
@@ -86,6 +86,6 @@ class DynamicMultiRNN(Layer):
     def get_config(self, ):
         config = {'num_units': self.num_units, 'rnn_type': self.rnn_type, 'return_sequence': self.return_sequence,
                   'num_layers': self.num_layers,
-                  'num_residual_layers': self.num_residual_layers, 'dropout_rate': self.dropout}
+                  'num_residual_layers': self.num_residual_layers, 'dropout_rate': self.dropout, 'forget_bias':self.forget_bias}
         base_config = super(DynamicMultiRNN, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))

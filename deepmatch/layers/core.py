@@ -1,7 +1,9 @@
 import tensorflow as tf
+from deepctr.layers.activation import activation_layer
 from deepctr.layers.utils import reduce_max, reduce_mean, reduce_sum, concat_func, div, softmax
-from tensorflow.python.keras.initializers import RandomNormal, Zeros
+from tensorflow.python.keras.initializers import RandomNormal, Zeros, glorot_normal
 from tensorflow.python.keras.layers import Layer
+from tensorflow.python.keras.regularizers import l2
 
 
 class PoolingLayer(Layer):
@@ -216,20 +218,19 @@ def squash(inputs):
     return vec_squashed
 
 
-
-
 class EmbeddingIndex(Layer):
 
-    def __init__(self, index,**kwargs):
-        self.index =index
+    def __init__(self, index, **kwargs):
+        self.index = index
         super(EmbeddingIndex, self).__init__(**kwargs)
 
     def build(self, input_shape):
-
         super(EmbeddingIndex, self).build(
             input_shape)  # Be sure to call this somewhere!
+
     def call(self, x, **kwargs):
-       return tf.constant(self.index)
+        return tf.constant(self.index)
+
     def get_config(self, ):
         config = {'index': self.index, }
         base_config = super(EmbeddingIndex, self).get_config()
