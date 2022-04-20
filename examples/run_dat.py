@@ -5,6 +5,20 @@ from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras.models import Model
 
 from deepmatch.models import *
+import tensorflow.keras.backend as K
+import tensorflow as tf
+
+from tensorflow.python.framework.ops import disable_eager_execution
+disable_eager_execution() # using for custom loss
+
+def dual_augmented_loss(p_u, p_v, a_u, a_v):
+    def loss(y_true, y_pred):
+        y_ = K.cast(y_true, tf.float32)
+        loss_p = K.mean(K.square(y_ - y_pred))
+        loss_u = K.mean(K.square(y_ * a_u + (1 - y_) * p_v - p_v))
+        loss_v = K.mean(K.square(y_ * a_v + (1 - y_) * p_u - p_u))
+        return loss_p + 0.5 * loss_u + 0.5 * loss_v
+    return loss
 
 if __name__ == "__main__":
 
@@ -35,6 +49,10 @@ if __name__ == "__main__":
 
     train_model_input, train_label = gen_model_input(train_set, user_profile, SEQ_LEN)
     test_model_input, test_label = gen_model_input(test_set, user_profile, SEQ_LEN)
+    train_model_input['aug_inp_user_id'] = train_model_input['user_id']
+    train_model_input['aug_inp_movie_id'] = train_model_input['movie_id']
+    test_model_input['aug_inp_user_id'] = test_model_input['user_id']
+    test_model_input['aug_inp_movie_id'] = test_model_input['movie_id']
 
     # 2.count #unique features for each sparse field and generate feature config for sequence feature
 
@@ -55,16 +73,16 @@ if __name__ == "__main__":
 
     user_dnn_hidden_units=(32, 16, 8)
     item_dnn_hidden_units=(32, 16, 8)
-    model = DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=user_dnn_hidden_units, item_dnn_hidden_units=item_dnn_hidden_units)  # FM(user_feature_columns,item_feature_columns)
-
-    model.compile(optimizer='adagrad', loss="binary_crossentropy")
+    model, y_pred, p_u, p_v, a_u, a_v = DAT(user_feature_columns, item_feature_columns, user_dnn_hidden_units=user_dnn_hidden_units, item_dnn_hidden_units=item_dnn_hidden_units)  # FM(user_feature_columns,item_feature_columns)
+    
+    model.compile(optimizer='adagrad', loss=dual_augmented_loss(p_u, p_v, a_u, a_v))
 
     history = model.fit(train_model_input, train_label,  # train_label,
                         batch_size=256, epochs=1, verbose=1, validation_split=0.0, )
 
     # 4. Generate user features for testing and full item features for retrieval
     test_user_model_input = test_model_input
-    all_item_model_input = {"movie_id": item_profile['movie_id'].values}
+    all_item_model_input = {"movie_id": item_profile['movie_id'].values, "aug_inp_movie_id": item_profile['movie_id'].values}
 
     user_embedding_model = Model(inputs=model.user_input, outputs=model.user_embedding)
     item_embedding_model = Model(inputs=model.item_input, outputs=model.item_embedding)
@@ -78,12 +96,12 @@ if __name__ == "__main__":
     # 5. [Optional] ANN search by faiss  and evaluate the result
 
     # test_true_label = {line[0]:[line[2]] for line in test_set}
-     
+    # 
     # import numpy as np
     # import faiss
     # from tqdm import tqdm
     # from deepmatch.utils import recall_N
-     
+    # 
     # index = faiss.IndexFlatIP(user_dnn_hidden_units[-1])
     # # faiss.normalize_L2(item_embs)
     # index.add(item_embs)
