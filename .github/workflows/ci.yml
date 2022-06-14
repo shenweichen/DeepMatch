@@ -56,6 +56,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip3 install -q tensorflow==${{ matrix.tf-version }}
+        pip install -q protobuf==3.19.0
         pip install -q requests
         pip install -e .
     - name: Test with pytest
