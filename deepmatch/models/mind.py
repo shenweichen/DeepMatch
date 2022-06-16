@@ -28,11 +28,17 @@ def tile_user_otherfeat(user_other_feature, k_max):
 
 
 def adaptive_interest_num(seq_len, k_max):
+    try:
+        log_len = tf.log1p(tf.cast(seq_len, dtype="float32"))
+        log_2 = tf.log(2.)
+    except AttributeError:
+        log_len = tf.math.log1p(tf.cast(seq_len, dtype="float32"))
+        log_2 = tf.math.log(2.)
     k_user = tf.cast(tf.maximum(
         1.,
         tf.minimum(
             tf.cast(k_max, dtype="float32"),  # k_max
-            tf.math.log1p(tf.cast(seq_len, dtype="float32")) / tf.math.log(2.)  # hist_len
+            log_len / log_2  # hist_len
         )
     ), dtype="int32")
     return k_user
@@ -124,12 +130,12 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     if dynamic_k:
         interest_num = Lambda(adaptive_interest_num, arguments={'k_max': k_max})(hist_len)
         high_capsule = CapsuleLayer(input_units=item_embedding_dim,
-                                     out_units=item_embedding_dim, max_len=seq_max_len,
-                                     k_max=k_max)((history_emb, hist_len, interest_num))
+                                    out_units=item_embedding_dim, max_len=seq_max_len,
+                                    k_max=k_max)((history_emb, hist_len, interest_num))
     else:
         high_capsule = CapsuleLayer(input_units=item_embedding_dim,
-                                     out_units=item_embedding_dim, max_len=seq_max_len,
-                                     k_max=k_max)((history_emb, hist_len))
+                                    out_units=item_embedding_dim, max_len=seq_max_len,
+                                    k_max=k_max)((history_emb, hist_len))
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
