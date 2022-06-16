@@ -24,7 +24,7 @@ if __name__ == "__main__":
         data[feature] = lbe.fit_transform(data[feature]) + 1
         feature_max_idx[feature] = data[feature].max() + 1
     
-    id_count = data['movie_id'].value_counts()  #
+    id_count = data['movie_id'].value_counts()  
     mapdict = {t[0]: i for i, t in
                enumerate(sorted([(k, v) for k, v in id_count.to_dict().items()], key=lambda x: x[1], reverse=True))}
     data['movie_id'] = data['movie_id'].map(mapdict)
