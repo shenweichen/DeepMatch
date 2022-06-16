@@ -175,8 +175,8 @@ class CapsuleLayer(Layer):
         self.routing_logits = self.add_weight(shape=[self.max_len, self.k_max, 1],
                                               initializer=TruncatedNormal(stddev=self.init_std),
                                               trainable=False, name="B", dtype=tf.float32)
-        self.bilinear_mapping_matrix = self.add_weight(shape=[self.input_units, self.out_units],
-                                                       name="S", dtype=tf.float32)
+        # self.bilinear_mapping_matrix = self.add_weight(shape=[self.input_units, self.out_units],
+        #                                               name="S", dtype=tf.float32)
         super(CapsuleLayer, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
@@ -187,7 +187,7 @@ class CapsuleLayer(Layer):
 
         mask = tf.reshape(tf.sequence_mask(seq_len, self.max_len, tf.float32), [-1, self.max_len, 1, 1])
 
-        behavior_embedding_mapping = behavior_embedding#tf.tensordot(behavior_embedding, self.bilinear_mapping_matrix, axes=1)
+        behavior_embedding_mapping = behavior_embedding  # tf.tensordot(behavior_embedding, self.bilinear_mapping_matrix, axes=1)
         behavior_embedding_mapping = tf.expand_dims(behavior_embedding_mapping, axis=2)
 
         behavior_embdding_mapping_ = tf.stop_gradient(behavior_embedding_mapping)  # N,max_len,1,E
