@@ -159,7 +159,6 @@ class Similarity(Layer):
         base_config = super(Similarity, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
-
 class CapsuleLayer(Layer):
     def __init__(self, input_units, out_units, max_len, k_max, iteration_times=3,
                  init_std=1.0, **kwargs):
@@ -172,43 +171,64 @@ class CapsuleLayer(Layer):
         super(CapsuleLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.routing_logits = self.add_weight(shape=[1, self.k_max, self.max_len],
-                                              initializer=RandomNormal(stddev=self.init_std),
+        self.routing_logits = self.add_weight(shape=[self.max_len, self.k_max, 1],
+                                              initializer=TruncatedNormal(stddev=self.init_std),
                                               trainable=False, name="B", dtype=tf.float32)
+        # N,T,k_max,1
         self.bilinear_mapping_matrix = self.add_weight(shape=[self.input_units, self.out_units],
-                                                       initializer=RandomNormal(stddev=self.init_std),
                                                        name="S", dtype=tf.float32)
         super(CapsuleLayer, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
-        behavior_embddings, seq_len = inputs
-        batch_size = tf.shape(behavior_embddings)[0]
-        seq_len_tile = tf.tile(seq_len, [1, self.k_max])
 
+        behavior_embddings = inputs[0]
+        seq_len = inputs[1]
+        batch_size = tf.shape(behavior_embddings)[0]
+
+        mask = tf.reshape(tf.sequence_mask(seq_len, self.max_len, tf.float32), [-1, self.max_len, 1, 1])
+
+        behavior_embdding_mapping = tf.matmul(behavior_embddings, self.bilinear_mapping_matrix)
+        behavior_embdding_mapping = tf.expand_dims(behavior_embdding_mapping, axis=2)
+
+        behavior_embdding_mapping_ = tf.stop_gradient(behavior_embdding_mapping)  # N,max_len,1,E
+        print(behavior_embdding_mapping_)
+        try:
+            routing_logits = tf.truncated_normal([batch_size, self.max_len, self.k_max, 1], stddev=self.init_std)
+        except AttributeError:
+            routing_logits = tf.compat.v1.truncated_normal([batch_size, self.max_len, self.k_max, 1],
+                                                           stddev=self.init_std)
+
+        k_user = None
+        if len(inputs) == 3:
+            k_user = inputs[2]
+            interest_mask = tf.sequence_mask(k_user, self.k_max, tf.float32)
+            interest_mask = tf.reshape(interest_mask, [batch_size, 1, self.k_max, 1])
+            interest_mask = tf.tile(interest_mask, [1, self.max_len, 1, 1])
+
+            interest_padding = tf.ones_like(interest_mask) * -2 ** 31
+            interest_mask = tf.cast(interest_mask, tf.bool)
+
+        routing_logits = tf.stop_gradient(routing_logits)
+        self.routing_logits = routing_logits  # N,max_len,k_max,1
+        print(self.routing_logits)
         for i in range(self.iteration_times):
-            mask = tf.sequence_mask(seq_len_tile, self.max_len)
-            pad = tf.ones_like(mask, dtype=tf.float32) * (-2 ** 32 + 1)
-            routing_logits_with_padding = tf.where(mask, tf.tile(self.routing_logits, [batch_size, 1, 1]), pad)
-            weight = tf.nn.softmax(routing_logits_with_padding)
-            behavior_embdding_mapping = tf.tensordot(behavior_embddings, self.bilinear_mapping_matrix, axes=1)
-            Z = tf.matmul(weight, behavior_embdding_mapping)
-            interest_capsules = squash(Z)
-            delta_routing_logits = reduce_sum(
-                tf.matmul(interest_capsules, tf.transpose(behavior_embdding_mapping, perm=[0, 2, 1])),
-                axis=0, keep_dims=True
-            )
-            self.routing_logits.assign_add(delta_routing_logits)
+            if k_user is not None:
+                self.routing_logits = tf.where(interest_mask, self.routing_logits, interest_padding)
+            weight = tf.nn.softmax(self.routing_logits, 2) * mask  # N,max_len,k_max,1
+            if i < self.iteration_times - 1:
+                Z = reduce_sum(tf.matmul(weight, behavior_embdding_mapping_), axis=1, keep_dims=True)  # N,1,k_max,E
+                interest_capsules = squash(Z)
+                delta_routing_logits = reduce_sum(
+                    interest_capsules * behavior_embdding_mapping_,
+                    axis=-1, keep_dims=True
+                )
+                self.routing_logits += delta_routing_logits
+            else:
+                Z = reduce_sum(tf.matmul(weight, behavior_embdding_mapping), axis=1, keep_dims=True)
+                interest_capsules = squash(Z)
+
         interest_capsules = tf.reshape(interest_capsules, [-1, self.k_max, self.out_units])
         return interest_capsules
-
-    def compute_output_shape(self, input_shape):
-        return (None, self.k_max, self.out_units)
-
-    def get_config(self, ):
-        config = {'input_units': self.input_units, 'out_units': self.out_units, 'max_len': self.max_len,
-                  'k_max': self.k_max, 'iteration_times': self.iteration_times, "init_std": self.init_std}
-        base_config = super(CapsuleLayer, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
 
 
 def squash(inputs):
