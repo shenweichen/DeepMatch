@@ -187,11 +187,10 @@ class CapsuleLayer(Layer):
 
         mask = tf.reshape(tf.sequence_mask(seq_len, self.max_len, tf.float32), [-1, self.max_len, 1, 1])
 
-        behavior_embdding_mapping = tf.matmul(behavior_embddings, self.bilinear_mapping_matrix)
+        behavior_embdding_mapping = tf.tensordot(behavior_embddings, self.bilinear_mapping_matrix,axes=1)
         behavior_embdding_mapping = tf.expand_dims(behavior_embdding_mapping, axis=2)
 
         behavior_embdding_mapping_ = tf.stop_gradient(behavior_embdding_mapping)  # N,max_len,1,E
-        print(behavior_embdding_mapping_)
         try:
             routing_logits = tf.truncated_normal([batch_size, self.max_len, self.k_max, 1], stddev=self.init_std)
         except AttributeError:
