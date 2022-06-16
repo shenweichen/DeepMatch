@@ -1,3 +1,4 @@
+import pytest
 import tensorflow as tf
 from deepmatch.models import MIND
 from deepmatch.utils import sampledsoftmaxloss
