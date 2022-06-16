@@ -187,7 +187,7 @@ class CapsuleLayer(Layer):
 
         mask = tf.reshape(tf.sequence_mask(seq_len, self.max_len, tf.float32), [-1, self.max_len, 1, 1])
 
-        behavior_embedding_mapping = tf.tensordot(behavior_embedding, self.bilinear_mapping_matrix, axes=1)
+        behavior_embedding_mapping = behavior_embedding#tf.tensordot(behavior_embedding, self.bilinear_mapping_matrix, axes=1)
         behavior_embedding_mapping = tf.expand_dims(behavior_embedding_mapping, axis=2)
 
         behavior_embdding_mapping_ = tf.stop_gradient(behavior_embedding_mapping)  # N,max_len,1,E
@@ -196,6 +196,7 @@ class CapsuleLayer(Layer):
         except AttributeError:
             routing_logits = tf.compat.v1.truncated_normal([batch_size, self.max_len, self.k_max, 1],
                                                            stddev=self.init_std)
+        routing_logits = tf.stop_gradient(routing_logits)
 
         k_user = None
         if len(inputs) == 3:
@@ -207,14 +208,15 @@ class CapsuleLayer(Layer):
             interest_padding = tf.ones_like(interest_mask) * -2 ** 31
             interest_mask = tf.cast(interest_mask, tf.bool)
 
-        routing_logits = tf.stop_gradient(routing_logits)
-        self.routing_logits = routing_logits  # N,max_len,k_max,1
-
+        # self.routing_logits = routing_logits  # N,max_len,k_max,1
         for i in range(self.iteration_times):
             if k_user is not None:
-                self.routing_logits = tf.where(interest_mask, self.routing_logits, interest_padding)
-            weight = tf.transpose(softmax(tf.transpose(self.routing_logits, [0, 1, 3, 2])),
-                                  [0, 1, 3, 2]) * mask  # N,max_len,k_max,1
+                routing_logits = tf.where(interest_mask, routing_logits, interest_padding)
+            try:
+                weight = softmax(routing_logits, 2) * mask
+            except TypeError:
+                weight = tf.transpose(softmax(tf.transpose(routing_logits, [0, 1, 3, 2])),
+                                      [0, 1, 3, 2]) * mask  # N,max_len,k_max,1
             if i < self.iteration_times - 1:
                 Z = reduce_sum(tf.matmul(weight, behavior_embdding_mapping_), axis=1, keep_dims=True)  # N,1,k_max,E
                 interest_capsules = squash(Z)
@@ -222,7 +224,7 @@ class CapsuleLayer(Layer):
                     interest_capsules * behavior_embdding_mapping_,
                     axis=-1, keep_dims=True
                 )
-                self.routing_logits += delta_routing_logits
+                routing_logits += delta_routing_logits
             else:
                 Z = reduce_sum(tf.matmul(weight, behavior_embedding_mapping), axis=1, keep_dims=True)
                 interest_capsules = squash(Z)
