@@ -9,7 +9,7 @@ REQUIRED_PACKAGES = [
 
 setuptools.setup(
     name="deepmatch",
-    version="0.2.0",
+    version="0.2.1",
     author="Weichen Shen",
     author_email="weichenswc@163.com",
     description="Deep matching model library for recommendations, advertising. It's easy to train models and to **export representation vectors** for user and item which can be used for **ANN search**.",

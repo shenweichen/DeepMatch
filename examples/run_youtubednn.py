@@ -16,13 +16,19 @@ if __name__ == "__main__":
     SEQ_LEN = 50
 
     # 1.Label Encoding for sparse features,and process sequence features with `gen_date_set` and `gen_model_input`
-
-    features = ['user_id', 'movie_id', 'gender', 'age', 'occupation', 'zip']
+    
+    features = ['user_id', 'gender', 'age', 'occupation', 'zip']
     feature_max_idx = {}
     for feature in features:
         lbe = LabelEncoder()
         data[feature] = lbe.fit_transform(data[feature]) + 1
         feature_max_idx[feature] = data[feature].max() + 1
+    
+    id_count = data['movie_id'].value_counts()  #
+    mapdict = {t[0]: i for i, t in
+               enumerate(sorted([(k, v) for k, v in id_count.to_dict().items()], key=lambda x: x[1], reverse=True))}
+    data['movie_id'] = data['movie_id'].map(mapdict)
+    feature_max_idx['movie_id'] = data['movie_id'].max() + 1
 
     user_profile = data[["user_id", "gender", "age", "occupation", "zip"]].drop_duplicates('user_id')
 

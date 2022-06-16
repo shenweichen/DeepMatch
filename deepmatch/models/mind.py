@@ -11,10 +11,10 @@ from deepctr.feature_column import SparseFeat, VarLenSparseFeat, DenseFeat, \
     embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features
 from deepctr.layers import DNN
 from deepctr.layers.utils import NoMask, combined_dnn_input
+from deepmatch.utils import get_item_embedding
 from tensorflow.python.keras.layers import Concatenate, Lambda
 from tensorflow.python.keras.models import Model
 
-from deepmatch.utils import get_item_embedding
 from ..inputs import create_embedding_matrix
 from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, SampledSoftmaxLayer, EmbeddingIndex
 
@@ -25,6 +25,17 @@ def shape_target(target_emb_tmp, target_emb_size):
 
 def tile_user_otherfeat(user_other_feature, k_max):
     return tf.tile(tf.expand_dims(user_other_feature, -2), [1, k_max, 1])
+
+
+def adaptive_interest_num(seq_len, k_max):
+    k_user = tf.cast(tf.maximum(
+        1.,
+        tf.minimum(
+            tf.cast(k_max, dtype="float32"),  # k_max
+            tf.math.log1p(tf.cast(seq_len, dtype="float32")) / tf.math.log(2.)  # hist_len
+        )
+    ), dtype="int32")
+    return k_user
 
 
 def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1.0, dynamic_k=False,
@@ -110,9 +121,15 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     # max_len = history_emb.get_shape()[1].value
     hist_len = features['hist_len']
 
-    high_capsule = CapsuleLayer(input_units=item_embedding_dim,
-                                out_units=item_embedding_dim, max_len=seq_max_len,
-                                k_max=k_max)((history_emb, hist_len))
+    if dynamic_k:
+        interest_num = Lambda(adaptive_interest_num, arguments={'k_max': k_max})(hist_len)
+        high_capsule = CapsuleLayer(input_units=item_embedding_dim,
+                                     out_units=item_embedding_dim, max_len=seq_max_len,
+                                     k_max=k_max)((history_emb, hist_len, interest_num))
+    else:
+        high_capsule = CapsuleLayer(input_units=item_embedding_dim,
+                                     out_units=item_embedding_dim, max_len=seq_max_len,
+                                     k_max=k_max)((history_emb, hist_len))
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
@@ -138,7 +155,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
     if dynamic_k:
-        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p, )((user_embeddings, target_emb, hist_len))
+        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p, )((user_embeddings, target_emb, interest_num))
     else:
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p, )((user_embeddings, target_emb))
 
