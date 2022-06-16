@@ -44,6 +44,13 @@ def adaptive_interest_num(seq_len, k_max):
     return k_user
 
 
+def adaptive_user_embedding(user_embedding, interest_num, k_max):
+    interest_mask = tf.sequence_mask(interest_num, k_max, tf.float32)
+    interest_mask = tf.reshape(interest_mask, [-1, k_max, 1])
+    user_embedding *= interest_mask
+    return user_embedding
+
+
 def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1.0, dynamic_k=False,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
          dnn_dropout=0, output_activation='linear', seed=1024):
@@ -148,7 +155,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
 
     user_embeddings = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn,
                           dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
-                          name="user_embedding")(
+                          name="user_dnn")(
         user_deep_input)
     item_inputs_list = list(item_features.values())
 
@@ -161,9 +168,11 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
     if dynamic_k:
-        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p, )((user_embeddings, target_emb, interest_num))
+        user_embeddings = Lambda(adaptive_user_embedding, arguments={'k_max': k_max, 'interest_num': interest_num})(
+            user_embeddings)
+        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb, interest_num))
     else:
-        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p, )((user_embeddings, target_emb))
+        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
 
     output = SampledSoftmaxLayer(num_sampled=num_sampled)(
         [pooling_item_embedding_weight, user_embedding_final, item_features[item_feature_name]])
