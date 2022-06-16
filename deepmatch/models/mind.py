@@ -44,7 +44,8 @@ def adaptive_interest_num(seq_len, k_max):
     return k_user
 
 
-def adaptive_user_embedding(user_embedding, interest_num, k_max):
+def adaptive_user_embedding(inputs, k_max):
+    user_embedding, interest_num = inputs
     interest_mask = tf.sequence_mask(interest_num, k_max, tf.float32)
     interest_mask = tf.reshape(interest_mask, [-1, k_max, 1])
     user_embedding *= interest_mask
@@ -168,8 +169,8 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
     if dynamic_k:
-        user_embeddings = Lambda(adaptive_user_embedding, arguments={'k_max': k_max, 'interest_num': interest_num})(
-            user_embeddings)
+        user_embeddings = Lambda(adaptive_user_embedding, arguments={'k_max': k_max})([
+            user_embeddings, interest_num])
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb, interest_num))
     else:
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
