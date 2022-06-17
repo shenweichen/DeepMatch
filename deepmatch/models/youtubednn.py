@@ -9,10 +9,9 @@ from deepctr.layers import DNN
 from deepctr.layers.utils import NoMask, combined_dnn_input
 from tensorflow.python.keras.models import Model
 
-from deepmatch.layers import PoolingLayer
-from deepmatch.utils import get_item_embedding
 from ..inputs import input_from_feature_columns, create_embedding_matrix
-from ..layers.core import SampledSoftmaxLayer, EmbeddingIndex
+from ..layers.core import SampledSoftmaxLayer, EmbeddingIndex, PoolingLayer
+from ..utils import get_item_embedding
 
 
 def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,

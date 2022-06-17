@@ -15,10 +15,10 @@ from deepctr.layers.utils import NoMask
 from tensorflow.python.keras.layers import Dense, Lambda
 from tensorflow.python.keras.models import Model
 
-from deepmatch.utils import get_item_embedding
 from ..layers.core import PoolingLayer, SampledSoftmaxLayer, EmbeddingIndex
 from ..layers.interaction import UserAttention, SelfMultiHeadAttention, AttentionSequencePoolingLayer
 from ..layers.sequence import DynamicMultiRNN
+from ..utils import get_item_embedding
 
 
 def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sampled=5, units=64, rnn_layers=2,
@@ -156,8 +156,3 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sa
                       get_item_embedding(pooling_item_embedding_weight, item_features[item_feature_name]))
 
     return model
-    # , Model(inputs=user_inputs_list, outputs=gate_output_reshape), Model(inputs=item_inputs_list,
-    #                                                                              outputs=get_item_embedding(
-    #                                                                                  pooling_item_embedding_weight,
-    #                                                                                  item_features[
-    #                                                                                      item_feature_name]))
