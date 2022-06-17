@@ -130,7 +130,7 @@ class LabelAwareAttention(Layer):
 
 class Similarity(Layer):
 
-    def __init__(self, gamma=10, axis=-1, type='cos', **kwargs):
+    def __init__(self, gamma=1, axis=-1, type='cos', **kwargs):
         self.gamma = gamma
         self.axis = axis
         self.type = type
