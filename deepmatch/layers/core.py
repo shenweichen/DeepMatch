@@ -275,14 +275,12 @@ class MaskUserEmbedding(Layer):
             input_shape)  # Be sure to call this somewhere!
 
     def call(self, x, training=None, **kwargs):
-        print(training)
         user_embedding, interest_num = x
         if not training:
             interest_mask = tf.sequence_mask(interest_num, self.k_max, tf.float32)
             interest_mask = tf.reshape(interest_mask, [-1, self.k_max, 1])
             user_embedding *= interest_mask
-        else:
-            return user_embedding
+        return user_embedding
 
     def get_config(self, ):
         config = {'k_max': self.k_max, }
