@@ -67,7 +67,7 @@ if __name__ == "__main__":
         K.set_learning_phase(True)
 
     model = YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5, user_dnn_hidden_units=(64, embedding_dim))
-    # model = MIND(user_feature_columns,item_feature_columns,dynamic_k=False,k_max=2,num_sampled=5,user_dnn_hidden_units=(64, embedding_dim))
+    # model = MIND(user_feature_columns,item_feature_columns,dynamic_k=True,k_max=2,num_sampled=5,user_dnn_hidden_units=(64, embedding_dim))
 
     model.compile(optimizer="adam", loss=sampledsoftmaxloss)  # "binary_crossentropy")
 
