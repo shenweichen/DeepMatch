@@ -172,11 +172,8 @@ class CapsuleLayer(Layer):
         super(CapsuleLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.routing_logits = self.add_weight(shape=[self.max_len, self.k_max, 1],
-                                              initializer=TruncatedNormal(stddev=self.init_std),
-                                              trainable=False, name="B", dtype=tf.float32)
-        # self.bilinear_mapping_matrix = self.add_weight(shape=[self.input_units, self.out_units],
-        #                                               name="S", dtype=tf.float32)
+        self.bilinear_mapping_matrix = self.add_weight(shape=[self.input_units, self.out_units],
+                                                       name="S", dtype=tf.float32)
         super(CapsuleLayer, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
@@ -187,7 +184,7 @@ class CapsuleLayer(Layer):
 
         mask = tf.reshape(tf.sequence_mask(seq_len, self.max_len, tf.float32), [-1, self.max_len, 1, 1])
 
-        behavior_embedding_mapping = behavior_embedding  # tf.tensordot(behavior_embedding, self.bilinear_mapping_matrix, axes=1)
+        behavior_embedding_mapping = tf.tensordot(behavior_embedding, self.bilinear_mapping_matrix, axes=1)
         behavior_embedding_mapping = tf.expand_dims(behavior_embedding_mapping, axis=2)
 
         behavior_embdding_mapping_ = tf.stop_gradient(behavior_embedding_mapping)  # N,max_len,1,E
@@ -208,7 +205,6 @@ class CapsuleLayer(Layer):
             interest_padding = tf.ones_like(interest_mask) * -2 ** 31
             interest_mask = tf.cast(interest_mask, tf.bool)
 
-        # self.routing_logits = routing_logits  # N,max_len,k_max,1
         for i in range(self.iteration_times):
             if k_user is not None:
                 routing_logits = tf.where(interest_mask, routing_logits, interest_padding)
@@ -265,4 +261,30 @@ class EmbeddingIndex(Layer):
     def get_config(self, ):
         config = {'index': self.index, }
         base_config = super(EmbeddingIndex, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+
+class MaskUserEmbedding(Layer):
+
+    def __init__(self, k_max, **kwargs):
+        self.k_max = k_max
+        super(MaskUserEmbedding, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        super(MaskUserEmbedding, self).build(
+            input_shape)  # Be sure to call this somewhere!
+
+    def call(self, x, training=None, **kwargs):
+        print(training)
+        user_embedding, interest_num = x
+        if not training:
+            interest_mask = tf.sequence_mask(interest_num, self.k_max, tf.float32)
+            interest_mask = tf.reshape(interest_mask, [-1, self.k_max, 1])
+            user_embedding *= interest_mask
+        else:
+            return user_embedding
+
+    def get_config(self, ):
+        config = {'k_max': self.k_max, }
+        base_config = super(MaskUserEmbedding, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))

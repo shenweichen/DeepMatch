@@ -63,6 +63,11 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
         ​ <a href="https://github.com/yangjieyu">Yang Jieyu</a>
         <p> Ant Group    </p>​
       </td>
+      <td>
+        ​ <a href="https://github.com/zzszmyf"><img width="70" height="70" src="https://github.com/zzszmyf.png?s=40" alt="pic"></a><br>
+        ​ <a href="https://github.com/zzszmyf">Meng Yifan</a>
+        <p> DeepCTR    </p>​
+      </td>
     </tr>
   </tbody>
 </table>
