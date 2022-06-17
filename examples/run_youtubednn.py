@@ -1,12 +1,11 @@
 import pandas as pd
 from deepctr.feature_column import SparseFeat, VarLenSparseFeat
+from deepmatch.models import *
+from deepmatch.utils import sampledsoftmaxloss
 from preprocess import gen_data_set, gen_model_input
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.models import Model
-
-from deepmatch.models import *
-from deepmatch.utils import sampledsoftmaxloss
 
 if __name__ == "__main__":
 
@@ -17,12 +16,18 @@ if __name__ == "__main__":
 
     # 1.Label Encoding for sparse features,and process sequence features with `gen_date_set` and `gen_model_input`
 
-    features = ['user_id', 'movie_id', 'gender', 'age', 'occupation', 'zip']
+    features = ['user_id', 'gender', 'age', 'occupation', 'zip']
     feature_max_idx = {}
     for feature in features:
         lbe = LabelEncoder()
         data[feature] = lbe.fit_transform(data[feature]) + 1
         feature_max_idx[feature] = data[feature].max() + 1
+
+    id_count = data['movie_id'].value_counts()
+    mapdict = {t[0]: i for i, t in
+               enumerate(sorted([(k, v) for k, v in id_count.to_dict().items()], key=lambda x: x[1], reverse=True))}
+    data['movie_id'] = data['movie_id'].map(mapdict)
+    feature_max_idx['movie_id'] = data['movie_id'].max() + 1
 
     user_profile = data[["user_id", "gender", "age", "occupation", "zip"]].drop_duplicates('user_id')
 
@@ -54,13 +59,15 @@ if __name__ == "__main__":
 
     # 3.Define Model and train
 
-    K.set_learning_phase(True)
     import tensorflow as tf
+
     if tf.__version__ >= '2.0.0':
-       tf.compat.v1.disable_eager_execution()
+        tf.compat.v1.disable_eager_execution()
+    else:
+        K.set_learning_phase(True)
 
     model = YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5, user_dnn_hidden_units=(64, embedding_dim))
-    #model = MIND(user_feature_columns,item_feature_columns,dynamic_k=False,p=1,k_max=2,num_sampled=5,user_dnn_hidden_units=(64, embedding_dim))
+    # model = MIND(user_feature_columns,item_feature_columns,dynamic_k=True,k_max=2,num_sampled=5,user_dnn_hidden_units=(64, embedding_dim))
 
     model.compile(optimizer="adam", loss=sampledsoftmaxloss)  # "binary_crossentropy")
 

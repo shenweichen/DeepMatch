@@ -1,7 +1,7 @@
 import tensorflow as tf
 from deepctr.layers.activation import activation_layer
 from deepctr.layers.utils import reduce_max, reduce_mean, reduce_sum, concat_func, div, softmax
-from tensorflow.python.keras.initializers import RandomNormal, Zeros, glorot_normal
+from tensorflow.python.keras.initializers import RandomNormal, Zeros, TruncatedNormal
 from tensorflow.python.keras.layers import Layer
 from tensorflow.python.keras.regularizers import l2
 
@@ -103,19 +103,19 @@ class LabelAwareAttention(Layer):
         weight = tf.pow(weight, self.pow_p)  # [x,k_max,1]
 
         if len(inputs) == 3:
-            k_user = tf.cast(tf.maximum(
-                1.,
-                tf.minimum(
-                    tf.cast(self.k_max, dtype="float32"),  # k_max
-                    tf.log1p(tf.cast(inputs[2], dtype="float32")) / tf.log(2.)  # hist_len
-                )
-            ), dtype="int64")
+            k_user = inputs[2]
             seq_mask = tf.transpose(tf.sequence_mask(k_user, self.k_max), [0, 2, 1])
             padding = tf.ones_like(seq_mask, dtype=tf.float32) * (-2 ** 32 + 1)  # [x,k_max,1]
             weight = tf.where(seq_mask, weight, padding)
 
-        weight = softmax(weight, dim=1, name="weight")
-        output = reduce_sum(keys * weight, axis=1)
+        if self.pow_p >= 100:
+            idx = tf.stack(
+                [tf.range(tf.shape(keys)[0]), tf.squeeze(tf.argmax(weight, axis=1, output_type=tf.int32), axis=1)],
+                axis=1)
+            output = tf.gather_nd(keys, idx)
+        else:
+            weight = softmax(weight, dim=1, name="weight")
+            output = tf.reduce_sum(keys * weight, axis=1)
 
         return output
 
@@ -159,6 +159,7 @@ class Similarity(Layer):
         base_config = super(Similarity, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
+
 class CapsuleLayer(Layer):
     def __init__(self, input_units, out_units, max_len, k_max, iteration_times=3,
                  init_std=1.0, **kwargs):
@@ -171,32 +172,28 @@ class CapsuleLayer(Layer):
         super(CapsuleLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.routing_logits = self.add_weight(shape=[self.max_len, self.k_max, 1],
-                                              initializer=TruncatedNormal(stddev=self.init_std),
-                                              trainable=False, name="B", dtype=tf.float32)
-        # N,T,k_max,1
         self.bilinear_mapping_matrix = self.add_weight(shape=[self.input_units, self.out_units],
                                                        name="S", dtype=tf.float32)
         super(CapsuleLayer, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
 
-        behavior_embddings = inputs[0]
+        behavior_embedding = inputs[0]
         seq_len = inputs[1]
-        batch_size = tf.shape(behavior_embddings)[0]
+        batch_size = tf.shape(behavior_embedding)[0]
 
         mask = tf.reshape(tf.sequence_mask(seq_len, self.max_len, tf.float32), [-1, self.max_len, 1, 1])
 
-        behavior_embdding_mapping = tf.matmul(behavior_embddings, self.bilinear_mapping_matrix)
-        behavior_embdding_mapping = tf.expand_dims(behavior_embdding_mapping, axis=2)
+        behavior_embedding_mapping = tf.tensordot(behavior_embedding, self.bilinear_mapping_matrix, axes=1)
+        behavior_embedding_mapping = tf.expand_dims(behavior_embedding_mapping, axis=2)
 
-        behavior_embdding_mapping_ = tf.stop_gradient(behavior_embdding_mapping)  # N,max_len,1,E
-        print(behavior_embdding_mapping_)
+        behavior_embdding_mapping_ = tf.stop_gradient(behavior_embedding_mapping)  # N,max_len,1,E
         try:
             routing_logits = tf.truncated_normal([batch_size, self.max_len, self.k_max, 1], stddev=self.init_std)
         except AttributeError:
             routing_logits = tf.compat.v1.truncated_normal([batch_size, self.max_len, self.k_max, 1],
                                                            stddev=self.init_std)
+        routing_logits = tf.stop_gradient(routing_logits)
 
         k_user = None
         if len(inputs) == 3:
@@ -208,13 +205,14 @@ class CapsuleLayer(Layer):
             interest_padding = tf.ones_like(interest_mask) * -2 ** 31
             interest_mask = tf.cast(interest_mask, tf.bool)
 
-        routing_logits = tf.stop_gradient(routing_logits)
-        self.routing_logits = routing_logits  # N,max_len,k_max,1
-        print(self.routing_logits)
         for i in range(self.iteration_times):
             if k_user is not None:
-                self.routing_logits = tf.where(interest_mask, self.routing_logits, interest_padding)
-            weight = tf.nn.softmax(self.routing_logits, 2) * mask  # N,max_len,k_max,1
+                routing_logits = tf.where(interest_mask, routing_logits, interest_padding)
+            try:
+                weight = softmax(routing_logits, 2) * mask
+            except TypeError:
+                weight = tf.transpose(softmax(tf.transpose(routing_logits, [0, 1, 3, 2])),
+                                      [0, 1, 3, 2]) * mask  # N,max_len,k_max,1
             if i < self.iteration_times - 1:
                 Z = reduce_sum(tf.matmul(weight, behavior_embdding_mapping_), axis=1, keep_dims=True)  # N,1,k_max,E
                 interest_capsules = squash(Z)
@@ -222,18 +220,27 @@ class CapsuleLayer(Layer):
                     interest_capsules * behavior_embdding_mapping_,
                     axis=-1, keep_dims=True
                 )
-                self.routing_logits += delta_routing_logits
+                routing_logits += delta_routing_logits
             else:
-                Z = reduce_sum(tf.matmul(weight, behavior_embdding_mapping), axis=1, keep_dims=True)
+                Z = reduce_sum(tf.matmul(weight, behavior_embedding_mapping), axis=1, keep_dims=True)
                 interest_capsules = squash(Z)
 
         interest_capsules = tf.reshape(interest_capsules, [-1, self.k_max, self.out_units])
         return interest_capsules
 
+    def compute_output_shape(self, input_shape):
+        return (None, self.k_max, self.out_units)
+
+    def get_config(self, ):
+        config = {'input_units': self.input_units, 'out_units': self.out_units, 'max_len': self.max_len,
+                  'k_max': self.k_max, 'iteration_times': self.iteration_times, "init_std": self.init_std}
+        base_config = super(CapsuleLayer, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
 
 def squash(inputs):
     vec_squared_norm = reduce_sum(tf.square(inputs), axis=-1, keep_dims=True)
-    scalar_factor = vec_squared_norm / (1 + vec_squared_norm) / tf.sqrt(vec_squared_norm + 1e-8)
+    scalar_factor = vec_squared_norm / (1 + vec_squared_norm) / tf.sqrt(vec_squared_norm + 1e-9)
     vec_squashed = scalar_factor * inputs
     return vec_squashed
 
@@ -254,4 +261,28 @@ class EmbeddingIndex(Layer):
     def get_config(self, ):
         config = {'index': self.index, }
         base_config = super(EmbeddingIndex, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+
+class MaskUserEmbedding(Layer):
+
+    def __init__(self, k_max, **kwargs):
+        self.k_max = k_max
+        super(MaskUserEmbedding, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        super(MaskUserEmbedding, self).build(
+            input_shape)  # Be sure to call this somewhere!
+
+    def call(self, x, training=None, **kwargs):
+        user_embedding, interest_num = x
+        if not training:
+            interest_mask = tf.sequence_mask(interest_num, self.k_max, tf.float32)
+            interest_mask = tf.reshape(interest_mask, [-1, self.k_max, 1])
+            user_embedding *= interest_mask
+        return user_embedding
+
+    def get_config(self, ):
+        config = {'k_max': self.k_max, }
+        base_config = super(MaskUserEmbedding, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
