@@ -15,8 +15,8 @@ from ..layers.core import Similarity
 
 def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 32),
          item_dnn_hidden_units=(64, 32),
-         dnn_activation='tanh', dnn_use_bn=False,
-         l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0, seed=1024, metric='cos'):
+         dnn_activation='relu', dnn_use_bn=False,
+         l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0, gamma=10, seed=1024, metric='cos'):
     """Instantiates the Deep Structured Semantic Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
@@ -28,6 +28,7 @@ def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 
     :param l2_reg_dnn: float. L2 regularizer strength applied to DNN
     :param l2_reg_embedding: float. L2 regularizer strength applied to embedding vector
     :param dnn_dropout: float in [0,1), the probability we will drop out a given DNN coordinate.
+    :param gamma: float. Scaling factor.
     :param seed: integer ,to use as random seed.
     :param metric: str, ``"cos"`` for  cosine  or  ``"ip"`` for inner product
     :return: A Keras model instance.
@@ -55,12 +56,12 @@ def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 
     item_dnn_input = combined_dnn_input(item_sparse_embedding_list, item_dense_value_list)
 
     user_dnn_out = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn, dnn_dropout,
-                       dnn_use_bn, seed=seed)(user_dnn_input)
+                       dnn_use_bn, output_activation='linear', seed=seed)(user_dnn_input)
 
     item_dnn_out = DNN(item_dnn_hidden_units, dnn_activation, l2_reg_dnn, dnn_dropout,
-                       dnn_use_bn, seed=seed)(item_dnn_input)
+                       dnn_use_bn, output_activation='linear', seed=seed)(item_dnn_input)
 
-    score = Similarity(type=metric, gamma = 10)([user_dnn_out, item_dnn_out])
+    score = Similarity(type=metric, gamma=gamma)([user_dnn_out, item_dnn_out])
 
     output = PredictionLayer("binary", False)(score)
 

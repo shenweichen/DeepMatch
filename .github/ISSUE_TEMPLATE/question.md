@@ -15,6 +15,6 @@ A clear and concise description of what the question is.
 Add any other context about the problem here.
 
 **Operating environment(运行环境):**
- - python version [e.g. 3.6]
- - tensorflow version [e.g. 1.4.0,]
- - deepmatch version [e.g. 0.2.0,]
+ - python version [e.g. 3.6, 3.7, 3.8]
+ - tensorflow version [e.g. 1.4.0, 1.14.0, 2.5.0]
+ - deepmatch version [e.g. 0.2.1,]

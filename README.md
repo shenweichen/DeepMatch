@@ -48,6 +48,12 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
         <p>Baidu Inc.  </p>​
       </td>
       <td>
+        ​ <a href="https://github.com/clhchtcjj"><img width="70" height="70" src="https://github.com/clhchtcjj.png?s=40" alt="pic"></a><br>
+        ​ <a href="https://github.com/clhchtcjj">Chen Leihui</a> ​
+        <p>
+        Alibaba Group  </p>​
+      </td>
+      <td>
         ​ <a href="https://github.com/LeoCai"><img width="70" height="70" src="https://github.com/LeoCai.png?s=40" alt="pic"></a><br>
          <a href="https://github.com/LeoCai">LeoCai</a>
          <p>  ByteDance   </p>​
@@ -56,6 +62,11 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
         ​ <a href="https://github.com/yangjieyu"><img width="70" height="70" src="https://github.com/yangjieyu.png?s=40" alt="pic"></a><br>
         ​ <a href="https://github.com/yangjieyu">Yang Jieyu</a>
         <p> Ant Group    </p>​
+      </td>
+      <td>
+        ​ <a href="https://github.com/zzszmyf"><img width="70" height="70" src="https://github.com/zzszmyf.png?s=40" alt="pic"></a><br>
+        ​ <a href="https://github.com/zzszmyf">Meng Yifan</a>
+        <p> DeepCTR    </p>​
       </td>
     </tr>
   </tbody>

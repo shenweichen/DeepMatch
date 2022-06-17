@@ -8,12 +8,13 @@ from ..inputs import create_embedding_matrix, input_from_feature_columns
 from ..layers.core import Similarity
 
 
-def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, seed=1024, metric='cos'):
+def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, gamma=10, seed=1024, metric='cos'):
     """Instantiates the FM architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
     :param item_feature_columns: An iterable containing item's features used by  the model.
     :param l2_reg_embedding: float. L2 regularizer strength applied to embedding vector
+    :param gamma: float. Scaling factor.
     :param seed: integer ,to use as random seed.
     :param metric: str, ``"cos"`` for  cosine  or  ``"ip"`` for inner product
     :return: A Keras model instance.
@@ -46,7 +47,7 @@ def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, seed=1
     item_dnn_input = concat_func(item_sparse_embedding_list, axis=1)
     item_vector_sum = Lambda(lambda x: reduce_sum(x, axis=1, keep_dims=False))(item_dnn_input)
 
-    score = Similarity(type=metric)([user_vector_sum, item_vector_sum])
+    score = Similarity(type=metric, gamma=gamma)([user_vector_sum, item_vector_sum])
 
     output = PredictionLayer("binary", False)(score)
 

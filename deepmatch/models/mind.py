@@ -11,12 +11,13 @@ from deepctr.feature_column import SparseFeat, VarLenSparseFeat, DenseFeat, \
     embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features
 from deepctr.layers import DNN
 from deepctr.layers.utils import NoMask, combined_dnn_input
-from tensorflow.python.keras.layers import Concatenate
+from tensorflow.python.keras.layers import Concatenate, Lambda
 from tensorflow.python.keras.models import Model
 
-from deepmatch.utils import get_item_embedding
 from ..inputs import create_embedding_matrix
-from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, SampledSoftmaxLayer, EmbeddingIndex
+from ..layers.core import CapsuleLayer, PoolingLayer, MaskUserEmbedding, LabelAwareAttention, SampledSoftmaxLayer, \
+    EmbeddingIndex
+from ..utils import get_item_embedding
 
 
 def shape_target(target_emb_tmp, target_emb_size):
@@ -27,7 +28,24 @@ def tile_user_otherfeat(user_other_feature, k_max):
     return tf.tile(tf.expand_dims(user_other_feature, -2), [1, k_max, 1])
 
 
-def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1.0, dynamic_k=False,
+def adaptive_interest_num(seq_len, k_max):
+    try:
+        log_len = tf.log1p(tf.cast(seq_len, dtype="float32"))
+        log_2 = tf.log(2.)
+    except AttributeError:
+        log_len = tf.math.log1p(tf.cast(seq_len, dtype="float32"))
+        log_2 = tf.math.log(2.)
+    k_user = tf.cast(tf.maximum(
+        1.,
+        tf.minimum(
+            tf.cast(k_max, dtype="float32"),  # k_max
+            log_len / log_2  # hist_len
+        )
+    ), dtype="int32")
+    return k_user
+
+
+def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=100, dynamic_k=True,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
          dnn_dropout=0, output_activation='linear', seed=1024):
     """Instantiates the MIND Model architecture.
@@ -110,14 +128,20 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     # max_len = history_emb.get_shape()[1].value
     hist_len = features['hist_len']
 
-    high_capsule = CapsuleLayer(input_units=item_embedding_dim,
-                                out_units=item_embedding_dim, max_len=seq_max_len,
-                                k_max=k_max)((history_emb, hist_len))
+    if dynamic_k:
+        interest_num = Lambda(adaptive_interest_num, arguments={'k_max': k_max})(hist_len)
+        high_capsule = CapsuleLayer(input_units=item_embedding_dim,
+                                    out_units=item_embedding_dim, max_len=seq_max_len,
+                                    k_max=k_max)((history_emb, hist_len, interest_num))
+    else:
+        high_capsule = CapsuleLayer(input_units=item_embedding_dim,
+                                    out_units=item_embedding_dim, max_len=seq_max_len,
+                                    k_max=k_max)((history_emb, hist_len))
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
 
-        other_feature_tile = tf.keras.layers.Lambda(tile_user_otherfeat, arguments={'k_max': k_max})(user_other_feature)
+        other_feature_tile = Lambda(tile_user_otherfeat, arguments={'k_max': k_max})(user_other_feature)
 
         user_deep_input = Concatenate()([NoMask()(other_feature_tile), high_capsule])
     else:
@@ -125,7 +149,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
 
     user_embeddings = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn,
                           dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
-                          name="user_embedding")(
+                          name="user_dnn")(
         user_deep_input)
     item_inputs_list = list(item_features.values())
 
@@ -138,9 +162,10 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
     if dynamic_k:
-        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p, )((user_embeddings, target_emb, hist_len))
+        user_embeddings = MaskUserEmbedding(k_max)([user_embeddings, interest_num])
+        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb, interest_num))
     else:
-        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p, )((user_embeddings, target_emb))
+        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
 
     output = SampledSoftmaxLayer(num_sampled=num_sampled)(
         [pooling_item_embedding_weight, user_embedding_final, item_features[item_feature_name]])
