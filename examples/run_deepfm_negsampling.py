@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     user_dnn_hidden_units=(32, 16, 8)
     item_dnn_hidden_units=(32, 16, 8)
-    model = DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=user_dnn_hidden_units, item_dnn_hidden_units=item_dnn_hidden_units)  # FM(user_feature_columns,item_feature_columns)
+    model = DeepFM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=user_dnn_hidden_units, item_dnn_hidden_units=item_dnn_hidden_units)  # FM(user_feature_columns,item_feature_columns)
 
     model.compile(optimizer='adagrad', loss="binary_crossentropy")
 
@@ -78,13 +78,13 @@ if __name__ == "__main__":
     # 5. [Optional] ANN search by faiss  and evaluate the result
 
     # test_true_label = {line[0]:[line[2]] for line in test_set}
-     
+    # 
     # import numpy as np
     # import faiss
     # from tqdm import tqdm
     # from deepmatch.utils import recall_N
-     
-    # index = faiss.IndexFlatIP(user_dnn_hidden_units[-1])
+    # 
+    # index = faiss.IndexFlatIP(user_dnn_hidden_units[-1] + embedding_dim)
     # # faiss.normalize_L2(item_embs)
     # index.add(item_embs)
     # # faiss.normalize_L2(user_embs)
