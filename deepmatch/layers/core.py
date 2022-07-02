@@ -94,7 +94,7 @@ class SampledSoftmaxLayer(Layer):
                                               labels=item_idx,
                                               inputs=inputs,
                                               num_sampled=num_sampled,
-                                              num_classes=self.vocabulary_size,  
+                                              num_classes=self.vocabulary_size,
                                               sampled_values=sampled_values
                                               )
         return tf.expand_dims(loss, axis=1)
@@ -301,10 +301,15 @@ def inbatch_softmax_cross_entropy(user_vec, item_vec, item_count, item_idx):
     logits = tf.matmul(user_vec, item_vec, transpose_b=True)
     Q = tf.gather(tf.constant(item_count / np.sum(item_count), 'float32'),
                   tf.squeeze(item_idx, axis=1))
-    logQ = tf.reshape(
-        tf.math.log(tf.clip_by_value(Q, 1e-8, 1.0)), (1, -1))
-    logits -= logQ  # subtract_log_q
-    labels = tf.compat.v1.diag(tf.ones(tf.shape(logits)[0]))
+    try:
+        logQ = tf.reshape(tf.math.log(Q), (1, -1))
+        logits -= logQ  # subtract_log_q
+        labels = tf.linalg.diag(tf.ones_like(logits[0]))
+    except AttributeError:
+        logQ = tf.reshape(tf.log(Q), (1, -1))
+        logits -= logQ  # subtract_log_q
+        labels = tf.diag(tf.ones_like(logits[0]))  # tf.shape(logits)[0]
+
     loss = tf.nn.softmax_cross_entropy_with_logits(
         labels=labels, logits=logits)
     return loss

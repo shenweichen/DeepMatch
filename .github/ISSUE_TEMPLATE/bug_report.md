@@ -20,7 +20,7 @@ Steps to reproduce the behavior:
 **Operating environment(运行环境):**
  - python version [e.g. 3.6, 3.7, 3.8]
  - tensorflow version [e.g. 1.4.0, 1.14.0, 2.5.0]
- - deepmatch version [e.g. 0.2.1,]
+ - deepmatch version [e.g. 0.3.0,]
 
 **Additional context**
 Add any other context about the problem here.
