@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from deepctr.layers.utils import reduce_max, reduce_mean, reduce_sum, concat_func, div, softmax
-from tensorflow.python.keras.initializers import Zeros, TruncatedNormal
+from tensorflow.python.keras.initializers import Zeros
 from tensorflow.python.keras.layers import Layer
 
 

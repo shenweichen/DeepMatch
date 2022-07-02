@@ -1,12 +1,11 @@
 import pandas as pd
 from deepctr.feature_column import SparseFeat, VarLenSparseFeat
+from deepmatch.models import SDM
+from deepmatch.utils import sampledsoftmaxloss, Sampler
 from preprocess import gen_data_set_sdm, gen_model_input_sdm
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.models import Model
-
-from deepmatch.models import SDM
-from deepmatch.utils import sampledsoftmaxloss
 
 if __name__ == "__main__":
     data = pd.read_csvdata = pd.read_csv("./movielens_sample.txt")
@@ -75,9 +74,11 @@ if __name__ == "__main__":
     if tf.__version__ >= '2.0.0':
         tf.compat.v1.disable_eager_execution()
 
+    sampler_config = Sampler('batch', num_sampled=5, item_name="movie_id", item_count=sample_count)
+
     # units must be equal to item embedding dim!
     model = SDM(user_feature_columns, item_feature_columns, history_feature_list=['movie_id', 'genres'],
-                units=embedding_dim, num_sampled=100, )
+                units=embedding_dim, sampler_config=sampler_config)
 
     model.compile(optimizer='adam', loss=sampledsoftmaxloss)  # "binary_crossentropy")
 
