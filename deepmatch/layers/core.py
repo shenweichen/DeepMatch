@@ -1,3 +1,10 @@
+"""
+
+Author:
+    Weichen Shen,weichenswc@163.com
+
+"""
+
 import numpy as np
 import tensorflow as tf
 from deepctr.layers.utils import reduce_max, reduce_mean, reduce_sum, concat_func, div, softmax

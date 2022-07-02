@@ -1,7 +1,8 @@
 """
 Author:
-    Qingliang Cai,leocaicoder@163.com
-    Weichen Shen,wcshen1994@164.com
+    Qingliang Cai, leocaicoder@163.com
+    Weichen Shen, weichenswc@163.com
+
 Reference:
 Li C, Liu Z, Wu M, et al. Multi-interest network with dynamic routing for recommendation at Tmall[C]//Proceedings of the 28th ACM International Conference on Information and Knowledge Management. 2019: 2615-2623.
 """
@@ -151,6 +152,8 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=T
                           dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
                           name="user_dnn")(
         user_deep_input)
+    user_embeddings = l2_normalize(user_embeddings)
+
     item_inputs_list = list(item_features.values())
 
     item_embedding_matrix = embedding_matrix_dict[item_feature_name]
@@ -160,6 +163,7 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=T
     item_embedding_weight = NoMask()(item_embedding_matrix(item_index))
 
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
+    #pooling_item_embedding_weight = l2_normalize(pooling_item_embedding_weight)
 
     if dynamic_k:
         user_embeddings = MaskUserEmbedding(k_max)([user_embeddings, interest_num])

@@ -1,3 +1,10 @@
+"""
+
+Author:
+    Weichen Shen,weichenswc@163.com
+
+"""
+
 import tensorflow as tf
 from deepctr.layers.normalization import LayerNormalization
 from deepctr.layers.utils import softmax, reduce_mean

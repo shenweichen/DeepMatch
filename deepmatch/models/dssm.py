@@ -1,6 +1,8 @@
 """
 Author:
-    Zhe Wang,734914022@qq.com
+    Zhe Wang, 734914022@qq.com
+    Weichen Shen, weichenswc@163.com
+
 Reference:
 Huang P S , He X , Gao J , et al. Learning deep structured semantic models for web search using clickthrough data[C]// Acm International Conference on Conference on Information & Knowledge Management. ACM, 2013.
 """

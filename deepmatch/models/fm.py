@@ -1,3 +1,8 @@
+"""
+Author:
+    Weichen Shen, weichenswc@163.com
+
+"""
 from deepctr.feature_column import build_input_features
 from deepctr.layers.core import PredictionLayer
 from deepctr.layers.utils import concat_func, reduce_sum

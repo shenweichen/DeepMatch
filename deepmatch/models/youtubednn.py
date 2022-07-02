@@ -1,6 +1,6 @@
 """
 Author:
-    Weichen Shen, wcshen1994@163.com
+    Weichen Shen, weichenswc@163.com
 Reference:
 Covington P, Adams J, Sargin E. Deep neural networks for youtube recommendations[C]//Proceedings of the 10th ACM conference on recommender systems. 2016: 191-198.
 """
