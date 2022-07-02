@@ -62,13 +62,13 @@ class SampledSoftmaxLayer(Layer):
         super(SampledSoftmaxLayer, self).build(input_shape)
 
     def call(self, inputs_with_item_idx, training=None, **kwargs):
-        embeddings, inputs, item_idx = inputs_with_item_idx
+        item_embeddings, user_vec, item_idx = inputs_with_item_idx
         if item_idx.dtype != tf.int64:
             item_idx = tf.cast(item_idx, tf.int64)
-
+        user_vec /= self.temperature
         if self.sampler == "batch":
-            item_ = tf.gather(embeddings, tf.squeeze(item_idx, axis=1))
-            logits = tf.matmul(inputs, item_, transpose_b=True) / self.temperature
+            item_vec = tf.gather(item_embeddings, tf.squeeze(item_idx, axis=1))
+            logits = tf.matmul(user_vec, item_vec, transpose_b=True)
             loss = inbatch_softmax_cross_entropy_with_logits(logits, self.item_count, item_idx)
 
         else:
@@ -93,10 +93,10 @@ class SampledSoftmaxLayer(Layer):
             else:
                 raise ValueError(' `sampler` is not supported ')
 
-            loss = tf.nn.sampled_softmax_loss(weights=embeddings,
+            loss = tf.nn.sampled_softmax_loss(weights=item_embeddings,
                                               biases=self.zero_bias,
                                               labels=item_idx,
-                                              inputs=inputs,
+                                              inputs=user_vec,
                                               num_sampled=num_sampled,
                                               num_classes=self.vocabulary_size,
                                               sampled_values=sampled_values
@@ -123,12 +123,12 @@ class InBatchSoftmaxLayer(Layer):
     def build(self, input_shape):
         super(InBatchSoftmaxLayer, self).build(input_shape)
 
-    def call(self, inputs_with_label_idx, training=None, **kwargs):
-        user_emb, item_emb, label_idx = inputs_with_label_idx
-        if label_idx.dtype != tf.int64:
-            label_idx = tf.cast(label_idx, tf.int64)
-        logits = tf.matmul(user_emb, item_emb, transpose_b=True) / self.temperature
-        loss = inbatch_softmax_cross_entropy_with_logits(logits, self.item_count, label_idx)
+    def call(self, inputs_with_item_idx, training=None, **kwargs):
+        user_vec, item_vec, item_idx = inputs_with_item_idx
+        if item_idx.dtype != tf.int64:
+            item_idx = tf.cast(item_idx, tf.int64)
+        logits = tf.matmul(user_vec, item_vec, transpose_b=True) / self.temperature
+        loss = inbatch_softmax_cross_entropy_with_logits(logits, self.item_count, item_idx)
         return tf.expand_dims(loss, axis=1)
 
     def compute_output_shape(self, input_shape):
