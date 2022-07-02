@@ -127,7 +127,8 @@ class InBatchSoftmaxLayer(Layer):
         user_vec, item_vec, item_idx = inputs_with_item_idx
         if item_idx.dtype != tf.int64:
             item_idx = tf.cast(item_idx, tf.int64)
-        logits = tf.matmul(user_vec, item_vec, transpose_b=True) / self.temperature
+        user_vec /= self.temperature
+        logits = tf.matmul(user_vec, item_vec, transpose_b=True)
         loss = inbatch_softmax_cross_entropy_with_logits(logits, self.item_count, item_idx)
         return tf.expand_dims(loss, axis=1)
 
