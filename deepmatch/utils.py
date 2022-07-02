@@ -8,9 +8,9 @@ Author:
 
 import json
 import logging
-from threading import Thread
-from collections import namedtuple
 import requests
+from collections import namedtuple
+from threading import Thread
 
 try:
     from packaging.version import parse
@@ -23,7 +23,7 @@ from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.layers import Lambda
 
 
-class Sampler(namedtuple('Sampler', ['sampler', 'num_sampled','item_name', 'item_count', 'distortion'])):
+class Sampler(namedtuple('Sampler', ['sampler', 'num_sampled', 'item_name', 'item_count', 'distortion'])):
     __slots__ = ()
 
     def __new__(cls, sampler, num_sampled, item_name, item_count=None, distortion=1.0, ):
@@ -34,7 +34,7 @@ class Sampler(namedtuple('Sampler', ['sampler', 'num_sampled','item_name', 'item
 
 
 def l2_normalize(x, axis=-1):
-    return Lambda(lambda x: tf.nn.l2_normalize(x, axis=axis))(x)
+    return Lambda(lambda x: tf.nn.l2_normalize(x, axis))(x)
 
 
 def inner_product(x, y, temperature=1.0):
