@@ -18,13 +18,13 @@ from tensorflow.python.keras.models import Model
 from ..layers.core import PoolingLayer, SampledSoftmaxLayer, EmbeddingIndex
 from ..layers.interaction import UserAttention, SelfMultiHeadAttention, AttentionSequencePoolingLayer
 from ..layers.sequence import DynamicMultiRNN
-from ..utils import get_item_embedding
+from ..utils import get_item_embedding, l2_normalize
 
 
-def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sampled=5, units=64, rnn_layers=2,
+def SDM(user_feature_columns, item_feature_columns, history_feature_list, units=64, rnn_layers=2,
         dropout_rate=0.2,
         rnn_num_res=1,
-        num_head=4, l2_reg_embedding=1e-6, dnn_activation='tanh', seed=1024):
+        num_head=4, l2_reg_embedding=1e-6, dnn_activation='tanh', temperature=0.05, sampler_config=None, seed=1024):
     """Instantiates the Sequential Deep Matching Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
@@ -131,15 +131,16 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sa
     gate_output = Lambda(lambda x: tf.multiply(x[0], x[1]) + tf.multiply(1 - x[0], x[2]))(
         [gate, short_output, prefer_output])
     gate_output_reshape = Lambda(lambda x: tf.squeeze(x, 1))(gate_output)
+    gate_output_reshape = l2_normalize(gate_output_reshape)
 
     item_index = EmbeddingIndex(list(range(item_vocabulary_size)))(item_features[item_feature_name])
     item_embedding_matrix = embedding_matrix_dict[item_feature_name]
     item_embedding_weight = NoMask()(item_embedding_matrix(item_index))
 
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
-
-    output = SampledSoftmaxLayer(num_sampled=num_sampled)([
-        pooling_item_embedding_weight, gate_output_reshape, item_features[item_feature_name]])
+    pooling_item_embedding_weight = l2_normalize(pooling_item_embedding_weight)
+    output = SampledSoftmaxLayer(sampler_config=sampler_config._asdict())([
+        pooling_item_embedding_weight, gate_output_reshape / temperature, item_features[item_feature_name]])
     model = Model(inputs=user_inputs_list + item_inputs_list, outputs=output)
 
     # model.user_input = user_inputs_list

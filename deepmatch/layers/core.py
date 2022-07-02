@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 from deepctr.layers.activation import activation_layer
 from deepctr.layers.utils import reduce_max, reduce_mean, reduce_sum, concat_func, div, softmax
@@ -45,42 +46,93 @@ class PoolingLayer(Layer):
 
 
 class SampledSoftmaxLayer(Layer):
-    def __init__(self, num_sampled=5, **kwargs):
-        self.num_sampled = num_sampled
+    def __init__(self, sampler_config, **kwargs):
+        self.sampler_config = sampler_config
+        self.sampler = self.sampler_config['sampler']
+        self.item_count = self.sampler_config['item_count']
+
         super(SampledSoftmaxLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.size = input_shape[0][0]
-        self.zero_bias = self.add_weight(shape=[self.size],
+        self.vocabulary_size = input_shape[0][0]
+        self.zero_bias = self.add_weight(shape=[self.vocabulary_size],
                                          initializer=Zeros,
                                          dtype=tf.float32,
                                          trainable=False,
                                          name="bias")
         super(SampledSoftmaxLayer, self).build(input_shape)
 
-    def call(self, inputs_with_label_idx, training=None, **kwargs):
-        """
-        The first input should be the model as it were, and the second the
-        target (i.e., a repeat of the training data) to compute the labels
-        argument
-        """
-        embeddings, inputs, label_idx = inputs_with_label_idx
+    def call(self, inputs_with_item_idx, training=None, **kwargs):
+        embeddings, inputs, item_idx = inputs_with_item_idx
+        if item_idx.dtype != tf.int64:
+            item_idx = tf.cast(item_idx, tf.int64)
 
-        loss = tf.nn.sampled_softmax_loss(weights=embeddings,  # self.item_embedding.
-                                          biases=self.zero_bias,
-                                          labels=label_idx,
-                                          inputs=inputs,
-                                          num_sampled=self.num_sampled,
-                                          num_classes=self.size,  # self.target_song_size
-                                          )
+        if self.sampler in ("batch", "batch_correct"):
+            item_ = tf.gather(embeddings, tf.squeeze(item_idx, axis=1))
+            loss = inbatch_softmax_cross_entropy(inputs, item_, self.item_count, item_idx)
+
+        else:
+            num_sampled = self.sampler_config['num_sampled']
+            if self.sampler == "uniform":
+                sampled_values = tf.compat.v1.nn.uniform_candidate_sampler(item_idx, 1, num_sampled, True,
+                                                                           self.vocabulary_size, seed=None, name=None)
+            elif self.sampler == "learned_unigram":
+                sampled_values = tf.nn.learned_unigram_candidate_sampler(item_idx, 1, num_sampled, True,
+                                                                         self.vocabulary_size, seed=None, name=None)
+            elif self.sampler == "fixed_unigram":
+                sampled_values = tf.nn.fixed_unigram_candidate_sampler(item_idx, 1, num_sampled, True,
+                                                                       self.vocabulary_size,
+                                                                       distortion=1.0,
+                                                                       unigrams=np.maximum(self.item_count, 1).tolist(),
+                                                                       seed=None,
+                                                                       name=None)
+            else:
+                raise ValueError(' `sampler` is not supported ')
+
+            loss = tf.nn.sampled_softmax_loss(weights=embeddings,
+                                              biases=self.zero_bias,
+                                              labels=item_idx,
+                                              inputs=inputs,
+                                              num_sampled=num_sampled,
+                                              num_classes=self.vocabulary_size,  
+                                              sampled_values=sampled_values
+                                              )
         return tf.expand_dims(loss, axis=1)
 
     def compute_output_shape(self, input_shape):
         return (None, 1)
 
     def get_config(self, ):
-        config = {'num_sampled': self.num_sampled}
+        config = {'sampler_config': self.sampler_config}
         base_config = super(SampledSoftmaxLayer, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+
+class InBatchSoftmaxLayer(Layer):
+    def __init__(self, sampler_config, **kwargs):
+        self.sampler_config = sampler_config
+        self.sampler = self.sampler_config['sampler']
+        self.item_count = self.sampler_config['item_count']
+
+        super(InBatchSoftmaxLayer, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        super(InBatchSoftmaxLayer, self).build(input_shape)
+
+    def call(self, inputs_with_label_idx, training=None, **kwargs):
+        user_emb, item_emb, label_idx = inputs_with_label_idx
+        if label_idx.dtype != tf.int64:
+            label_idx = tf.cast(label_idx, tf.int64)
+
+        loss = inbatch_softmax_cross_entropy(user_emb, item_emb, self.item_count, label_idx)
+        return tf.expand_dims(loss, axis=1)
+
+    def compute_output_shape(self, input_shape):
+        return (None, 1)
+
+    def get_config(self, ):
+        config = {'sampler_config': self.sampler_config}
+        base_config = super(InBatchSoftmaxLayer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
 
@@ -243,6 +295,19 @@ def squash(inputs):
     scalar_factor = vec_squared_norm / (1 + vec_squared_norm) / tf.sqrt(vec_squared_norm + 1e-9)
     vec_squashed = scalar_factor * inputs
     return vec_squashed
+
+
+def inbatch_softmax_cross_entropy(user_vec, item_vec, item_count, item_idx):
+    logits = tf.matmul(user_vec, item_vec, transpose_b=True)
+    Q = tf.gather(tf.constant(item_count / np.sum(item_count), 'float32'),
+                  tf.squeeze(item_idx, axis=1))
+    logQ = tf.reshape(
+        tf.math.log(tf.clip_by_value(Q, 1e-8, 1.0)), (1, -1))
+    logits -= logQ  # subtract_log_q
+    labels = tf.compat.v1.diag(tf.ones(tf.shape(logits)[0]))
+    loss = tf.nn.softmax_cross_entropy_with_logits(
+        labels=labels, logits=logits)
+    return loss
 
 
 class EmbeddingIndex(Layer):

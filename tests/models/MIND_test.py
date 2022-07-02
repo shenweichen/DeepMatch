@@ -1,7 +1,7 @@
 import pytest
 import tensorflow as tf
 from deepmatch.models import MIND
-from deepmatch.utils import sampledsoftmaxloss
+from deepmatch.utils import sampledsoftmaxloss, Sampler
 from tensorflow.python.keras import backend as K
 
 from ..utils import check_model, get_xy_fd
@@ -21,8 +21,9 @@ def test_MIND(dynamic_k, p):
         tf.compat.v1.disable_eager_execution()
     else:
         K.set_learning_phase(True)
-    model = MIND(user_feature_columns, item_feature_columns, num_sampled=2, p=p, dynamic_k=dynamic_k,
-                 user_dnn_hidden_units=(16, 4))
+    sampler_config = Sampler(sampler='uniform', num_sampled=2, item_name='item')
+    model = MIND(user_feature_columns, item_feature_columns, p=p, dynamic_k=dynamic_k,
+                 user_dnn_hidden_units=(16, 4), sampler_config=sampler_config)
 
     model.compile('adam', sampledsoftmaxloss)
     check_model(model, model_name, x, y)

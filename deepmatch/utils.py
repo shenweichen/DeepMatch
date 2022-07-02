@@ -9,7 +9,7 @@ Author:
 import json
 import logging
 from threading import Thread
-
+from collections import namedtuple
 import requests
 
 try:
@@ -17,11 +17,28 @@ try:
 except ImportError:
     from pip._vendor.packaging.version import parse
 
-
 import tensorflow as tf
 
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.layers import Lambda
+
+
+class Sampler(namedtuple('Sampler', ['sampler', 'num_sampled','item_name', 'item_count', 'distortion'])):
+    __slots__ = ()
+
+    def __new__(cls, sampler, num_sampled, item_name, item_count=None, distortion=1.0, ):
+        return super(Sampler, cls).__new__(cls, sampler, num_sampled, item_name, item_count, distortion)
+
+    # def __hash__(self):
+    #     return self.sampler.__hash__()
+
+
+def l2_normalize(x, axis=-1):
+    return Lambda(lambda x: tf.nn.l2_normalize(x, axis=axis))(x)
+
+
+def inner_product(x, y, temperature=1.0):
+    return Lambda(lambda x: tf.reduce_sum(x[0] * [1]) / temperature)([x, y])
 
 
 def recall_N(y_true, y_pred, N=50):
@@ -31,10 +48,10 @@ def recall_N(y_true, y_pred, N=50):
 def sampledsoftmaxloss(y_true, y_pred):
     return K.mean(y_pred)
 
+
 def get_item_embedding(item_embedding, item_input_layer):
     return Lambda(lambda x: tf.squeeze(tf.gather(item_embedding, x), axis=1))(
         item_input_layer)
-
 
 
 def check_version(version):

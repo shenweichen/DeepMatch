@@ -17,7 +17,7 @@ from tensorflow.python.keras.models import Model
 from ..inputs import create_embedding_matrix
 from ..layers.core import CapsuleLayer, PoolingLayer, MaskUserEmbedding, LabelAwareAttention, SampledSoftmaxLayer, \
     EmbeddingIndex
-from ..utils import get_item_embedding
+from ..utils import get_item_embedding, l2_normalize
 
 
 def shape_target(target_emb_tmp, target_emb_size):
@@ -45,9 +45,9 @@ def adaptive_interest_num(seq_len, k_max):
     return k_user
 
 
-def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=100, dynamic_k=True,
+def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=True,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
-         dnn_dropout=0, output_activation='linear', seed=1024):
+         dnn_dropout=0, temperature=0.05, output_activation='linear', sampler_config=None, seed=1024):
     """Instantiates the MIND Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
@@ -167,7 +167,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     else:
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
 
-    output = SampledSoftmaxLayer(num_sampled=num_sampled)(
+    output = SampledSoftmaxLayer(sampler_config=sampler_config._asdict())(
         [pooling_item_embedding_weight, user_embedding_final, item_features[item_feature_name]])
     model = Model(inputs=inputs_list + item_inputs_list, outputs=output)
 

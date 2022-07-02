@@ -4,20 +4,24 @@ Author:
 Reference:
 Covington P, Adams J, Sargin E. Deep neural networks for youtube recommendations[C]//Proceedings of the 10th ACM conference on recommender systems. 2016: 191-198.
 """
+import tensorflow as tf
 from deepctr.feature_column import build_input_features
 from deepctr.layers import DNN
 from deepctr.layers.utils import NoMask, combined_dnn_input
+from tensorflow.python.keras.layers import Lambda
 from tensorflow.python.keras.models import Model
 
 from ..inputs import input_from_feature_columns, create_embedding_matrix
 from ..layers.core import SampledSoftmaxLayer, EmbeddingIndex, PoolingLayer
-from ..utils import get_item_embedding
+from ..utils import get_item_embedding, l2_normalize
 
 
-def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
+
+def YoutubeDNN(user_feature_columns, item_feature_columns,
                user_dnn_hidden_units=(64, 32),
                dnn_activation='relu', dnn_use_bn=False,
-               l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0, output_activation='linear', seed=1024, ):
+               l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0, output_activation='linear', temperature=0.05,
+               sampler_config=None, seed=1024, ):
     """Instantiates the YoutubeDNN Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
@@ -54,6 +58,7 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
     item_inputs_list = list(item_features.values())
     user_dnn_out = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn, dnn_dropout,
                        dnn_use_bn, output_activation=output_activation, seed=seed)(user_dnn_input)
+    user_dnn_out = l2_normalize(user_dnn_out)
 
     item_index = EmbeddingIndex(list(range(item_vocabulary_size)))(item_features[item_feature_name])
 
@@ -63,8 +68,9 @@ def YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5,
 
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
-    output = SampledSoftmaxLayer(num_sampled=num_sampled)(
-        [pooling_item_embedding_weight, user_dnn_out, item_features[item_feature_name]])
+    pooling_item_embedding_weight = l2_normalize(pooling_item_embedding_weight)
+    output = SampledSoftmaxLayer(sampler_config._asdict())(
+        [pooling_item_embedding_weight, user_dnn_out / temperature, item_features[item_feature_name]])
     model = Model(inputs=user_inputs_list + item_inputs_list, outputs=output)
 
     model.__setattr__("user_input", user_inputs_list)

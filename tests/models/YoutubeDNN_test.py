@@ -1,12 +1,17 @@
+import pytest
 import tensorflow as tf
-from tensorflow.python.keras import backend as K
-
 from deepmatch.models import YoutubeDNN
-from deepmatch.utils import sampledsoftmaxloss
-from ..utils import check_model, get_xy_fd
+from deepmatch.utils import sampledsoftmaxloss, Sampler
+from tensorflow.python.keras import backend as K
+from tests.utils import check_model, get_xy_fd
 
 
-def test_YoutubeDNN():
+@pytest.mark.parametrize(
+    'sampler',
+    ['batch', 'batch_correct', 'uniform', 'learned_unigram', 'fixed_unigram'
+     ]
+)
+def test_YoutubeDNN(sampler):
     model_name = "YoutubeDNN"
 
     x, y, user_feature_columns, item_feature_columns = get_xy_fd(False)
@@ -15,8 +20,12 @@ def test_YoutubeDNN():
         tf.compat.v1.disable_eager_execution()
     else:
         K.set_learning_phase(True)
-
-    model = YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=2, user_dnn_hidden_units=(16, 4))
+    from collections import Counter
+    train_counter = Counter(x['item'])
+    item_count = [train_counter.get(i, 0) for i in range(item_feature_columns[0].vocabulary_size)]
+    sampler_config = Sampler(sampler, num_sampled=2, item_name='item', item_count=item_count, distortion=1.0)
+    model = YoutubeDNN(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(16, 4),
+                       sampler_config=sampler_config )
     model.compile('adam', sampledsoftmaxloss)
 
     check_model(model, model_name, x, y, check_model_io=True)
