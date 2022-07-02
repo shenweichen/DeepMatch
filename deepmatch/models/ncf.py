@@ -92,11 +92,11 @@ def NCF(user_feature_columns, item_feature_columns, user_gmf_embedding_dim=20, i
 
     mlp_input = Concatenate(axis=1)([user_mlp_out, item_mlp_out])
     mlp_out = DNN(dnn_hidden_units, dnn_activation, l2_reg_dnn, dnn_dropout,
-                  dnn_use_bn, seed = seed, name="mlp_embedding")(mlp_input)
+                  dnn_use_bn, seed=seed, name="mlp_embedding")(mlp_input)
 
     # Fusion of GMF and MLP
     neumf_input = Concatenate(axis=1)([gmf_out, mlp_out])
-    neumf_out = DNN(hidden_units=[1], activation='sigmoid',seed=seed)(neumf_input)
+    neumf_out = DNN(hidden_units=[1], activation='sigmoid', seed=seed)(neumf_input)
     output = Lambda(lambda x: x, name='neumf_out')(neumf_out)
 
     # output = PredictionLayer(task, False)(neumf_out)

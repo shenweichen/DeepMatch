@@ -76,7 +76,7 @@ def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 
         output = PredictionLayer("binary", False)(score)
 
     elif loss_type == "softmax":
-        output = InBatchSoftmaxLayer(sampler_config._asdict(),temperature)(
+        output = InBatchSoftmaxLayer(sampler_config._asdict(), temperature)(
             [user_dnn_out, item_dnn_out, item_features[sampler_config.item_name]])
 
     model = Model(inputs=user_inputs_list + item_inputs_list, outputs=output)

@@ -68,7 +68,7 @@ class SampledSoftmaxLayer(Layer):
         if item_idx.dtype != tf.int64:
             item_idx = tf.cast(item_idx, tf.int64)
 
-        if self.sampler in ("batch", "batch_correct"):
+        if self.sampler == "batch":
             item_ = tf.gather(embeddings, tf.squeeze(item_idx, axis=1))
             logits = tf.matmul(inputs, item_, transpose_b=True) / self.temperature
             loss = inbatch_softmax_cross_entropy_with_logits(logits, self.item_count, item_idx)
@@ -109,7 +109,7 @@ class SampledSoftmaxLayer(Layer):
         return (None, 1)
 
     def get_config(self, ):
-        config = {'sampler_config': self.sampler_config}
+        config = {'sampler_config': self.sampler_config, 'temperature': self.temperature}
         base_config = super(SampledSoftmaxLayer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
@@ -137,7 +137,7 @@ class InBatchSoftmaxLayer(Layer):
         return (None, 1)
 
     def get_config(self, ):
-        config = {'sampler_config': self.sampler_config}
+        config = {'sampler_config': self.sampler_config, 'temperature': self.temperature}
         base_config = super(InBatchSoftmaxLayer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
@@ -313,7 +313,7 @@ def inbatch_softmax_cross_entropy_with_logits(logits, item_count, item_idx):
     except AttributeError:
         logQ = tf.reshape(tf.log(Q), (1, -1))
         logits -= logQ  # subtract_log_q
-        labels = tf.diag(tf.ones_like(logits[0]))  # tf.shape(logits)[0]
+        labels = tf.diag(tf.ones_like(logits[0]))
 
     loss = tf.nn.softmax_cross_entropy_with_logits(
         labels=labels, logits=logits)
