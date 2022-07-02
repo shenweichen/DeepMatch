@@ -9,7 +9,7 @@ REQUIRED_PACKAGES = [
 
 setuptools.setup(
     name="deepmatch",
-    version="0.2.2",
+    version="0.3.0",
     author="Weichen Shen",
     author_email="weichenswc@163.com",
     description="Deep matching model library for recommendations, advertising. It's easy to train models and to **export representation vectors** for user and item which can be used for **ANN search**.",
@@ -22,8 +22,8 @@ setuptools.setup(
     python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*",  # '>=3.4',  # 3.4.6
     install_requires=REQUIRED_PACKAGES,
     extras_require={
-        "cpu": ["tensorflow>=1.4.0,!=1.7.*,!=1.8.*"],
-        "gpu": ["tensorflow-gpu>=1.4.0,!=1.7.*,!=1.8.*"],
+        "cpu": ["tensorflow>=1.9.0"],
+        "gpu": ["tensorflow-gpu>=1.9.0"],
     },
     entry_points={
     },
