@@ -76,8 +76,12 @@ class SampledSoftmaxLayer(Layer):
         else:
             num_sampled = self.sampler_config['num_sampled']
             if self.sampler == "uniform":
-                sampled_values = tf.nn.uniform_candidate_sampler(item_idx, 1, num_sampled, True,
-                                                                 self.vocabulary_size, seed=None, name=None)
+                try:
+                    sampled_values = tf.nn.uniform_candidate_sampler(item_idx, 1, num_sampled, True,
+                                                                     self.vocabulary_size, seed=None, name=None)
+                except AttributeError:
+                    sampled_values = tf.random.uniform_candidate_sampler(item_idx, 1, num_sampled, True,
+                                                                         self.vocabulary_size, seed=None, name=None)
             elif self.sampler == "learned_unigram":
                 sampled_values = tf.nn.learned_unigram_candidate_sampler(item_idx, 1, num_sampled, True,
                                                                          self.vocabulary_size, seed=None, name=None)
