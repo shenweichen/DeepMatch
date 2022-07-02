@@ -1,18 +1,16 @@
 from __future__ import absolute_import, division, print_function
 
 import inspect
+import numpy as np
 import os
 import sys
-
-import numpy as np
 import tensorflow as tf
 from deepctr.feature_column import SparseFeat, DenseFeat, VarLenSparseFeat, DEFAULT_GROUP_NAME
+from deepmatch.layers import custom_objects
 from numpy.testing import assert_allclose
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.layers import Input, Masking
 from tensorflow.python.keras.models import Model, load_model, save_model
-
-from deepmatch.layers import custom_objects
 
 SAMPLE_SIZE = 8
 VOCABULARY_SIZE = 4
@@ -346,10 +344,10 @@ def check_model(model, model_name, x, y, check_model_io=True):
     user_embedding_model = Model(inputs=model.user_input, outputs=model.user_embedding)
     item_embedding_model = Model(inputs=model.item_input, outputs=model.item_embedding)
 
-    user_embs = user_embedding_model.predict(x, batch_size=2 ** 12)
+    _ = user_embedding_model.predict(x, batch_size=2 ** 12)
     # user_embs = user_embs[:, i, :]  i in [0,k_max) if MIND
     print(model_name + " user_emb pass!")
-    item_embs = item_embedding_model.predict(x, batch_size=2 ** 12)
+    _ = item_embedding_model.predict(x, batch_size=2 ** 12)
 
     print(model_name + " item_emb pass!")
 

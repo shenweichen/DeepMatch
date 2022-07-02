@@ -29,19 +29,19 @@ def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, temper
 
     user_features = build_input_features(user_feature_columns)
     user_inputs_list = list(user_features.values())
-    user_sparse_embedding_list, user_dense_value_list = input_from_feature_columns(user_features,
-                                                                                   user_feature_columns,
-                                                                                   l2_reg_embedding, seed=seed,
-                                                                                   support_dense=False,
-                                                                                   embedding_matrix_dict=embedding_matrix_dict)
+    user_sparse_embedding_list, _ = input_from_feature_columns(user_features,
+                                                               user_feature_columns,
+                                                               l2_reg_embedding, seed=seed,
+                                                               support_dense=False,
+                                                               embedding_matrix_dict=embedding_matrix_dict)
 
     item_features = build_input_features(item_feature_columns)
     item_inputs_list = list(item_features.values())
-    item_sparse_embedding_list, item_dense_value_list = input_from_feature_columns(item_features,
-                                                                                   item_feature_columns,
-                                                                                   l2_reg_embedding, seed=seed,
-                                                                                   support_dense=False,
-                                                                                   embedding_matrix_dict=embedding_matrix_dict)
+    item_sparse_embedding_list, _ = input_from_feature_columns(item_features,
+                                                               item_feature_columns,
+                                                               l2_reg_embedding, seed=seed,
+                                                               support_dense=False,
+                                                               embedding_matrix_dict=embedding_matrix_dict)
 
     user_dnn_input = concat_func(user_sparse_embedding_list, axis=1)
     user_vector_sum = Lambda(lambda x: reduce_sum(x, axis=1, keep_dims=False))(user_dnn_input)

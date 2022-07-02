@@ -102,7 +102,7 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, units=
 
     prefer_sess_length = features['prefer_sess_length']
     prefer_att_outputs = []
-    for i, prefer_emb in enumerate(prefer_emb_list):
+    for prefer_emb in prefer_emb_list:
         prefer_attention_output = AttentionSequencePoolingLayer(dropout_rate=0)(
             [user_emb_output, prefer_emb, prefer_sess_length])
         prefer_att_outputs.append(prefer_attention_output)

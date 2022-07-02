@@ -109,7 +109,7 @@ class SoftmaxWeightedSum(Layer):
             lower_tri = tf.ones([length, length])
             try:
                 lower_tri = tf.contrib.linalg.LinearOperatorTriL(lower_tri).to_dense()
-            except:
+            except AttributeError:
                 lower_tri = tf.linalg.LinearOperatorLowerTriangular(lower_tri).to_dense()
             masks = tf.tile(tf.expand_dims(lower_tri, 0), [tf.shape(align)[0], 1, 1])
             align = tf.where(tf.equal(masks, 0), paddings, align)

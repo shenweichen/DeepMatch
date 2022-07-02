@@ -48,7 +48,7 @@ def NCF(user_feature_columns, item_feature_columns, user_gmf_embedding_dim=20, i
                                 for feat, size in user_feature_columns.items()]
     user_features = build_input_features(user_gmf_feature_columns)
     user_inputs_list = list(user_features.values())
-    user_gmf_sparse_embedding_list, user_gmf_dense_value_list = input_from_feature_columns(user_features,
+    user_gmf_sparse_embedding_list, _ = input_from_feature_columns(user_features,
                                                                                            user_gmf_feature_columns,
                                                                                            l2_reg_embedding, seed=seed,
                                                                                            prefix='gmf_')
@@ -59,7 +59,7 @@ def NCF(user_feature_columns, item_feature_columns, user_gmf_embedding_dim=20, i
                                 for feat, size in item_feature_columns.items()]
     item_features = build_input_features(item_gmf_feature_columns)
     item_inputs_list = list(item_features.values())
-    item_gmf_sparse_embedding_list, item_gmf_dense_value_list = input_from_feature_columns(item_features,
+    item_gmf_sparse_embedding_list, _ = input_from_feature_columns(item_features,
                                                                                            item_gmf_feature_columns,
                                                                                            l2_reg_embedding, seed=seed,
                                                                                            prefix='gmf_')
