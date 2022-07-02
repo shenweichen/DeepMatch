@@ -5,7 +5,7 @@ from tensorflow.python.keras.layers import Lambda
 from tensorflow.python.keras.models import Model
 
 from ..inputs import create_embedding_matrix, input_from_feature_columns
-from ..layers.core import Similarity, InBatchSoftmaxLayer
+from ..layers.core import InBatchSoftmaxLayer
 from ..utils import l2_normalize, inner_product
 
 
@@ -50,10 +50,6 @@ def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, temper
     item_dnn_input = concat_func(item_sparse_embedding_list, axis=1)
     item_vector_sum = Lambda(lambda x: reduce_sum(x, axis=1, keep_dims=False))(item_dnn_input)
     item_vector_sum = l2_normalize(item_vector_sum)
-
-    # score = Similarity(type=metric, gamma=gamma)([user_vector_sum, item_vector_sum])
-    # 
-    # output = PredictionLayer("binary", False)(score)
 
     if loss_type == "logistic":
         score = inner_product(user_vector_sum, item_vector_sum, temperature)
