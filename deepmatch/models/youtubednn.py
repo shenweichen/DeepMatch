@@ -16,7 +16,6 @@ from ..layers.core import SampledSoftmaxLayer, EmbeddingIndex, PoolingLayer
 from ..utils import get_item_embedding, l2_normalize
 
 
-
 def YoutubeDNN(user_feature_columns, item_feature_columns,
                user_dnn_hidden_units=(64, 32),
                dnn_activation='relu', dnn_use_bn=False,
@@ -69,8 +68,8 @@ def YoutubeDNN(user_feature_columns, item_feature_columns,
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
     pooling_item_embedding_weight = l2_normalize(pooling_item_embedding_weight)
-    output = SampledSoftmaxLayer(sampler_config._asdict())(
-        [pooling_item_embedding_weight, user_dnn_out / temperature, item_features[item_feature_name]])
+    output = SampledSoftmaxLayer(sampler_config._asdict(), temperature)(
+        [pooling_item_embedding_weight, user_dnn_out, item_features[item_feature_name]])
     model = Model(inputs=user_inputs_list + item_inputs_list, outputs=output)
 
     model.__setattr__("user_input", user_inputs_list)

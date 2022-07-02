@@ -46,8 +46,9 @@ class PoolingLayer(Layer):
 
 
 class SampledSoftmaxLayer(Layer):
-    def __init__(self, sampler_config, **kwargs):
+    def __init__(self, sampler_config, temperature=1.0, **kwargs):
         self.sampler_config = sampler_config
+        self.temperature = temperature
         self.sampler = self.sampler_config['sampler']
         self.item_count = self.sampler_config['item_count']
 
@@ -69,13 +70,14 @@ class SampledSoftmaxLayer(Layer):
 
         if self.sampler in ("batch", "batch_correct"):
             item_ = tf.gather(embeddings, tf.squeeze(item_idx, axis=1))
-            loss = inbatch_softmax_cross_entropy(inputs, item_, self.item_count, item_idx)
+            logits = tf.matmul(inputs, item_, transpose_b=True) / self.temperature
+            loss = inbatch_softmax_cross_entropy_with_logits(logits, self.item_count, item_idx)
 
         else:
             num_sampled = self.sampler_config['num_sampled']
             if self.sampler == "uniform":
                 sampled_values = tf.nn.uniform_candidate_sampler(item_idx, 1, num_sampled, True,
-                                                                           self.vocabulary_size, seed=None, name=None)
+                                                                 self.vocabulary_size, seed=None, name=None)
             elif self.sampler == "learned_unigram":
                 sampled_values = tf.nn.learned_unigram_candidate_sampler(item_idx, 1, num_sampled, True,
                                                                          self.vocabulary_size, seed=None, name=None)
@@ -109,9 +111,9 @@ class SampledSoftmaxLayer(Layer):
 
 
 class InBatchSoftmaxLayer(Layer):
-    def __init__(self, sampler_config, **kwargs):
+    def __init__(self, sampler_config, temperature=1.0, **kwargs):
         self.sampler_config = sampler_config
-        self.sampler = self.sampler_config['sampler']
+        self.temperature = temperature
         self.item_count = self.sampler_config['item_count']
 
         super(InBatchSoftmaxLayer, self).__init__(**kwargs)
@@ -123,8 +125,8 @@ class InBatchSoftmaxLayer(Layer):
         user_emb, item_emb, label_idx = inputs_with_label_idx
         if label_idx.dtype != tf.int64:
             label_idx = tf.cast(label_idx, tf.int64)
-
-        loss = inbatch_softmax_cross_entropy(user_emb, item_emb, self.item_count, label_idx)
+        logits = tf.matmul(user_emb, item_emb, transpose_b=true) / self.temperature
+        loss = inbatch_softmax_cross_entropy_with_logits(logits, self.item_count, label_idx)
         return tf.expand_dims(loss, axis=1)
 
     def compute_output_shape(self, input_shape):
@@ -297,8 +299,7 @@ def squash(inputs):
     return vec_squashed
 
 
-def inbatch_softmax_cross_entropy(user_vec, item_vec, item_count, item_idx):
-    logits = tf.matmul(user_vec, item_vec, transpose_b=True)
+def inbatch_softmax_cross_entropy_with_logits(logits, item_count, item_idx):
     Q = tf.gather(tf.constant(item_count / np.sum(item_count), 'float32'),
                   tf.squeeze(item_idx, axis=1))
     try:

@@ -139,8 +139,8 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, units=
 
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
     pooling_item_embedding_weight = l2_normalize(pooling_item_embedding_weight)
-    output = SampledSoftmaxLayer(sampler_config=sampler_config._asdict())([
-        pooling_item_embedding_weight, gate_output_reshape / temperature, item_features[item_feature_name]])
+    output = SampledSoftmaxLayer(sampler_config._asdict(), temperature)([
+        pooling_item_embedding_weight, gate_output_reshape, item_features[item_feature_name]])
     model = Model(inputs=user_inputs_list + item_inputs_list, outputs=output)
 
     # model.user_input = user_inputs_list

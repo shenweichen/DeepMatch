@@ -167,7 +167,7 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=T
     else:
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
 
-    output = SampledSoftmaxLayer(sampler_config=sampler_config._asdict())(
+    output = SampledSoftmaxLayer(sampler_config._asdict(), temperature)(
         [pooling_item_embedding_weight, user_embedding_final, item_features[item_feature_name]])
     model = Model(inputs=inputs_list + item_inputs_list, outputs=output)
 
