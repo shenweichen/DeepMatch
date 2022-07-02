@@ -1,7 +1,8 @@
 # DeepMatch
 
 [![Python Versions](https://img.shields.io/pypi/pyversions/deepmatch.svg)](https://pypi.org/project/deepmatch)
-[![TensorFlow Versions](https://img.shields.io/badge/TensorFlow-1.4+/2.0+-blue.svg)](https://pypi.org/project/deepmatch)
+[![TensorFlow Versions](https://img.shields.io/badge/TensorFlow-1.9+/2.0+-blue.svg)](https://pypi.org/project/deepmatch)
+[![Downloads](https://pepy.tech/badge/deepmatch)](https://pepy.tech/project/deepmatch)
 [![PyPI Version](https://img.shields.io/pypi/v/deepmatch.svg)](https://pypi.org/project/deepmatch)
 [![GitHub Issues](https://img.shields.io/github/issues/shenweichen/deepmatch.svg
 )](https://github.com/shenweichen/deepmatch/issues)
@@ -11,7 +12,7 @@
 [![Documentation Status](https://readthedocs.org/projects/deepmatch/badge/?version=latest)](https://deepmatch.readthedocs.io/)
 ![CI status](https://github.com/shenweichen/deepmatch/workflows/CI/badge.svg)
 [![codecov](https://codecov.io/gh/shenweichen/DeepMatch/branch/master/graph/badge.svg)](https://codecov.io/gh/shenweichen/DeepMatch)
-[![Disscussion](https://img.shields.io/badge/chat-wechat-brightgreen?style=flat)](./README.md#disscussiongroup)
+[![Disscussion](https://img.shields.io/badge/chat-wechat-brightgreen?style=flat)](https://github.com/shenweichen/DeepMatch#disscussiongroup)
 [![License](https://img.shields.io/github/license/shenweichen/deepmatch.svg)](https://github.com/shenweichen/deepmatch/blob/master/LICENSE)
 
 DeepMatch is a deep matching model library for recommendations & advertising. It's easy to **train models** and to **export representation vectors** for user and item which can be used for **ANN search**.You can use any complex model with `model.fit()`and `model.predict()` .
@@ -72,31 +73,12 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
   </tbody>
 </table>
 
-## DisscussionGroup & Related Projects
+## DisscussionGroup
 
-<html>
-    <table style="margin-left: 20px; margin-right: auto;">
-        <tr>
-            <td>
-                公众号：<b>浅梦的学习笔记</b><br><br>
-                <a href="https://github.com/shenweichen/deepmatch">
-  <img align="center" src="./docs/pics/code.png" />
-</a>
-            </td>
-            <td>
-                微信：<b>deepctrbot</b><br><br>
- <a href="https://github.com/shenweichen/deepmatch">
-  <img align="center" src="./docs/pics/deepctrbot.png" />
-</a>
-            </td>
-            <td>
-<ul>
-<li><a href="https://github.com/shenweichen/AlgoNotes">AlgoNotes</a></li>
-<li><a href="https://github.com/shenweichen/DeepCTR">DeepCTR</a></li>
-<li><a href="https://github.com/shenweichen/DeepCTR-Torch">DeepCTR-Torch</a></li>
-<li><a href="https://github.com/shenweichen/GraphEmbedding">GraphEmbedding</a></li>
-</ul>
-            </td>
-        </tr>
-    </table>
-</html>
+- [Github Discussions](https://github.com/shenweichen/DeepMatch/discussions)
+- Wechat Discussions
+
+|公众号：浅梦学习笔记|微信：deepctrbot|学习小组 [加入](https://t.zsxq.com/026UJEuzv) [主题集合](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MjM5MzY4NzE3MA==&action=getalbum&album_id=1361647041096843265&scene=126#wechat_redirect)|
+|:--:|:--:|:--:|
+| [![公众号](./docs/pics/code.png)](https://github.com/shenweichen/AlgoNotes)| [![微信](./docs/pics/deepctrbot.png)](https://github.com/shenweichen/AlgoNotes)|[![学习小组](./docs/pics/planet_github.png)](https://t.zsxq.com/026UJEuzv)|
+
