@@ -12,6 +12,7 @@
 [![Documentation Status](https://readthedocs.org/projects/deepmatch/badge/?version=latest)](https://deepmatch.readthedocs.io/)
 ![CI status](https://github.com/shenweichen/deepmatch/workflows/CI/badge.svg)
 [![codecov](https://codecov.io/gh/shenweichen/DeepMatch/branch/master/graph/badge.svg)](https://codecov.io/gh/shenweichen/DeepMatch)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/c5a2769ec35444d8958f6b58ff85029b)](https://www.codacy.com/gh/shenweichen/DeepMatch/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=shenweichen/DeepMatch&amp;utm_campaign=Badge_Grade)
 [![Disscussion](https://img.shields.io/badge/chat-wechat-brightgreen?style=flat)](https://github.com/shenweichen/DeepMatch#disscussiongroup)
 [![License](https://img.shields.io/github/license/shenweichen/deepmatch.svg)](https://github.com/shenweichen/deepmatch/blob/master/LICENSE)
 
