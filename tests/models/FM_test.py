@@ -32,6 +32,7 @@ def test_FM(loss_type):
                                  distortion=1.0)
         model = FM(user_feature_columns, item_feature_columns, loss_type=loss_type, sampler_config=sampler_config)
         model.compile('adam', sampledsoftmaxloss)
+    check_model(model, model_name, x, y)
 
 
 if __name__ == "__main__":
