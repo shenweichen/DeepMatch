@@ -5,10 +5,12 @@ from tensorflow.python.keras.layers import Lambda
 from tensorflow.python.keras.models import Model
 
 from ..inputs import create_embedding_matrix, input_from_feature_columns
-from ..layers.core import Similarity
+from ..layers.core import Similarity, InBatchSoftmaxLayer
+from ..utils import l2_normalize, inner_product
 
 
-def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, gamma=10, seed=1024, metric='cos'):
+def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, temperature=0.05, seed=1024,
+       loss_type='logistic', sampler_config=None):
     """Instantiates the FM architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
@@ -43,13 +45,23 @@ def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, gamma=
 
     user_dnn_input = concat_func(user_sparse_embedding_list, axis=1)
     user_vector_sum = Lambda(lambda x: reduce_sum(x, axis=1, keep_dims=False))(user_dnn_input)
+    user_vector_sum = l2_normalize(user_vector_sum)
 
     item_dnn_input = concat_func(item_sparse_embedding_list, axis=1)
     item_vector_sum = Lambda(lambda x: reduce_sum(x, axis=1, keep_dims=False))(item_dnn_input)
+    item_vector_sum = l2_normalize(item_vector_sum)
 
-    score = Similarity(type=metric, gamma=gamma)([user_vector_sum, item_vector_sum])
+    # score = Similarity(type=metric, gamma=gamma)([user_vector_sum, item_vector_sum])
+    # 
+    # output = PredictionLayer("binary", False)(score)
 
-    output = PredictionLayer("binary", False)(score)
+    if loss_type == "logistic":
+        score = inner_product(user_vector_sum, item_vector_sum, temperature)
+        output = PredictionLayer("binary", False)(score)
+
+    elif loss_type == "softmax":
+        output = InBatchSoftmaxLayer(sampler_config._asdict(), temperature)(
+            [user_vector_sum, item_vector_sum, item_features[sampler_config.item_name]])
 
     model = Model(inputs=user_inputs_list + item_inputs_list, outputs=output)
 

@@ -13,7 +13,7 @@ from tensorflow.python.keras.layers import Lambda
 from tensorflow.python.keras.models import Model
 
 from ..inputs import input_from_feature_columns
-from ..layers.core import Similarity, EmbeddingIndex, PoolingLayer, SampledSoftmaxLayer, InBatchSoftmaxLayer
+from ..layers.core import Similarity, EmbeddingIndex, PoolingLayer, InBatchSoftmaxLayer
 from ..utils import l2_normalize, inner_product, get_item_embedding
 
 
