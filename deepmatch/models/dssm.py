@@ -10,7 +10,7 @@ from deepctr.layers import PredictionLayer, DNN, combined_dnn_input
 from tensorflow.python.keras.models import Model
 
 from ..inputs import input_from_feature_columns
-from ..layers.core import EmbeddingIndex, PoolingLayer, InBatchSoftmaxLayer
+from ..layers.core import InBatchSoftmaxLayer
 from ..utils import l2_normalize, inner_product
 
 
