@@ -199,8 +199,8 @@ class SelfAttention(Layer):
         super(SelfAttention, self).build(input_shape)
 
     def call(self, inputs, mask=None, **kwargs):
-        input, key_masks = inputs
-        querys, keys, values = input, input, input
+        _input, key_masks = inputs
+        querys, keys, values = _input, _input, _input
         align = self.attention([querys, keys])
         output = self.softmax_weight_sum([align, values, key_masks])
         if self.use_layer_norm:
