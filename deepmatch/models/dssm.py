@@ -17,8 +17,9 @@ from ..utils import l2_normalize, inner_product
 def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 32),
          item_dnn_hidden_units=(64, 32),
          dnn_activation='relu', dnn_use_bn=False,
-         l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0, temperature=0.05,
-         seed=1024, loss_type='logistic', sampler_config=None):
+         l2_reg_dnn=0, l2_reg_embedding=1e-6, dnn_dropout=0, loss_type='logistic', temperature=0.05,
+         sampler_config=None,
+         seed=1024, ):
     """Instantiates the Deep Structured Semantic Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.

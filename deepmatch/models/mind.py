@@ -47,7 +47,7 @@ def adaptive_interest_num(seq_len, k_max):
 
 def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=True,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
-         dnn_dropout=0, temperature=0.05, output_activation='linear', sampler_config=None, seed=1024):
+         dnn_dropout=0, output_activation='linear', temperature=0.05, sampler_config=None, seed=1024):
     """Instantiates the MIND Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.

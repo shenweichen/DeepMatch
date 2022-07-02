@@ -9,8 +9,9 @@ from ..layers.core import InBatchSoftmaxLayer
 from ..utils import l2_normalize, inner_product
 
 
-def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, temperature=0.05, seed=1024,
-       loss_type='logistic', sampler_config=None):
+def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, loss_type='logistic', temperature=0.05,
+       sampler_config=None, seed=1024,
+       ):
     """Instantiates the FM architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
