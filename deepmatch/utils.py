@@ -38,7 +38,7 @@ def l2_normalize(x, axis=-1):
 
 
 def inner_product(x, y, temperature=1.0):
-    return Lambda(lambda x: tf.reduce_sum(x[0] * [1]) / temperature)([x, y])
+    return Lambda(lambda x: tf.reduce_sum(tf.multiply(x[0], x[1])) / temperature)([x, y])
 
 
 def recall_N(y_true, y_pred, N=50):

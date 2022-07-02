@@ -74,7 +74,7 @@ class SampledSoftmaxLayer(Layer):
         else:
             num_sampled = self.sampler_config['num_sampled']
             if self.sampler == "uniform":
-                sampled_values = tf.compat.v1.nn.uniform_candidate_sampler(item_idx, 1, num_sampled, True,
+                sampled_values = tf.nn.uniform_candidate_sampler(item_idx, 1, num_sampled, True,
                                                                            self.vocabulary_size, seed=None, name=None)
             elif self.sampler == "learned_unigram":
                 sampled_values = tf.nn.learned_unigram_candidate_sampler(item_idx, 1, num_sampled, True,
