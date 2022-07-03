@@ -8,7 +8,7 @@ from tests.utils import check_model, get_xy_fd
 
 @pytest.mark.parametrize(
     'sampler',
-    ['batch', 'uniform', 'learned_unigram', 'fixed_unigram'
+    ['in_batch', 'uniform', 'learned_unigram', 'fixed_unigram'
      ]
 )
 def test_YoutubeDNN(sampler):

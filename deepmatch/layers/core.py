@@ -73,7 +73,7 @@ class SampledSoftmaxLayer(Layer):
         if item_idx.dtype != tf.int64:
             item_idx = tf.cast(item_idx, tf.int64)
         user_vec /= self.temperature
-        if self.sampler == "batch":
+        if self.sampler == "in_batch":
             item_vec = tf.gather(item_embeddings, tf.squeeze(item_idx, axis=1))
             logits = tf.matmul(user_vec, item_vec, transpose_b=True)
             loss = inbatch_softmax_cross_entropy_with_logits(logits, self.item_count, item_idx)
