@@ -1,7 +1,7 @@
 from deepctr.layers import custom_objects
 from deepctr.layers.utils import reduce_sum
 
-from .core import PoolingLayer, Similarity, LabelAwareAttention, CapsuleLayer, SampledSoftmaxLayer, EmbeddingIndex, \
+from .core import PoolingLayer, LabelAwareAttention, CapsuleLayer, SampledSoftmaxLayer, EmbeddingIndex, \
     MaskUserEmbedding, InBatchSoftmaxLayer
 from .interaction import DotAttention, ConcatAttention, SoftmaxWeightedSum, AttentionSequencePoolingLayer, \
     SelfAttention, \
@@ -10,7 +10,6 @@ from .sequence import DynamicMultiRNN
 from ..utils import sampledsoftmaxloss
 
 _custom_objects = {'PoolingLayer': PoolingLayer,
-                   'Similarity': Similarity,
                    'LabelAwareAttention': LabelAwareAttention,
                    'CapsuleLayer': CapsuleLayer,
                    'reduce_sum': reduce_sum,
