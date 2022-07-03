@@ -1,7 +1,6 @@
 import pandas as pd
 from deepctr.feature_column import SparseFeat, VarLenSparseFeat
 from deepmatch.models import *
-from deepmatch.utils import sampledsoftmaxloss, Sampler
 from preprocess import gen_data_set, gen_model_input
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras.models import Model
@@ -53,10 +52,7 @@ if __name__ == "__main__":
     item_feature_columns = [SparseFeat('movie_id', feature_max_idx['movie_id'], embedding_dim),
                             SparseFeat('genres', feature_max_idx['genres'], embedding_dim)
                             ]
-    from collections import Counter
 
-    train_counter = Counter(train_model_input['movie_id'])
-    item_count = [train_counter.get(i, 0) for i in range(item_feature_columns[0].vocabulary_size)]
     # 3.Define Model and train
 
     import tensorflow as tf
@@ -65,11 +61,9 @@ if __name__ == "__main__":
         tf.compat.v1.disable_eager_execution()
     else:
         K.set_learning_phase(True)
-    sampler_config = Sampler('batch_correct', num_sampled=255, item_name='movie_id', item_count=item_count)
 
-    model = DSSM(user_feature_columns, item_feature_columns, sampler_config=sampler_config,
-                 loss_type="logistic")  
-    #model = FM(user_feature_columns,item_feature_columns)
+    model = DSSM(user_feature_columns, item_feature_columns, loss_type="logistic")
+    # model = FM(user_feature_columns,item_feature_columns)
 
     model.compile(optimizer='adagrad', loss="binary_crossentropy")
 
