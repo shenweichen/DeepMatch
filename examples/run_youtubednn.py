@@ -1,7 +1,7 @@
 import pandas as pd
 from deepctr.feature_column import SparseFeat, VarLenSparseFeat
 from deepmatch.models import *
-from deepmatch.utils import sampledsoftmaxloss
+from deepmatch.utils import sampledsoftmaxloss, Sampler
 from preprocess import gen_data_set, gen_model_input
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras import backend as K
@@ -10,24 +10,19 @@ from tensorflow.python.keras.models import Model
 if __name__ == "__main__":
 
     data = pd.read_csvdata = pd.read_csv("./movielens_sample.txt")
+    data['genres'] = list(map(lambda x: x.split('|')[0], data['genres'].values))
+
     sparse_features = ["movie_id", "user_id",
-                       "gender", "age", "occupation", "zip", ]
+                       "gender", "age", "occupation", "zip", "genres"]
     SEQ_LEN = 50
 
     # 1.Label Encoding for sparse features,and process sequence features with `gen_date_set` and `gen_model_input`
 
-    features = ['user_id', 'gender', 'age', 'occupation', 'zip']
     feature_max_idx = {}
-    for feature in features:
+    for feature in sparse_features:
         lbe = LabelEncoder()
         data[feature] = lbe.fit_transform(data[feature]) + 1
         feature_max_idx[feature] = data[feature].max() + 1
-
-    id_count = data['movie_id'].value_counts()
-    mapdict = {t[0]: i for i, t in
-               enumerate(sorted([(k, v) for k, v in id_count.to_dict().items()], key=lambda x: x[1], reverse=True))}
-    data['movie_id'] = data['movie_id'].map(mapdict)
-    feature_max_idx['movie_id'] = data['movie_id'].max() + 1
 
     user_profile = data[["user_id", "gender", "age", "occupation", "zip"]].drop_duplicates('user_id')
 
@@ -53,9 +48,17 @@ if __name__ == "__main__":
                             SparseFeat("zip", feature_max_idx['zip'], embedding_dim),
                             VarLenSparseFeat(SparseFeat('hist_movie_id', feature_max_idx['movie_id'], embedding_dim,
                                                         embedding_name="movie_id"), SEQ_LEN, 'mean', 'hist_len'),
+                            VarLenSparseFeat(SparseFeat('hist_genres', feature_max_idx['genres'], embedding_dim,
+                                                        embedding_name="genres"), SEQ_LEN, 'mean', 'hist_len')
                             ]
 
     item_feature_columns = [SparseFeat('movie_id', feature_max_idx['movie_id'], embedding_dim)]
+
+    from collections import Counter
+
+    train_counter = Counter(train_model_input['movie_id'])
+    item_count = [train_counter.get(i, 0) for i in range(item_feature_columns[0].vocabulary_size)]
+    sampler_config = Sampler('fixed_unigram', num_sampled=5, item_name='movie_id', item_count=item_count)
 
     # 3.Define Model and train
 
@@ -66,10 +69,12 @@ if __name__ == "__main__":
     else:
         K.set_learning_phase(True)
 
-    model = YoutubeDNN(user_feature_columns, item_feature_columns, num_sampled=5, user_dnn_hidden_units=(64, embedding_dim))
-    # model = MIND(user_feature_columns,item_feature_columns,dynamic_k=True,k_max=2,num_sampled=5,user_dnn_hidden_units=(64, embedding_dim))
+    model = YoutubeDNN(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, embedding_dim),
+                       sampler_config=sampler_config)
+    # model = MIND(user_feature_columns, item_feature_columns, dynamic_k=False, k_max=2,
+    #              user_dnn_hidden_units=(64, embedding_dim), sampler_config=sampler_config)
 
-    model.compile(optimizer="adam", loss=sampledsoftmaxloss)  # "binary_crossentropy")
+    model.compile(optimizer="adam", loss=sampledsoftmaxloss)
 
     history = model.fit(train_model_input, train_label,  # train_label,
                         batch_size=256, epochs=1, verbose=1, validation_split=0.0, )

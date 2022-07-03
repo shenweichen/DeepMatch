@@ -9,22 +9,22 @@ from tensorflow.python.keras.models import Model
 
 if __name__ == "__main__":
     data = pd.read_csvdata = pd.read_csv("./movielens_sample.txt")
+    data['genres'] = list(map(lambda x: x.split('|')[0], data['genres'].values))
+
     sparse_features = ["movie_id", "user_id",
                        "gender", "age", "occupation", "zip", "genres"]
     SEQ_LEN_short = 5
     SEQ_LEN_prefer = 50
 
     # 1.Label Encoding for sparse features,and process sequence features with `gen_date_set` and `gen_model_input`
-    data['genres'] = list(map(lambda x: x.split('|')[0], data['genres'].values))
 
-    features = ['movie_id', 'user_id', 'gender', 'age', 'occupation', 'zip', 'genres']
     feature_max_idx = {}
-    for feature in features:
+    for feature in sparse_features:
         lbe = LabelEncoder()
         data[feature] = lbe.fit_transform(data[feature]) + 1
         feature_max_idx[feature] = data[feature].max() + 1
 
-    user_profile = data[["user_id", "gender", "age", "occupation", "zip", "genres"]].drop_duplicates('user_id')
+    user_profile = data[["user_id", "gender", "age", "occupation", "zip"]].drop_duplicates('user_id')
 
     item_profile = data[["movie_id"]].drop_duplicates('movie_id')
 
@@ -46,7 +46,6 @@ if __name__ == "__main__":
                             SparseFeat("age", feature_max_idx['age'], 16),
                             SparseFeat("occupation", feature_max_idx['occupation'], 16),
                             SparseFeat("zip", feature_max_idx['zip'], 16),
-                            SparseFeat("genres", feature_max_idx['genres'], 16),
                             VarLenSparseFeat(SparseFeat('short_movie_id', feature_max_idx['movie_id'], embedding_dim,
                                                         embedding_name="movie_id"), SEQ_LEN_short, 'mean',
                                              'short_sess_length'),
