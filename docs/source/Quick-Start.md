@@ -16,7 +16,8 @@ $ pip install deepmatch[gpu]
 ```
 ## Run examples !!
 
-- [Run YoutubeDNN on MovieLen1M on Google colab](https://colab.research.google.com/github/shenweichen/DeepMatch/blob/dev_shenweichen/examples/colab_MovieLen1M_YoutubeDNN.ipynb)
+- [Run models on MovieLen1M in Google colab](./Examples.html#youtubednn-mind-with-sampled-softmax)
+
 - [YoutubeDNN/MIND with sampled softmax](./Examples.html#youtubednn-mind-with-sampled-softmax)
 - [SDM with sampled softmax](./Examples.html#sdm-with-sampled-softmax)
 - [DSSM with negative sampling](./Examples.html#dssm-with-negative-sampling)
