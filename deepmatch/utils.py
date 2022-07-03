@@ -24,6 +24,14 @@ from tensorflow.python.keras.layers import Lambda
 
 
 class NegativeSampler(namedtuple('NegativeSampler', ['sampler', 'num_sampled', 'item_name', 'item_count', 'distortion'])):
+    """ NegativeSampler
+    Args:
+        sampler: sampler name,['in_batch', 'uniform', 'fixed_unigram' 'learned_unigram',] .
+        num_sampled: negative samples number per one positive sample.
+        item_name: pkey of item features .
+        item_count: global frequency of item .
+        distortion: skew factor of the unigram probability distribution. 
+    """
     __slots__ = ()
 
     def __new__(cls, sampler, num_sampled, item_name, item_count=None, distortion=1.0, ):
