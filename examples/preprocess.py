@@ -49,13 +49,13 @@ def gen_data_set_sdm(data, seq_short_max_len=5, seq_prefer_max_len=50):
             seq_prefer_len = min(max(i - seq_short_len, 0), seq_prefer_max_len)
             if i != len(pos_list) - 1:
                 train_set.append(
-                    (reviewerID, pos_list[i], hist[::-1][:seq_short_len][::-1],
+                    (reviewerID, pos_list[i], 1, hist[::-1][:seq_short_len][::-1],
                      hist[::-1][seq_short_len:seq_short_len + seq_prefer_len], seq_short_len,
                      seq_prefer_len, rating_list[i], genres_hist[::-1][:seq_short_len][::-1],
                      genres_hist[::-1][seq_short_len:seq_short_len + seq_prefer_len]))
             else:
                 test_set.append(
-                    (reviewerID, pos_list[i], hist[::-1][:seq_short_len][::-1],
+                    (reviewerID, pos_list[i], 1, hist[::-1][:seq_short_len][::-1],
                      hist[::-1][seq_short_len:seq_short_len + seq_prefer_len], seq_short_len,
                      seq_prefer_len, rating_list[i], genres_hist[::-1][:seq_short_len][::-1],
                      genres_hist[::-1][seq_short_len:seq_short_len + seq_prefer_len]))
@@ -118,17 +118,20 @@ def gen_model_input_sdm(train_set, user_profile, seq_short_max_len, seq_prefer_m
     train_prefer_item_pad = pad_sequences(prefer_train_seq, maxlen=seq_prefer_max_len, padding='post',
                                           truncating='post',
                                           value=0)
-    # train_short_genres_pad = pad_sequences(short_train_seq_genres, maxlen=seq_short_max_len, padding='post', truncating='post',
-    #                                     value=0)
-    # train_prefer_genres_pad = pad_sequences(prefer_train_seq_genres, maxlen=seq_prefer_max_len, padding='post', truncating='post',
-    #                                     value=0)
+    train_short_genres_pad = pad_sequences(short_train_seq_genres, maxlen=seq_short_max_len, padding='post',
+                                           truncating='post',
+                                           value=0)
+    train_prefer_genres_pad = pad_sequences(prefer_train_seq_genres, maxlen=seq_prefer_max_len, padding='post',
+                                            truncating='post',
+                                            value=0)
 
     train_model_input = {"user_id": train_uid, "movie_id": train_iid, "short_movie_id": train_short_item_pad,
                          "prefer_movie_id": train_prefer_item_pad,
                          "prefer_sess_length": np.minimum(train_prefer_len, seq_prefer_max_len),
                          "short_sess_length":
                              np.minimum(train_short_len,
-                                        seq_short_max_len)}  # 'short_genres': train_short_genres_pad, 'prefer_genres': train_prefer_genres_pad
+                                        seq_short_max_len), 'short_genres': train_short_genres_pad,
+                         'prefer_genres': train_prefer_genres_pad}
 
     for key in ["gender", "age", "occupation", "zip"]:
         train_model_input[key] = user_profile.loc[train_model_input['user_id']][key].values

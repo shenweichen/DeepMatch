@@ -15,19 +15,14 @@ if __name__ == "__main__":
     SEQ_LEN_prefer = 50
 
     # 1.Label Encoding for sparse features,and process sequence features with `gen_date_set` and `gen_model_input`
+    data['genres'] = list(map(lambda x: x.split('|')[0], data['genres'].values))
 
-    features = ['user_id', 'gender', 'age', 'occupation', 'zip']
+    features = ['movie_id', 'user_id', 'gender', 'age', 'occupation', 'zip', 'genres']
     feature_max_idx = {}
     for feature in features:
         lbe = LabelEncoder()
         data[feature] = lbe.fit_transform(data[feature]) + 1
         feature_max_idx[feature] = data[feature].max() + 1
-
-    id_count = data['movie_id'].value_counts()
-    mapdict = {t[0]: i for i, t in
-               enumerate(sorted([(k, v) for k, v in id_count.to_dict().items()], key=lambda x: x[1], reverse=True))}
-    data['movie_id'] = data['movie_id'].map(mapdict)
-    feature_max_idx['movie_id'] = data['movie_id'].max() + 1
 
     user_profile = data[["user_id", "gender", "age", "occupation", "zip", "genres"]].drop_duplicates('user_id')
 
@@ -37,7 +32,7 @@ if __name__ == "__main__":
     #
     # user_item_list = data.groupby("user_id")['movie_id'].apply(list)
 
-    train_set, test_set = gen_data_set_sdm(data, seq_short_len=SEQ_LEN_short, seq_prefer_len=SEQ_LEN_prefer)
+    train_set, test_set = gen_data_set_sdm(data, seq_short_max_len=SEQ_LEN_short, seq_prefer_max_len=SEQ_LEN_prefer)
 
     train_model_input, train_label = gen_model_input_sdm(train_set, user_profile, SEQ_LEN_short, SEQ_LEN_prefer)
     test_model_input, test_label = gen_model_input_sdm(test_set, user_profile, SEQ_LEN_short, SEQ_LEN_prefer)
@@ -67,14 +62,20 @@ if __name__ == "__main__":
 
     item_feature_columns = [SparseFeat('movie_id', feature_max_idx['movie_id'], embedding_dim)]
 
+    from collections import Counter
+
+    train_counter = Counter(train_model_input['movie_id'])
+    item_count = [train_counter.get(i, 0) for i in range(item_feature_columns[0].vocabulary_size)]
+    sampler_config = Sampler('fixed_unigram', num_sampled=5, item_name='movie_id', item_count=item_count)
+
     K.set_learning_phase(True)
 
     import tensorflow as tf
 
     if tf.__version__ >= '2.0.0':
         tf.compat.v1.disable_eager_execution()
-
-    sampler_config = Sampler('batch', num_sampled=5, item_name="movie_id", item_count=sample_count)
+    else:
+        K.set_learning_phase(True)
 
     # units must be equal to item embedding dim!
     model = SDM(user_feature_columns, item_feature_columns, history_feature_list=['movie_id', 'genres'],
@@ -100,7 +101,7 @@ if __name__ == "__main__":
     print(user_embs.shape)
     print(item_embs.shape)
 
-    # test_true_label = {line[0]: [line[3]] for line in test_set}
+    # test_true_label = {line[0]: [line[2]] for line in test_set}
     #
     # import numpy as np
     # import faiss
