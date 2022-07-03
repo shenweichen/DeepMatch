@@ -152,7 +152,7 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=T
                           dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
                           name="user_dnn")(
         user_deep_input)
-    user_embeddings = l2_normalize(user_embeddings)
+    #user_embeddings = l2_normalize(user_embeddings)
 
     item_inputs_list = list(item_features.values())
 
