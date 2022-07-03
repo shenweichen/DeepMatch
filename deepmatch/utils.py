@@ -38,6 +38,8 @@ class NegativeSampler(
     def __new__(cls, sampler, num_sampled, item_name, item_count=None, distortion=1.0, ):
         if sampler not in ['inbatch', 'uniform', 'frequency', 'adaptive']:
             raise ValueError(' `%s` sampler is not supported ' % sampler)
+        if sampler in ['inbatch', 'frequency'] and item_count is None:
+            raise ValueError(' `item_count` must not be `None` when using `inbatch` or `frequency` sampler')
         return super(NegativeSampler, cls).__new__(cls, sampler, num_sampled, item_name, item_count, distortion)
 
     # def __hash__(self):

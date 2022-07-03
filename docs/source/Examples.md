@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     train_counter = Counter(train_model_input['movie_id'])
     item_count = [train_counter.get(i, 0) for i in range(item_feature_columns[0].vocabulary_size)]
-    sampler_config = NegativeSampler('fixed_unigram', num_sampled=5, item_name='movie_id', item_count=item_count)
+    sampler_config = NegativeSampler('frequency', num_sampled=5, item_name='movie_id', item_count=item_count)
 
     # 3.Define Model and train
 
@@ -231,7 +231,7 @@ if __name__ == "__main__":
 
     train_counter = Counter(train_model_input['movie_id'])
     item_count = [train_counter.get(i, 0) for i in range(item_feature_columns[0].vocabulary_size)]
-    sampler_config = NegativeSampler('fixed_unigram', num_sampled=5, item_name='movie_id', item_count=item_count)
+    sampler_config = NegativeSampler('frequency', num_sampled=5, item_name='movie_id', item_count=item_count)
 
     K.set_learning_phase(True)
 
@@ -370,7 +370,7 @@ if __name__ == "__main__":
 
     train_counter = Counter(train_model_input['movie_id'])
     item_count = [train_counter.get(i, 0) for i in range(item_feature_columns[0].vocabulary_size)]
-    sampler_config = NegativeSampler('in_batch', num_sampled=5, item_name='movie_id', item_count=item_count)
+    sampler_config = NegativeSampler('inbatch', num_sampled=5, item_name='movie_id', item_count=item_count)
 
     # 3.Define Model and train
 

@@ -83,7 +83,7 @@ class SampledSoftmaxLayer(Layer):
             if self.sampler == "frequency":
                 sampled_values = tf.nn.fixed_unigram_candidate_sampler(item_idx, 1, num_sampled, True,
                                                                        self.vocabulary_size,
-                                                                       distortion=self.sampler_config['distortionself'],
+                                                                       distortion=self.sampler_config['distortion'],
                                                                        unigrams=np.maximum(self.item_count, 1).tolist(),
                                                                        seed=None,
                                                                        name=None)
