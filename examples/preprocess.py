@@ -133,7 +133,7 @@ def gen_model_input_sdm(train_set, user_profile, seq_short_max_len, seq_prefer_m
                                         seq_short_max_len), 'short_genres': train_short_genres_pad,
                          'prefer_genres': train_prefer_genres_pad}
 
-    for key in ["gender", "age", "occupation", "zip"]:
+    for key in ["gender", "age", "occupation", "zip", "genres"]:
         train_model_input[key] = user_profile.loc[train_model_input['user_id']][key].values
 
     return train_model_input, train_label

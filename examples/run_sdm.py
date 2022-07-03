@@ -46,6 +46,7 @@ if __name__ == "__main__":
                             SparseFeat("age", feature_max_idx['age'], 16),
                             SparseFeat("occupation", feature_max_idx['occupation'], 16),
                             SparseFeat("zip", feature_max_idx['zip'], 16),
+                            SparseFeat("genres", feature_max_idx['genres'], 16),
                             VarLenSparseFeat(SparseFeat('short_movie_id', feature_max_idx['movie_id'], embedding_dim,
                                                         embedding_name="movie_id"), SEQ_LEN_short, 'mean',
                                              'short_sess_length'),
