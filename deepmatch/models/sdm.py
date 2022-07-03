@@ -38,6 +38,8 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, units=
     :param num_head: int int, the number of attention head
     :param l2_reg_embedding: float. L2 regularizer strength applied to embedding vector
     :param dnn_activation: Activation function to use in deep net
+    :param temperature: float. Scaling factor.
+    :param sampler_config: negative sample config.
     :param seed: integer ,to use as random seed.
     :return: A Keras model instance.
 

@@ -33,9 +33,10 @@ def DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=(64, 
     :param l2_reg_dnn: float. L2 regularizer strength applied to DNN
     :param l2_reg_embedding: float. L2 regularizer strength applied to embedding vector
     :param dnn_dropout: float in [0,1), the probability we will drop out a given DNN coordinate.
-    :param gamma: float. Scaling factor.
+    :param loss_type: string. Loss type.
+    :param temperature: float. Scaling factor.
+    :param sampler_config: negative sample config.
     :param seed: integer ,to use as random seed.
-    :param metric: str, ``"cos"`` for  cosine  or  ``"ip"`` for inner product
     :return: A Keras model instance.
 
     """

@@ -22,9 +22,10 @@ def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, loss_t
     :param user_feature_columns: An iterable containing user's features used by  the model.
     :param item_feature_columns: An iterable containing item's features used by  the model.
     :param l2_reg_embedding: float. L2 regularizer strength applied to embedding vector
-    :param gamma: float. Scaling factor.
+    :param loss_type: string. Loss type.
+    :param temperature: float. Scaling factor.
+    :param sampler_config: negative sample config.
     :param seed: integer ,to use as random seed.
-    :param metric: str, ``"cos"`` for  cosine  or  ``"ip"`` for inner product
     :return: A Keras model instance.
 
     """

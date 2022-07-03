@@ -64,8 +64,9 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=F
     :param l2_reg_dnn:  L2 regularizer strength applied to DNN
     :param l2_reg_embedding: float. L2 regularizer strength applied to embedding vector
     :param dnn_dropout:  float in [0,1), the probability we will drop out a given DNN coordinate.
-    :param seed: integer ,to use as random seed.
     :param output_activation: Activation function to use in output layer
+    :param sampler_config: negative sample config.
+    :param seed: integer ,to use as random seed.
     :return: A Keras model instance.
 
     """
