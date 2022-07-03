@@ -23,11 +23,11 @@ from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.layers import Lambda
 
 
-class Sampler(namedtuple('Sampler', ['sampler', 'num_sampled', 'item_name', 'item_count', 'distortion'])):
+class NegativeSampler(namedtuple('NegativeSampler', ['sampler', 'num_sampled', 'item_name', 'item_count', 'distortion'])):
     __slots__ = ()
 
     def __new__(cls, sampler, num_sampled, item_name, item_count=None, distortion=1.0, ):
-        return super(Sampler, cls).__new__(cls, sampler, num_sampled, item_name, item_count, distortion)
+        return super(NegativeSampler, cls).__new__(cls, sampler, num_sampled, item_name, item_count, distortion)
 
     # def __hash__(self):
     #     return self.sampler.__hash__()

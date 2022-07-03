@@ -1,6 +1,6 @@
 import tensorflow as tf
 from deepmatch.models import SDM
-from deepmatch.utils import sampledsoftmaxloss, Sampler
+from deepmatch.utils import sampledsoftmaxloss, NegativeSampler
 from tensorflow.python.keras import backend as K
 
 from ..utils import check_model, get_xy_fd_sdm
@@ -15,7 +15,7 @@ def test_SDM():
     else:
         K.set_learning_phase(True)
 
-    sampler_config = Sampler(sampler='uniform', num_sampled=2, item_name='item')
+    sampler_config = NegativeSampler(sampler='uniform', num_sampled=2, item_name='item')
     model = SDM(user_feature_columns, item_feature_columns, history_feature_list, units=8,
                 sampler_config=sampler_config)
     # model.summary()
