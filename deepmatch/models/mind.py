@@ -18,7 +18,7 @@ from tensorflow.python.keras.models import Model
 from ..inputs import create_embedding_matrix
 from ..layers.core import CapsuleLayer, PoolingLayer, MaskUserEmbedding, LabelAwareAttention, SampledSoftmaxLayer, \
     EmbeddingIndex
-from ..utils import get_item_embedding, l2_normalize
+from ..utils import get_item_embedding
 
 
 def shape_target(target_emb_tmp, target_emb_size):

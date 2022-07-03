@@ -31,13 +31,13 @@ class NegativeSampler(
         num_sampled: negative samples number per one positive sample.
         item_name: pkey of item features .
         item_count: global frequency of item .
-        distortion: skew factor of the unigram probability distribution. 
+        distortion: skew factor of the unigram probability distribution.
     """
     __slots__ = ()
 
     def __new__(cls, sampler, num_sampled, item_name, item_count=None, distortion=1.0, ):
         if sampler not in ['in_batch', 'uniform', 'fixed_unigram', 'learned_unigram']:
-            raise ValueError(' `%s` sampler is not supported ' % self.sampler)
+            raise ValueError(' `%s` sampler is not supported ' % sampler)
         return super(NegativeSampler, cls).__new__(cls, sampler, num_sampled, item_name, item_count, distortion)
 
     # def __hash__(self):
