@@ -297,7 +297,7 @@ if __name__ == "__main__":
 ```
 
 
-## DSSM with negative sampling
+## DSSM with in batch softmax
 
 The MovieLens data has been used for personalized tag recommendation,which
 contains 668, 953 tag applications of users on movies.

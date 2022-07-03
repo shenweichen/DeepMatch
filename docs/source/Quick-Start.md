@@ -20,5 +20,5 @@ $ pip install deepmatch[gpu]
 
 - [YoutubeDNN/MIND with sampled softmax](./Examples.html#youtubednn-mind-with-sampled-softmax)
 - [SDM with sampled softmax](./Examples.html#sdm-with-sampled-softmax)
-- [DSSM with in batch softmax](./Examples.html#sdm-with-sampled-softmax)
+- [DSSM with in batch softmax](./Examples.html#dssm-with-in-batch-softmax)
 - [DSSM with negative sampling](./Examples.html#dssm-with-negative-sampling)
