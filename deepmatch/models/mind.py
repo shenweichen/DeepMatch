@@ -152,7 +152,7 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=F
                           dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
                           name="user_dnn")(
         user_deep_input)
-    user_embeddings = l2_normalize(user_embeddings)
+    # user_embeddings = l2_normalize(user_embeddings)
 
     item_inputs_list = list(item_features.values())
 
@@ -163,7 +163,7 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=F
     item_embedding_weight = NoMask()(item_embedding_matrix(item_index))
 
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
-    pooling_item_embedding_weight = l2_normalize(pooling_item_embedding_weight)
+    # pooling_item_embedding_weight = l2_normalize(pooling_item_embedding_weight)
 
     if dynamic_k:
         user_embeddings = MaskUserEmbedding(k_max)([user_embeddings, interest_num])
@@ -171,7 +171,7 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=F
     else:
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
 
-    output = SampledSoftmaxLayer(sampler_config._asdict(), temperature)(
+    output = SampledSoftmaxLayer(sampler_config._asdict())(
         [pooling_item_embedding_weight, user_embedding_final, item_features[item_feature_name]])
     model = Model(inputs=inputs_list + item_inputs_list, outputs=output)
 
