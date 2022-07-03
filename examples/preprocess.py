@@ -84,7 +84,7 @@ def gen_model_input(train_set, user_profile, seq_max_len):
     train_seq = [line[3] for line in train_set]
     train_hist_len = np.array([line[4] for line in train_set])
     train_seq_genres = np.array([line[5] for line in train_set])
-    train_genres = np.array([line[7] for line in train_set])
+    train_genres = np.array([line[6] for line in train_set])
     train_seq_pad = pad_sequences(train_seq, maxlen=seq_max_len, padding='post', truncating='post', value=0)
     train_seq_genres_pad = pad_sequences(train_seq_genres, maxlen=seq_max_len, padding='post', truncating='post',
                                          value=0)
