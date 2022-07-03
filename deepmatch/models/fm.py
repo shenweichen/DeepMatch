@@ -65,6 +65,8 @@ def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, loss_t
     elif loss_type == "softmax":
         output = InBatchSoftmaxLayer(sampler_config._asdict(), temperature)(
             [user_vector_sum, item_vector_sum, item_features[sampler_config.item_name]])
+    else:
+        raise ValueError(' `loss_type` must be `logistic` or `softmax` ')
 
     model = Model(inputs=user_inputs_list + item_inputs_list, outputs=output)
 
