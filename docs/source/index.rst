@@ -37,7 +37,7 @@ You can read the latest code at https://github.com/shenweichen/DeepMatch
 News
 -----
 
-07/04/2022 : Support different negative sampling strategies, including `inbatch sampling` , `uniform sampling` , `frequency sampling` , `adaptive sampling` . `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.3.0>`_
+07/04/2022 : Support different negative sampling strategies, including `inbatch` , `uniform` , `frequency` , `adaptive` . `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.3.0>`_
 
 06/17/2022 : Fix some bugs. `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.2.1>`_
 

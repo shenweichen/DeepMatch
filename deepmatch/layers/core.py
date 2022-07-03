@@ -73,21 +73,21 @@ class SampledSoftmaxLayer(Layer):
         if item_idx.dtype != tf.int64:
             item_idx = tf.cast(item_idx, tf.int64)
         user_vec /= self.temperature
-        if self.sampler == "in_batch":
+        if self.sampler == "inbatch":
             item_vec = tf.gather(item_embeddings, tf.squeeze(item_idx, axis=1))
             logits = tf.matmul(user_vec, item_vec, transpose_b=True)
             loss = inbatch_softmax_cross_entropy_with_logits(logits, self.item_count, item_idx)
 
         else:
             num_sampled = self.sampler_config['num_sampled']
-            if self.sampler == "fixed_unigram":
+            if self.sampler == "frequency":
                 sampled_values = tf.nn.fixed_unigram_candidate_sampler(item_idx, 1, num_sampled, True,
                                                                        self.vocabulary_size,
                                                                        distortion=self.sampler_config['distortionself'],
                                                                        unigrams=np.maximum(self.item_count, 1).tolist(),
                                                                        seed=None,
                                                                        name=None)
-            elif self.sampler == "learned_unigram":
+            elif self.sampler == "adaptive":
                 sampled_values = tf.nn.learned_unigram_candidate_sampler(item_idx, 1, num_sampled, True,
                                                                          self.vocabulary_size, seed=None, name=None)
             elif self.sampler == "uniform":
