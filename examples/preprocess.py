@@ -7,7 +7,7 @@ from tqdm import tqdm
 def gen_data_set(data, seq_max_len=50, negsample=0):
     data.sort_values("timestamp", inplace=True)
     item_ids = data['movie_id'].unique()
-
+    item_id_genres_map = dict(zip(data['movie_id'].values, data['genres'].values))
     train_set = []
     test_set = []
     for reviewerID, hist in tqdm(data.groupby('user_id')):
@@ -25,12 +25,14 @@ def gen_data_set(data, seq_max_len=50, negsample=0):
             if i != len(pos_list) - 1:
                 train_set.append((
                     reviewerID, pos_list[i], 1, hist[::-1][:seq_len], seq_len, genres_hist[::-1][:seq_len],
+                    genres_list[i],
                     rating_list[i]))
                 for negi in range(negsample):
                     train_set.append((reviewerID, neg_list[i * negsample + negi], 0, hist[::-1][:seq_len], seq_len,
-                                      genres_hist[::-1][:seq_len]))
+                                      genres_hist[::-1][:seq_len], item_id_genres_map[neg_list[i * negsample + negi]]))
             else:
                 test_set.append((reviewerID, pos_list[i], 1, hist[::-1][:seq_len], seq_len, genres_hist[::-1][:seq_len],
+                                 genres_list[i],
                                  rating_list[i]))
 
     random.shuffle(train_set)
@@ -99,13 +101,13 @@ def gen_model_input(train_set, user_profile, seq_max_len):
     train_seq = [line[3] for line in train_set]
     train_hist_len = np.array([line[4] for line in train_set])
     train_seq_genres = np.array([line[5] for line in train_set])
-
+    train_genres = np.array([line[7] for line in train_set])
     train_seq_pad = pad_sequences(train_seq, maxlen=seq_max_len, padding='post', truncating='post', value=0)
     train_seq_genres_pad = pad_sequences(train_seq_genres, maxlen=seq_max_len, padding='post', truncating='post',
                                          value=0)
     train_model_input = {"user_id": train_uid, "movie_id": train_iid, "hist_movie_id": train_seq_pad,
                          "hist_genres": train_seq_genres_pad,
-                         "hist_len": train_hist_len}
+                         "hist_len": train_hist_len, "genres": train_genres}
 
     for key in ["gender", "age", "occupation", "zip"]:
         train_model_input[key] = user_profile.loc[train_model_input['user_id']][key].values
