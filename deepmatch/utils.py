@@ -27,7 +27,7 @@ class NegativeSampler(
     namedtuple('NegativeSampler', ['sampler', 'num_sampled', 'item_name', 'item_count', 'distortion'])):
     """ NegativeSampler
     Args:
-        sampler: sampler name,['in_batch', 'uniform', 'fixed_unigram' 'learned_unigram',] .
+        sampler: sampler name,['inbatch', 'uniform', 'frequency' 'adaptive',] .
         num_sampled: negative samples number per one positive sample.
         item_name: pkey of item features .
         item_count: global frequency of item .
