@@ -20,13 +20,13 @@ sys.path.insert(0, os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 
 project = 'DeepMatch'
-copyright = '2020, Weichen Shen'
+copyright = '2020-present, Weichen Shen'
 author = 'Weichen Shen'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.2.1'
+release = '0.3.0'
 
 
 # -- General configuration ---------------------------------------------------

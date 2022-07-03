@@ -1,15 +1,40 @@
+import pytest
+import tensorflow as tf
 from deepmatch.models import DSSM
+from deepmatch.utils import sampledsoftmaxloss, NegativeSampler
+from tensorflow.python.keras import backend as K
+
 from ..utils import check_model, get_xy_fd
 
 
-
-def test_DSSM():
+@pytest.mark.parametrize(
+    'loss_type,user_dnn_hidden_units,item_dnn_hidden_units',
+    [('logistic', [32, 4], []), ('softmax', [64, 32], [32])
+     ]
+)
+def test_DSSM(loss_type, user_dnn_hidden_units, item_dnn_hidden_units):
     model_name = "DSSM"
 
     x, y, user_feature_columns, item_feature_columns = get_xy_fd(False)
-    model = DSSM(user_feature_columns, item_feature_columns, )
-
-    model.compile('adam', "binary_crossentropy")
+    if tf.__version__ >= '2.0.0':
+        tf.compat.v1.disable_eager_execution()
+    else:
+        K.set_learning_phase(True)
+    if loss_type == "logistic":
+        model = DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=user_dnn_hidden_units,
+                     item_dnn_hidden_units=item_dnn_hidden_units,
+                     loss_type=loss_type)
+        model.compile('adam', "binary_crossentropy")
+    else:
+        from collections import Counter
+        item_name = 'item'
+        train_counter = Counter(x[item_name])
+        item_count = [train_counter.get(i, 0) for i in range(item_feature_columns[0].vocabulary_size)]
+        sampler_config = NegativeSampler(sampler='inbatch', num_sampled=2, item_name=item_name, item_count=item_count)
+        model = DSSM(user_feature_columns, item_feature_columns, user_dnn_hidden_units=user_dnn_hidden_units,
+                     item_dnn_hidden_units=item_dnn_hidden_units,
+                     loss_type=loss_type, sampler_config=sampler_config)
+        model.compile('adam', sampledsoftmaxloss)
     check_model(model, model_name, x, y)
 
 

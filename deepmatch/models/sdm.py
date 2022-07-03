@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 """
 Author:
-    Zhe Wang,734914022@qq.com
+    Zhe Wang, 734914022@qq.com
 
 Reference:
     [1] Lv, Fuyu, Jin, Taiwei, Yu, Changlong etc. SDM: Sequential Deep Matching Model for Online Large-scale Recommender System[J].
@@ -18,13 +18,13 @@ from tensorflow.python.keras.models import Model
 from ..layers.core import PoolingLayer, SampledSoftmaxLayer, EmbeddingIndex
 from ..layers.interaction import UserAttention, SelfMultiHeadAttention, AttentionSequencePoolingLayer
 from ..layers.sequence import DynamicMultiRNN
-from ..utils import get_item_embedding
+from ..utils import get_item_embedding, l2_normalize
 
 
-def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sampled=5, units=64, rnn_layers=2,
+def SDM(user_feature_columns, item_feature_columns, history_feature_list, units=64, rnn_layers=2,
         dropout_rate=0.2,
         rnn_num_res=1,
-        num_head=4, l2_reg_embedding=1e-6, dnn_activation='tanh', seed=1024):
+        num_head=4, l2_reg_embedding=1e-6, dnn_activation='tanh', temperature=0.05, sampler_config=None, seed=1024):
     """Instantiates the Sequential Deep Matching Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
@@ -38,6 +38,8 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sa
     :param num_head: int int, the number of attention head
     :param l2_reg_embedding: float. L2 regularizer strength applied to embedding vector
     :param dnn_activation: Activation function to use in deep net
+    :param temperature: float. Scaling factor.
+    :param sampler_config: negative sample config.
     :param seed: integer ,to use as random seed.
     :return: A Keras model instance.
 
@@ -102,7 +104,7 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sa
 
     prefer_sess_length = features['prefer_sess_length']
     prefer_att_outputs = []
-    for i, prefer_emb in enumerate(prefer_emb_list):
+    for prefer_emb in prefer_emb_list:
         prefer_attention_output = AttentionSequencePoolingLayer(dropout_rate=0)(
             [user_emb_output, prefer_emb, prefer_sess_length])
         prefer_att_outputs.append(prefer_attention_output)
@@ -131,14 +133,15 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, num_sa
     gate_output = Lambda(lambda x: tf.multiply(x[0], x[1]) + tf.multiply(1 - x[0], x[2]))(
         [gate, short_output, prefer_output])
     gate_output_reshape = Lambda(lambda x: tf.squeeze(x, 1))(gate_output)
+    gate_output_reshape = l2_normalize(gate_output_reshape)
 
     item_index = EmbeddingIndex(list(range(item_vocabulary_size)))(item_features[item_feature_name])
     item_embedding_matrix = embedding_matrix_dict[item_feature_name]
     item_embedding_weight = NoMask()(item_embedding_matrix(item_index))
 
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
-
-    output = SampledSoftmaxLayer(num_sampled=num_sampled)([
+    pooling_item_embedding_weight = l2_normalize(pooling_item_embedding_weight)
+    output = SampledSoftmaxLayer(sampler_config._asdict(), temperature)([
         pooling_item_embedding_weight, gate_output_reshape, item_features[item_feature_name]])
     model = Model(inputs=user_inputs_list + item_inputs_list, outputs=output)
 
