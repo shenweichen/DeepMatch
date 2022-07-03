@@ -3,11 +3,11 @@
 
 ## Run models on MovieLen1M in Google colab
 
-[![Run YoutubeDNN In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shenweichen/DeepMatch/blob/master/examples/colab_MovieLen1M_YoutubeDNN.ipynb)  
+YoutubeDNN: [![Run YoutubeDNN In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shenweichen/DeepMatch/blob/master/examples/colab_MovieLen1M_YoutubeDNN.ipynb)  
 
-[![Run DSSM InBatchSoftmax In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shenweichen/DeepMatch/blob/master/examples/colab_MovieLen1M_DSSM_InBatchSoftmax.ipynb)  
+DSSM InBatchSoftmax: [![Run DSSM InBatchSoftmax In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shenweichen/DeepMatch/blob/master/examples/colab_MovieLen1M_DSSM_InBatchSoftmax.ipynb)  
 
-[![Run SDM In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shenweichen/DeepMatch/blob/master/examples/colab_MovieLen1M_SDM.ipynb)
+SDM: [![Run SDM In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shenweichen/DeepMatch/blob/master/examples/colab_MovieLen1M_SDM.ipynb) 
 
 
 ## YoutubeDNN/MIND with sampled softmax 
