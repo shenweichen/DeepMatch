@@ -23,7 +23,8 @@ from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.layers import Lambda
 
 
-class NegativeSampler(namedtuple('NegativeSampler', ['sampler', 'num_sampled', 'item_name', 'item_count', 'distortion'])):
+class NegativeSampler(
+    namedtuple('NegativeSampler', ['sampler', 'num_sampled', 'item_name', 'item_count', 'distortion'])):
     """ NegativeSampler
     Args:
         sampler: sampler name,['in_batch', 'uniform', 'fixed_unigram' 'learned_unigram',] .
@@ -35,6 +36,8 @@ class NegativeSampler(namedtuple('NegativeSampler', ['sampler', 'num_sampled', '
     __slots__ = ()
 
     def __new__(cls, sampler, num_sampled, item_name, item_count=None, distortion=1.0, ):
+        if sampler not in ['in_batch', 'uniform', 'fixed_unigram', 'learned_unigram']:
+            raise ValueError(' `%s` sampler is not supported ' % self.sampler)
         return super(NegativeSampler, cls).__new__(cls, sampler, num_sampled, item_name, item_count, distortion)
 
     # def __hash__(self):

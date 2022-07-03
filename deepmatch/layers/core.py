@@ -83,7 +83,7 @@ class SampledSoftmaxLayer(Layer):
             if self.sampler == "fixed_unigram":
                 sampled_values = tf.nn.fixed_unigram_candidate_sampler(item_idx, 1, num_sampled, True,
                                                                        self.vocabulary_size,
-                                                                       distortion=sampler_config['distortionself'],
+                                                                       distortion=self.sampler_config['distortionself'],
                                                                        unigrams=np.maximum(self.item_count, 1).tolist(),
                                                                        seed=None,
                                                                        name=None)
@@ -98,7 +98,7 @@ class SampledSoftmaxLayer(Layer):
                     sampled_values = tf.random.uniform_candidate_sampler(item_idx, 1, num_sampled, True,
                                                                          self.vocabulary_size, seed=None, name=None)
             else:
-                raise ValueError(' `sampler` is not supported ')
+                raise ValueError(' `%s` sampler is not supported ' % self.sampler)
 
             loss = tf.nn.sampled_softmax_loss(weights=item_embeddings,
                                               biases=self.zero_bias,
