@@ -28,8 +28,7 @@ def test_FM(loss_type):
         item_name = 'item'
         train_counter = Counter(x[item_name])
         item_count = [train_counter.get(i, 0) for i in range(item_feature_columns[0].vocabulary_size)]
-        sampler_config = NegativeSampler(sampler='inbatch', num_sampled=2, item_name=item_name, item_count=item_count,
-                                 distortion=1.0)
+        sampler_config = NegativeSampler(sampler='inbatch', num_sampled=2, item_name=item_name, item_count=item_count)
         model = FM(user_feature_columns, item_feature_columns, loss_type=loss_type, sampler_config=sampler_config)
         model.compile('adam', sampledsoftmaxloss)
     check_model(model, model_name, x, y)
