@@ -69,23 +69,6 @@ def gen_data_set_sdm(data, seq_short_max_len=5, seq_prefer_max_len=50):
                      seq_prefer_len, genres_hist[::-1][:seq_short_len][::-1],
                      genres_hist[::-1][seq_short_len:seq_short_len + seq_prefer_len], rating_list[i]))
 
-            # if i <= seq_short_max_len and i != len(pos_list) - 1: # i <= seq_short_max_len & i != len()-1
-            #     train_set.append((reviewerID, hist[::-1], [0] * seq_prefer_max_len, pos_list[i], 1, len(hist[::-1]), 0,
-            #                       rating_list[i], genres_hist[::-1], [0] * seq_prefer_max_len))
-            # elif i != len(pos_list) - 1: # i>seq_short_max_len & i != len() - 1
-            #     train_set.append(
-            #         (reviewerID, hist[::-1][:seq_short_max_len], hist[::-1][seq_short_max_len:], pos_list[i], 1, seq_short_max_len,
-            #          len(hist[::-1]) - seq_short_max_len, rating_list[i], genres_hist[::-1][:seq_short_max_len],
-            #          genres_hist[::-1][seq_short_max_len:]))
-            # elif i <= seq_short_max_len and i == len(pos_list) - 1: #i <= seq_short_max_len & i == len()-1
-            #     test_set.append((reviewerID, hist[::-1], [0] * seq_prefer_max_len, pos_list[i], 1, len(hist[::-1]), 0,
-            #                      rating_list[i], genres_hist[::-1], [0] * seq_prefer_max_len))
-            # else: # i> seq_short_max_len & i== len() - 1
-            #     test_set.append(
-            #         (reviewerID, hist[::-1][:seq_short_max_len], hist[::-1][seq_short_max_len:], pos_list[i], 1, seq_short_max_len,
-            #          len(hist[::-1]) - seq_short_max_len, rating_list[i], genres_hist[::-1][:seq_short_max_len],
-            #          genres_hist[::-1][seq_short_max_len:]))
-
     random.shuffle(train_set)
     random.shuffle(test_set)
 

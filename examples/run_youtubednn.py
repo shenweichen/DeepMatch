@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     user_item_list = data.groupby("user_id")['movie_id'].apply(list)
 
-    train_set, test_set = gen_data_set(data, 0)
+    train_set, test_set = gen_data_set(data, SEQ_LEN, 0)
 
     train_model_input, train_label = gen_model_input(train_set, user_profile, SEQ_LEN)
     test_model_input, test_label = gen_model_input(test_set, user_profile, SEQ_LEN)

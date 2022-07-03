@@ -1,8 +1,7 @@
 import pandas as pd
+from deepmatch.models import NCF
 from preprocess import gen_data_set, gen_model_input
 from sklearn.preprocessing import LabelEncoder
-
-from deepmatch.models import NCF
 
 if __name__ == "__main__":
     data = pd.read_csvdata = pd.read_csv("./movielens_sample.txt")
@@ -28,7 +27,7 @@ if __name__ == "__main__":
 
     user_item_list = data.groupby("user_id")['movie_id'].apply(list)
 
-    train_set, test_set = gen_data_set(data, negsample)
+    train_set, test_set = gen_data_set(data, SEQ_LEN, negsample)
 
     train_model_input, train_label = gen_model_input(train_set, user_profile, SEQ_LEN)
     test_model_input, test_label = gen_model_input(test_set, user_profile, SEQ_LEN)
