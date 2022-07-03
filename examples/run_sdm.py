@@ -101,7 +101,7 @@ if __name__ == "__main__":
     print(user_embs.shape)
     print(item_embs.shape)
 
-    # test_true_label = {line[0]: [line[2]] for line in test_set}
+    # test_true_label = {line[0]: [line[1]] for line in test_set}
     #
     # import numpy as np
     # import faiss

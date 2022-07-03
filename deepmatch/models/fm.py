@@ -14,7 +14,7 @@ from ..layers.core import InBatchSoftmaxLayer
 from ..utils import l2_normalize, inner_product
 
 
-def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, loss_type='logistic', temperature=0.05,
+def FM(user_feature_columns, item_feature_columns, l2_reg_embedding=1e-6, loss_type='softmax', temperature=0.05,
        sampler_config=None, seed=1024,
        ):
     """Instantiates the FM architecture.
