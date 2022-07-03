@@ -6,6 +6,25 @@
 Welcome to DeepMatch's documentation!
 =====================================
 
+|Downloads|_ |Stars|_ |Forks|_ |PyPii|_ |Issues|_ |Chat|_
+
+.. |Downloads| image:: https://pepy.tech/badge/deepmatch
+.. _Downloads: https://pepy.tech/project/deepmatch
+
+.. |Stars| image:: https://img.shields.io/github/stars/shenweichen/deepmatch.svg
+.. _Stars: https://github.com/shenweichen/DeepMatch
+
+.. |Forks| image:: https://img.shields.io/github/forks/shenweichen/deepmatch.svg
+.. _Forks: https://github.com/shenweichen/DeepMatch/fork
+
+.. |PyPii| image:: https://img.shields.io/pypi/v/deepmatch.svg
+.. _PyPii: https://pypi.org/project/deepmatch
+
+.. |Issues| image:: https://img.shields.io/github/issues/shenweichen/deepmatch.svg
+.. _Issues: https://github.com/shenweichen/deepmatch/issues
+
+.. |Chat| image:: https://img.shields.io/badge/chat-wechat-brightgreen?style=flat
+.. _Chat: ./#disscussiongroup
 
 
 DeepMatch is a  deep matching model library for recommendations, advertising, and search. It's easy to **train models** and to **export representation vectors** for user and item which can be used for **ANN search**.You can use any complex model with ``model.fit()`` and ``model.predict()`` .
@@ -18,18 +37,22 @@ You can read the latest code at https://github.com/shenweichen/DeepMatch
 News
 -----
 
+07/04/2022 : Support different negative sampling strategies, including `inbatch` , `uniform` , `frequency` , `adaptive` . `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.3.0>`_
+
 06/17/2022 : Fix some bugs. `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.2.1>`_
 
 10/12/2020 : Support different initializers for different embedding weights and loading pretrained embeddings. `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.2.0>`_
 
-05/17/2020 : Add ``SDM`` model. `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.1.3>`_
-
 DisscussionGroup
 -----------------------
 
-公众号：**浅梦的学习笔记**  wechat ID: **deepctrbot**
 
-.. image:: ../pics/code.png
+  公众号：**浅梦学习笔记**  wechat ID: **deepctrbot**
+
+  `Discussions <https://github.com/shenweichen/DeepMatch/discussions>`_ `学习小组主题集合 <https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MjM5MzY4NzE3MA==&action=getalbum&album_id=1361647041096843265&scene=126#wechat_redirect>`_
+
+.. image:: ../pics/code2.jpg
+
 
 .. toctree::
    :maxdepth: 2

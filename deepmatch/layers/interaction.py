@@ -1,3 +1,10 @@
+"""
+
+Author:
+    Weichen Shen,weichenswc@163.com
+
+"""
+
 import tensorflow as tf
 from deepctr.layers.normalization import LayerNormalization
 from deepctr.layers.utils import softmax, reduce_mean
@@ -109,7 +116,7 @@ class SoftmaxWeightedSum(Layer):
             lower_tri = tf.ones([length, length])
             try:
                 lower_tri = tf.contrib.linalg.LinearOperatorTriL(lower_tri).to_dense()
-            except:
+            except AttributeError:
                 lower_tri = tf.linalg.LinearOperatorLowerTriangular(lower_tri).to_dense()
             masks = tf.tile(tf.expand_dims(lower_tri, 0), [tf.shape(align)[0], 1, 1])
             align = tf.where(tf.equal(masks, 0), paddings, align)
@@ -199,8 +206,8 @@ class SelfAttention(Layer):
         super(SelfAttention, self).build(input_shape)
 
     def call(self, inputs, mask=None, **kwargs):
-        input, key_masks = inputs
-        querys, keys, values = input, input, input
+        _input, key_masks = inputs
+        querys, keys, values = _input, _input, _input
         align = self.attention([querys, keys])
         output = self.softmax_weight_sum([align, values, key_masks])
         if self.use_layer_norm:

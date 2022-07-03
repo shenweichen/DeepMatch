@@ -1,7 +1,8 @@
 """
 Author:
-    Qingliang Cai,leocaicoder@163.com
-    Weichen Shen,wcshen1994@164.com
+    Qingliang Cai, leocaicoder@163.com
+    Weichen Shen, weichenswc@163.com
+
 Reference:
 Li C, Liu Z, Wu M, et al. Multi-interest network with dynamic routing for recommendation at Tmall[C]//Proceedings of the 28th ACM International Conference on Information and Knowledge Management. 2019: 2615-2623.
 """
@@ -45,9 +46,9 @@ def adaptive_interest_num(seq_len, k_max):
     return k_user
 
 
-def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=100, dynamic_k=True,
+def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=False,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
-         dnn_dropout=0, output_activation='linear', seed=1024):
+         dnn_dropout=0, output_activation='linear', sampler_config=None, seed=1024):
     """Instantiates the MIND Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
@@ -63,8 +64,9 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
     :param l2_reg_dnn:  L2 regularizer strength applied to DNN
     :param l2_reg_embedding: float. L2 regularizer strength applied to embedding vector
     :param dnn_dropout:  float in [0,1), the probability we will drop out a given DNN coordinate.
-    :param seed: integer ,to use as random seed.
     :param output_activation: Activation function to use in output layer
+    :param sampler_config: negative sample config.
+    :param seed: integer ,to use as random seed.
     :return: A Keras model instance.
 
     """
@@ -151,6 +153,7 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
                           dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
                           name="user_dnn")(
         user_deep_input)
+
     item_inputs_list = list(item_features.values())
 
     item_embedding_matrix = embedding_matrix_dict[item_feature_name]
@@ -166,8 +169,8 @@ def MIND(user_feature_columns, item_feature_columns, num_sampled=5, k_max=2, p=1
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb, interest_num))
     else:
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
-
-    output = SampledSoftmaxLayer(num_sampled=num_sampled)(
+    print("swc")
+    output = SampledSoftmaxLayer(sampler_config._asdict())(
         [pooling_item_embedding_weight, user_embedding_final, item_features[item_feature_name]])
     model = Model(inputs=inputs_list + item_inputs_list, outputs=output)
 
