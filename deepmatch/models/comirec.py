@@ -14,23 +14,15 @@ from deepctr.layers import DNN
 from deepctr.layers.utils import NoMask, combined_dnn_input
 from tensorflow.python.keras.layers import Concatenate, Lambda
 from tensorflow.python.keras.models import Model
-
 from ..inputs import create_embedding_matrix
-from ..layers.core import CapsuleLayer, PoolingLayer, MaskUserEmbedding, LabelAwareAttention, SampledSoftmaxLayer, \
-    EmbeddingIndex
+from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, SampledSoftmaxLayer, EmbeddingIndex
 from ..layers.interaction import PositionalEncodingLayer
 from ..utils import get_item_embedding
-
-
-def shape_target(target_emb_tmp, target_emb_size):
-    return tf.expand_dims(tf.reshape(target_emb_tmp, [-1, target_emb_size]), axis=-1)
-
 
 def tile_user_otherfeat(user_other_feature, k_max):
     return tf.tile(tf.expand_dims(user_other_feature, -2), [1, k_max, 1])
 
-
-def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, interest_extractor='sa', add_pos=None, 
+def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, interest_extractor='sa', add_pos=False, 
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
          dnn_dropout=0, output_activation='linear', sampler_config=None, seed=1024):
     """Instantiates the ComiRec Model architecture.
@@ -40,7 +32,8 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
     :param num_sampled: int, the number of classes to randomly sample per batch.
     :param interest_num: int, the max size of user interest embedding
     :param p: float,the parameter for adjusting the attention distribution in LabelAwareAttention.
-    :param interest_extractor: type of a multi-interest extraction module, 'sa' means self-attentive and 'dr' means dynamic routing.
+    :param interest_extractor: string, type of a multi-interest extraction module, 'sa' means self-attentive and 'dr' means dynamic routing
+    :param add_pos: bool. Whether use positional encoding layer
     :param dnn_use_bn: bool. Whether use BatchNormalization before activation or not in deep net
     :param user_dnn_hidden_units: list,list of positive integer or empty list, the layer number and units in each layer of user tower
     :param dnn_activation: Activation function to use in deep net
@@ -57,7 +50,8 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
 
     if len(item_feature_columns) > 1:
         raise ValueError("Now ComiRec only support 1 item feature like item_id")
-    assert interest_extractor.lower() in ['dr','sa']
+    if interest_extractor.lower() not in ['dr','sa']:
+        raise ValueError("Now ComiRec only support dr and sa two interest_extractor")
     item_feature_column = item_feature_columns[0]
     item_feature_name = item_feature_column.name
     item_vocabulary_size = item_feature_columns[0].vocabulary_size
