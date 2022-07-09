@@ -9,5 +9,5 @@ DeepMatch Models API
    NCF<deepmatch.models.ncf>
    SDM<deepmatch.models.sdm>
    MIND<deepmatch.models.mind>
-
+   COMIREC<deepmatch.models.comirec>
    

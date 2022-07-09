@@ -9,6 +9,7 @@ Submodules
    deepmatch.models.dssm
    deepmatch.models.fm
    deepmatch.models.mind
+   deepmatch.models.comirec
    deepmatch.models.ncf
    deepmatch.models.sdm
    deepmatch.models.youtubednn

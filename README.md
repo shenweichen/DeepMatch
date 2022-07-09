@@ -32,6 +32,7 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
 | NCF  | [WWW 2017][Neural Collaborative Filtering](https://arxiv.org/abs/1708.05031)       |
 | SDM  | [CIKM 2019][SDM: Sequential Deep Matching Model for Online Large-scale Recommender System](https://arxiv.org/abs/1909.00385)  |
 | MIND | [CIKM 2019][Multi-interest network with dynamic routing for recommendation at Tmall](https://arxiv.org/pdf/1904.08030)  |
+| COMIREC | [KDD 2020][Controllable Multi-Interest Framework for Recommendation](https://arxiv.org/pdf/2005.09347.pdf)  |
 
 ## Contributors([welcome to join us!](./CONTRIBUTING.md))
 
@@ -69,6 +70,11 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
         ​ <a href="https://github.com/zzszmyf"><img width="70" height="70" src="https://github.com/zzszmyf.png?s=40" alt="pic"></a><br>
         ​ <a href="https://github.com/zzszmyf">Meng Yifan</a>
         <p> DeepCTR    </p>​
+      </td>
+      <td>
+        ​ <a href="https://github.com/liyuan97"><img width="70" height="70" src="https://github.com/liyuan97.png?s=40" alt="pic"></a><br>
+        ​ <a href="https://github.com/liyuan97">Li Yuan</a>
+        <p> Tencent    </p>​
       </td>
     </tr>
   </tbody>
