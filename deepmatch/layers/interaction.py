@@ -404,5 +404,5 @@ class PositionalEncodingLayer(Layer):
             'learnable': self.learnable,
             'init_std': self.init_std,
         }
-        base_config = super(UserAttention, self).get_config()
+        base_config = super(PositionalEncodingLayer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))

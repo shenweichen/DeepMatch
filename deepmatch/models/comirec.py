@@ -100,8 +100,7 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
     dense_value_list = get_dense_input(features, dense_feature_columns)
 
     sequence_embed_dict = varlen_embedding_lookup(embedding_matrix_dict, features, sparse_varlen_feature_columns)
-    sequence_embed_list = get_varlen_pooling_list(sequence_embed_dict, features, sparse_varlen_feature_columns,
-                                                  to_list=True)
+    sequence_embed_list = get_varlen_pooling_list(sequence_embed_dict, features, sparse_varlen_feature_columns, to_list=True)
 
     dnn_input_emb_list += sequence_embed_list
 
@@ -121,16 +120,14 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
                                     out_units=item_embedding_dim, max_len=seq_max_len,
                                     k_max=interest_num)((history_emb, hist_len))     # 胶囊out
     elif interest_extractor.lower()=='sa':
-        history_add_pos = None
+        history_emb_add_pos = history_emb
         if add_pos:
-            position_embedding = PositionalEncodingLayer(max_len=seq_max_len, dim=item_embedding_dim, learnable=True)
-            history_add_pos += position_embedding 
-        else:
-            history_add_pos = history_emb
+            position_embedding = PositionalEncodingLayer(max_len=seq_max_len, dim=item_embedding_dim, learnable=True)(history_emb)
+            history_emb_add_pos += position_embedding 
 
-        attn = DNN((32*4, interest_num), dnn_activation, l2_reg_dnn,
+        attn = DNN((item_embedding_dim*4, interest_num), dnn_activation, l2_reg_dnn,
                         dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
-                        name="user_dnn")(user_deep_input)(history_add_pos)
+                        name="user_dnn_attn")(history_emb_add_pos)
 
         seq_len_tile = tf.tile(hist_len, [1, interest_num])  # [batch_size, num_interests]
         mask = tf.sequence_mask(seq_len_tile, seq_max_len)
@@ -141,21 +138,18 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
         attn = tf.where(mask, attn, pad)  # [batch_size, seq_len, num_interests]
         attn = tf.nn.softmax(attn, -2)  # [batch_size, seq_len, num_interests] 
         attn = tf.transpose(attn, [0, 2, 1])
-        high_capsule = tf.matmul(attn, history_add_pos)
+        high_capsule = tf.matmul(attn, history_emb_add_pos)
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
-
         other_feature_tile = Lambda(tile_user_otherfeat, arguments={'k_max': interest_num})(user_other_feature)
-
         user_deep_input = Concatenate()([NoMask()(other_feature_tile), high_capsule])
     else:
         user_deep_input = high_capsule
 
     user_embeddings = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn,
                           dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
-                          name="user_dnn")(
-        user_deep_input)
+                          name="user_dnn")(user_deep_input)
 
     item_inputs_list = list(item_features.values())
 
