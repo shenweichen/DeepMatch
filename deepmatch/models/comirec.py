@@ -113,7 +113,7 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
     if interest_extractor.lower()=='dr':
         high_capsule = CapsuleLayer(input_units=item_embedding_dim,
                                     out_units=item_embedding_dim, max_len=seq_max_len,
-                                    k_max=interest_num)((history_emb, hist_len))     # 胶囊out
+                                    k_max=interest_num)((history_emb, hist_len))
     elif interest_extractor.lower()=='sa':
         history_emb_add_pos = history_emb
         if add_pos:
