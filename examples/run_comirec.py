@@ -65,7 +65,7 @@ if __name__ == "__main__":
         tf.compat.v1.disable_eager_execution()
     else:
         K.set_learning_phase(True)
-        
+
     model = ComiRec(user_feature_columns, item_feature_columns,user_dnn_hidden_units=(128,64, embedding_dim),
                 sampler_config=sampler_config, add_pos = True,interest_extractor='sa')
 

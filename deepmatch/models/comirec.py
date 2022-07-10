@@ -22,7 +22,7 @@ from ..utils import get_item_embedding
 def tile_user_otherfeat(user_other_feature, k_max):
     return tf.tile(tf.expand_dims(user_other_feature, -2), [1, k_max, 1])
 
-def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, interest_extractor='sa', add_pos=False, 
+def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, interest_extractor='sa', add_pos=False,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
          dnn_dropout=0, output_activation='linear', sampler_config=None, seed=1024):
     """Instantiates the ComiRec Model architecture.
@@ -56,6 +56,8 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
     item_feature_name = item_feature_column.name
     item_vocabulary_size = item_feature_columns[0].vocabulary_size
     item_embedding_dim = item_feature_columns[0].embedding_dim
+    if user_dnn_hidden_units[-1] != item_embedding_dim:
+        user_dnn_hidden_units = tuple(list(user_dnn_hidden_units) + [item_embedding_dim])
     # item_index = Input(tensor=tf.constant([list(range(item_vocabulary_size))]))
 
     history_feature_list = [item_feature_name]
@@ -117,7 +119,7 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
         history_emb_add_pos = history_emb
         if add_pos:
             position_embedding = PositionalEncodingLayer(max_len=seq_max_len, dim=item_embedding_dim, learnable=True)(history_emb)
-            history_emb_add_pos += position_embedding 
+            history_emb_add_pos += position_embedding
 
         attn = DNN((item_embedding_dim*4, interest_num), dnn_activation, l2_reg_dnn,
                         dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
@@ -130,7 +132,7 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
         pad = tf.ones_like(mask, dtype=tf.float32) * (-2 ** 32 + 1)
 
         attn = tf.where(mask, attn, pad)  # [batch_size, seq_len, num_interests]
-        attn = tf.nn.softmax(attn, -2)  # [batch_size, seq_len, num_interests] 
+        attn = tf.nn.softmax(attn, -2)# [batch_size, seq_len, num_interests]
         attn = tf.transpose(attn, [0, 2, 1])
         high_capsule = tf.matmul(attn, history_emb_add_pos)
 
