@@ -1,10 +1,9 @@
 """
 Author:
-    Qingliang Cai, leocaicoder@163.com
-    Weichen Shen, weichenswc@163.com
+    Li Yuan, lysysu@qq.com
 
 Reference:
-Li C, Liu Z, Wu M, et al. Multi-interest network with dynamic routing for recommendation at Tmall[C]//Proceedings of the 28th ACM International Conference on Information and Knowledge Management. 2019: 2615-2623.
+Yukuo Cen, Jianwei Zhang, Xu Zou, et al. Controllable Multi-Interest Framework for Recommendation//Accepted to KDD 2020
 """
 
 import tensorflow as tf

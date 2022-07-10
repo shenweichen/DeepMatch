@@ -8,11 +8,11 @@ from ..utils import check_model, get_xy_fd
 
 
 @pytest.mark.parametrize(
-    'interest_num,p',
-    [(False, 1), (True, 100)
+    'interest_num,p,interest_extractor,add_pos',
+    [(2, 1, 'dr',True), (1, 100, 'sa',False), (3, 50, 'sa', True),
      ]
 )
-def test_COMIREC(interest_num, p):
+def test_COMIREC(interest_num, p, interest_extractor,add_pos):
     model_name = "COMIREC"
 
     x, y, user_feature_columns, item_feature_columns = get_xy_fd(False)
@@ -22,8 +22,8 @@ def test_COMIREC(interest_num, p):
     else:
         K.set_learning_phase(True)
     sampler_config = NegativeSampler(sampler='uniform', num_sampled=2, item_name='item')
-    model = ComiRec(user_feature_columns, item_feature_columns, p=p, interest_num=interest_num, 
-                 user_dnn_hidden_units=(64, 32, 4), sampler_config=sampler_config)
+    model = ComiRec(user_feature_columns, item_feature_columns, p=p, interest_num=interest_num, interest_extractor=interest_extractor,
+                     add_pos=add_pos,sampler_config=sampler_config)
 
     model.compile('adam', sampledsoftmaxloss)
     check_model(model, model_name, x, y)
