@@ -9,13 +9,13 @@ Yukuo Cen, Jianwei Zhang, Xu Zou, et al. Controllable Multi-Interest Framework f
 import tensorflow as tf
 from deepctr.feature_column import SparseFeat, VarLenSparseFeat, DenseFeat, \
     embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features
-from deepctr.layers import DNN
+from deepctr.layers import DNN,PositionEncoding
 from deepctr.layers.utils import NoMask, combined_dnn_input
 from tensorflow.python.keras.layers import Concatenate, Lambda
 from tensorflow.python.keras.models import Model
 from ..inputs import create_embedding_matrix
 from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, SampledSoftmaxLayer, EmbeddingIndex
-from ..layers.interaction import PositionalEncodingLayer
+from ..layers.interaction import SoftmaxWeightedSum
 from ..utils import get_item_embedding
 
 def tile_user_otherfeat(user_other_feature, k_max):
@@ -117,23 +117,16 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
     elif interest_extractor.lower()=='sa':
         history_emb_add_pos = history_emb
         if add_pos:
-            position_embedding = PositionalEncodingLayer(max_len=seq_max_len, dim=item_embedding_dim, learnable=True)(history_emb)
-            history_emb_add_pos += position_embedding
+            position_embedding = PositionEncoding()(history_emb)
+            history_emb_add_pos += position_embedding # [None, MAX_LEN, emb_dim]
 
         attn = DNN((item_embedding_dim*4, interest_num), dnn_activation, l2_reg_dnn,
                         dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
                         name="user_dnn_attn")(history_emb_add_pos)
-
-        seq_len_tile = tf.tile(hist_len, [1, interest_num])  # [batch_size, num_interests]
-        mask = tf.sequence_mask(seq_len_tile, seq_max_len)
-
-        mask = tf.transpose(mask, [0, 2, 1])
-        pad = tf.ones_like(mask, dtype=tf.float32) * (-2 ** 32 + 1)
-
-        attn = tf.where(mask, attn, pad)  # [batch_size, seq_len, num_interests]
-        attn = tf.nn.softmax(attn, -2)# [batch_size, seq_len, num_interests]
-        attn = tf.transpose(attn, [0, 2, 1])
-        high_capsule = tf.matmul(attn, history_emb_add_pos)
+        attn = tf.transpose(attn, [0, 2, 1]) # [None, interest_num, MAX_LEN]
+        seq_len_tile = tf.tile(hist_len, [1, interest_num])
+        mask = tf.sequence_mask(seq_len_tile, seq_max_len)  # [None, interest_num, MAX_LEN]
+        high_capsule = SoftmaxWeightedSum()([attn, history_emb_add_pos, mask])
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
@@ -144,7 +137,8 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
 
     user_embeddings = DNN(user_dnn_hidden_units, dnn_activation, l2_reg_dnn,
                           dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
-                          name="user_dnn")(user_deep_input)
+                          name="user_dnn")(
+        user_deep_input)
 
     item_inputs_list = list(item_features.values())
 

@@ -371,38 +371,3 @@ class UserAttention(Layer):
                   'scale': self.scale, 'seed': self.seed, }
         base_config = super(UserAttention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
-
-class PositionalEncodingLayer(Layer):
-    """
-      :param query: A 3d tensor with shape of [batch, seq_len, D]
-      :return: A 3d tensor with shape of  [batch_size, 1, C]
-    """
-    def __init__(self, dim, max_len=2048, learnable=True, init_std=0.02, **kwargs):
-        super(PositionalEncodingLayer, self).__init__(**kwargs)
-        self.dim = dim
-        self.max_len = max_len
-        self.learnable = learnable
-        self.init_std = init_std
-
-    def build(self, input_shape):
-        self.position_embedding = self.add_weight(shape=[self.max_len, self.dim],
-                                                  initializer=tf.keras.initializers.TruncatedNormal(
-                                                      stddev=self.init_std),
-                                                  trainable=self.learnable, name="pos_enc", dtype=tf.float32)
-
-    def call(self, inputs):
-        shapes = tf.shape(inputs)
-        position_embeds = tf.expand_dims(self.position_embedding, axis=0)
-        position_embeds = tf.tile(input=position_embeds, multiples=(shapes[0], 1, 1))
-
-        return position_embeds
-
-    def get_config(self, ):
-        config = {
-            'dim': self.dim,
-            'max_len': self.max_len,
-            'learnable': self.learnable,
-            'init_std': self.init_std,
-        }
-        base_config = super(PositionalEncodingLayer, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))

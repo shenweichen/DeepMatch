@@ -5,7 +5,7 @@ from .core import PoolingLayer, LabelAwareAttention, CapsuleLayer, SampledSoftma
     MaskUserEmbedding, InBatchSoftmaxLayer
 from .interaction import DotAttention, ConcatAttention, SoftmaxWeightedSum, AttentionSequencePoolingLayer, \
     SelfAttention, \
-    SelfMultiHeadAttention, UserAttention, PositionalEncodingLayer
+    SelfMultiHeadAttention, UserAttention
 from .sequence import DynamicMultiRNN
 from ..utils import sampledsoftmaxloss
 
@@ -25,8 +25,7 @@ _custom_objects = {'PoolingLayer': PoolingLayer,
                    'SelfMultiHeadAttention': SelfMultiHeadAttention,
                    'UserAttention': UserAttention,
                    'DynamicMultiRNN': DynamicMultiRNN,
-                   'MaskUserEmbedding': MaskUserEmbedding,
-                   'PositionalEncodingLayer':PositionalEncodingLayer,
+                   'MaskUserEmbedding': MaskUserEmbedding
                    }
 
 custom_objects = dict(custom_objects, **_custom_objects)
