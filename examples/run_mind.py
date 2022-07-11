@@ -91,28 +91,36 @@ if __name__ == "__main__":
     # 5. [Optional] ANN search by faiss  and evaluate the result
 
     # test_true_label = {line[0]:[line[1]] for line in test_set}
-    #
+
     # import numpy as np
     # import faiss
     # from tqdm import tqdm
     # from deepmatch.utils import recall_N
-    #
+    # k_max = 2
+    # SIM_ITME_NUM = 50 
     # index = faiss.IndexFlatIP(embedding_dim)
-    # # faiss.normalize_L2(item_embs)
+
     # index.add(item_embs)
-    # # faiss.normalize_L2(user_embs)
-    # D, I = index.search(np.ascontiguousarray(user_embs), 50)
+
+    # if len(user_embs.shape)==3:
+    #     AllI = [[]  for _ in range(len(user_embs))]
+    #     for interest in range(user_embs.shape[1]):
+    #         _, I = index.search(np.ascontiguousarray(user_embs[:,interest,:]), SIM_ITME_NUM)
+    #         for i in range(len(user_embs)):
+    #             AllI[i].extend(I[i])
     # s = []
     # hit = 0
     # for i, uid in tqdm(enumerate(test_user_model_input['user_id'])):
     #     try:
-    #         pred = [item_profile['movie_id'].values[x] for x in I[i]]
+    #         pred = [item_profile['movie_id'].values[x] for x in AllI[i]]
     #         filter_item = None
-    #         recall_score = recall_N(test_true_label[uid], pred, N=50)
+    #         recall_score = recall_N(test_true_label[uid], pred, N=SIM_ITME_NUM)
     #         s.append(recall_score)
     #         if test_true_label[uid] in pred:
     #             hit += 1
     #     except:
     #         print(i)
+
+    # print("")
     # print("recall", np.mean(s))
-    # print("hr", hit / len(test_user_model_input['user_id']))
+    # print("hit rate", hit / len(test_user_model_input['user_id']))
