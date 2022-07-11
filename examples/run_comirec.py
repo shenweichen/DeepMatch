@@ -89,10 +89,8 @@ if __name__ == "__main__":
     print(item_embs.shape)
 
     # 5. [Optional] ANN search by faiss  and evaluate the result
-    # 5. [Optional] ANN search by faiss  and evaluate the result
 
     # test_true_label = {line[0]:[line[1]] for line in test_set}
-
     # import numpy as np
     # import faiss
     # from tqdm import tqdm
@@ -100,9 +98,7 @@ if __name__ == "__main__":
     # k_max = 2
     # SIM_ITME_NUM = 50 
     # index = faiss.IndexFlatIP(embedding_dim)
-
     # index.add(item_embs)
-
     # if len(user_embs.shape)==3:
     #     AllI = [[]  for _ in range(len(user_embs))]
     #     for interest in range(user_embs.shape[1]):
@@ -121,7 +117,6 @@ if __name__ == "__main__":
     #             hit += 1
     #     except:
     #         print(i)
-
     # print("")
     # print("recall", np.mean(s))
     # print("hit rate", hit / len(test_user_model_input['user_id']))
