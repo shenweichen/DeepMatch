@@ -96,13 +96,13 @@ if __name__ == "__main__":
     # from tqdm import tqdm
     # from deepmatch.utils import recall_N
     # k_max = 2
-    # SIM_ITME_NUM = 50 
+    # sim_item_num = 50 
     # index = faiss.IndexFlatIP(embedding_dim)
     # index.add(item_embs)
     # if len(user_embs.shape)==3:
     #     AllI = [[]  for _ in range(len(user_embs))]
     #     for interest in range(user_embs.shape[1]):
-    #         _, I = index.search(np.ascontiguousarray(user_embs[:,interest,:]), SIM_ITME_NUM)
+    #         _, I = index.search(np.ascontiguousarray(user_embs[:,interest,:]), sim_item_num)
     #         for i in range(len(user_embs)):
     #             AllI[i].extend(I[i])
     # s = []
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     #     try:
     #         pred = [item_profile['movie_id'].values[x] for x in AllI[i]]
     #         filter_item = None
-    #         recall_score = recall_N(test_true_label[uid], pred, N=SIM_ITME_NUM)
+    #         recall_score = recall_N(test_true_label[uid], pred, N=sim_item_num)
     #         s.append(recall_score)
     #         if test_true_label[uid] in pred:
     #             hit += 1
