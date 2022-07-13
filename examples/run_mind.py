@@ -96,7 +96,7 @@ if __name__ == "__main__":
     # from tqdm import tqdm
     # from deepmatch.utils import recall_N
     # k_max = 2
-    # sim_item_num = 50 
+    # sim_item_num = 50
     # index = faiss.IndexFlatIP(embedding_dim)
     # index.add(item_embs)
     # if len(user_embs.shape)==3:

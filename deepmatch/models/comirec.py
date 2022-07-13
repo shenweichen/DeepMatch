@@ -129,7 +129,7 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
         attn = tf.transpose(attn, [0, 2, 1]) # [None, interest_num, max_len]
         mask = Lambda(tile_user_his_mask, arguments={'interest_num': interest_num,
                     'seq_max_len':seq_max_len})(hist_len) # [None, interest_num, max_len]
-        high_capsule = SoftmaxWeightedSum(dropout_rate=0, future_binding=False, 
+        high_capsule = SoftmaxWeightedSum(dropout_rate=0, future_binding=False,
                         seed=seed)([attn, history_emb_add_pos, mask])
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
