@@ -135,7 +135,8 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
         other_feature_tile = Lambda(tile_user_otherfeat, arguments={'interest_num': interest_num})(user_other_feature)
-        user_deep_input = Concatenate()([NoMask()(other_feature_tile), high_capsule])
+        other_feature_tile = NoMask()(other_feature_tile)
+        user_deep_input = Concatenate()([other_feature_tile, high_capsule])
     else:
         user_deep_input = high_capsule
 
