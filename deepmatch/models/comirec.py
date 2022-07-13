@@ -18,8 +18,11 @@ from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, Sampl
 from ..layers.interaction import SoftmaxWeightedSum
 from ..utils import get_item_embedding
 
-def tile_user_otherfeat(user_other_feature, k_max):
-    return tf.tile(tf.expand_dims(user_other_feature, -2), [1, k_max, 1])
+def tile_user_otherfeat(user_other_feature, interest_num):
+    return tf.tile(tf.expand_dims(user_other_feature, -2), [1, interest_num, 1])
+
+def tile_user_his_mask(hist_len, interest_num, seq_max_len):
+    return tf.sequence_mask(tf.tile(hist_len, [1, interest_num]), seq_max_len)
 
 def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, interest_extractor='sa', add_pos=False,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
@@ -124,14 +127,14 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
                         dnn_dropout, dnn_use_bn, output_activation=None, seed=seed,
                         name="user_dnn_attn")(history_emb_add_pos)
         attn = tf.transpose(attn, [0, 2, 1]) # [None, interest_num, max_len]
-        seq_len_tile = tf.tile(hist_len, [1, interest_num])
-        mask = tf.sequence_mask(seq_len_tile, seq_max_len)  # [None, interest_num, max_len]
+        mask = Lambda(tile_user_his_mask, arguments={'interest_num': interest_num,
+                    'seq_max_len':seq_max_len})(hist_len) # [None, interest_num, max_len]
         high_capsule = SoftmaxWeightedSum(dropout_rate=0, future_binding=False, 
                         seed=seed)([attn, history_emb_add_pos, mask])
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
-        other_feature_tile = Lambda(tile_user_otherfeat, arguments={'k_max': interest_num})(user_other_feature)
+        other_feature_tile = Lambda(tile_user_otherfeat, arguments={'interest_num': interest_num})(user_other_feature)
         user_deep_input = Concatenate()([NoMask()(other_feature_tile), high_capsule])
     else:
         user_deep_input = high_capsule
