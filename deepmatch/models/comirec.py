@@ -10,7 +10,7 @@ import tensorflow as tf
 from deepctr.feature_column import SparseFeat, VarLenSparseFeat, DenseFeat, \
     embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features
 from deepctr.layers import DNN,PositionEncoding
-from deepctr.layers.utils import NoMask, combined_dnn_input
+from deepctr.layers.utils import NoMask, combined_dnn_input,add_func
 from tensorflow.python.keras.layers import Concatenate, Lambda
 from tensorflow.python.keras.models import Model
 from ..inputs import create_embedding_matrix
@@ -102,7 +102,7 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
     # keys_emb = concat_func(keys_emb_list, mask=True)
     # query_emb = concat_func(query_emb_list, mask=True)
 
-    history_emb = PoolingLayer()(NoMask()(keys_emb_list))     # [None, MAX_LEN, emb_dim]
+    history_emb = PoolingLayer()(NoMask()(keys_emb_list))     # [None, max_len, emb_dim]
     target_emb = PoolingLayer()(NoMask()(query_emb_list))
 
     # target_emb_size = target_emb.get_shape()[-1].value
@@ -118,15 +118,16 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
         history_emb_add_pos = history_emb
         if add_pos:
             position_embedding = PositionEncoding()(history_emb)
-            history_emb_add_pos += position_embedding # [None, MAX_LEN, emb_dim]
+            history_emb_add_pos = add_func([history_emb_add_pos, position_embedding]) # [None, max_len, emb_dim]
 
         attn = DNN((item_embedding_dim*4, interest_num), dnn_activation, l2_reg_dnn,
-                        dnn_dropout, dnn_use_bn, output_activation=output_activation, seed=seed,
+                        dnn_dropout, dnn_use_bn, output_activation=None, seed=seed,
                         name="user_dnn_attn")(history_emb_add_pos)
-        attn = tf.transpose(attn, [0, 2, 1]) # [None, interest_num, MAX_LEN]
+        attn = tf.transpose(attn, [0, 2, 1]) # [None, interest_num, max_len]
         seq_len_tile = tf.tile(hist_len, [1, interest_num])
-        mask = tf.sequence_mask(seq_len_tile, seq_max_len)  # [None, interest_num, MAX_LEN]
-        high_capsule = SoftmaxWeightedSum()([attn, history_emb_add_pos, mask])
+        mask = tf.sequence_mask(seq_len_tile, seq_max_len)  # [None, interest_num, max_len]
+        high_capsule = SoftmaxWeightedSum(dropout_rate=0, future_binding=False, 
+                        seed=seed)([attn, history_emb_add_pos, mask])
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
