@@ -10,7 +10,7 @@ import tensorflow as tf
 from deepctr.feature_column import SparseFeat, VarLenSparseFeat, DenseFeat, \
     embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features
 from deepctr.layers import DNN,PositionEncoding
-from deepctr.layers.utils import NoMask, combined_dnn_input,add_func,softmax
+from deepctr.layers.utils import NoMask, combined_dnn_input,add_func
 from tensorflow.python.keras.layers import Concatenate, Lambda
 from tensorflow.python.keras.models import Model
 from ..inputs import create_embedding_matrix
@@ -131,12 +131,11 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
                     'seq_max_len':seq_max_len})(hist_len) # [None, interest_num, max_len]
         high_capsule = SoftmaxWeightedSum(dropout_rate=0, future_binding=False,
                         seed=seed)([attn, history_emb_add_pos, mask])
-        high_capsule = NoMask()(high_capsule)
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
         other_feature_tile = Lambda(tile_user_otherfeat, arguments={'interest_num': interest_num})(user_other_feature)
-        user_deep_input = Concatenate([NoMask()(other_feature_tile), high_capsule])
+        user_deep_input = Concatenate()([NoMask()(other_feature_tile), high_capsule])
     else:
         user_deep_input = high_capsule
 
