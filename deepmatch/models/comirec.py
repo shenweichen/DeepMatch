@@ -24,10 +24,6 @@ def tile_user_otherfeat(user_other_feature, interest_num):
 def tile_user_his_mask(hist_len, interest_num, seq_max_len):
     return tf.sequence_mask(tf.tile(hist_len, [1, interest_num]), seq_max_len)
 
-def Concat_func(inputs):
-    return Concatenate()(inputs)
-
-
 def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, interest_extractor='sa', add_pos=False,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
          dnn_dropout=0, output_activation='linear', sampler_config=None, seed=1024):
@@ -135,12 +131,12 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
                     'seq_max_len':seq_max_len})(hist_len) # [None, interest_num, max_len]
         high_capsule = SoftmaxWeightedSum(dropout_rate=0, future_binding=False,
                         seed=seed)([attn, history_emb_add_pos, mask])
-        # high_capsule = Lambda(lambda x: x)(high_capsule)
+        high_capsule = NoMask()(Lambda(lambda x: x)(high_capsule))
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
         other_feature_tile = Lambda(tile_user_otherfeat, arguments={'interest_num': interest_num})(user_other_feature)
-        user_deep_input = Concat_func([NoMask()(other_feature_tile), high_capsule])
+        user_deep_input = Concatenate([NoMask()(other_feature_tile), high_capsule])
     else:
         user_deep_input = high_capsule
 
