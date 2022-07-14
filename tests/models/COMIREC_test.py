@@ -9,7 +9,7 @@ from ..utils import check_model, get_xy_fd
 
 @pytest.mark.parametrize(
     'interest_num,p,interest_extractor,add_pos',
-    [(2, 1, 'dr',True), (1, 100, 'sa',False), (3, 50, 'sa', True),
+    [(2, 1, 'dr',True), (1, 100, 'dr',False), (3, 50, 'dr', True),
      ]
 )
 def test_COMIREC(interest_num, p, interest_extractor,add_pos):
