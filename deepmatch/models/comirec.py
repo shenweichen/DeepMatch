@@ -22,7 +22,7 @@ def tile_user_otherfeat(user_other_feature, interest_num):
     return tf.tile(tf.expand_dims(user_other_feature, -2), [1, interest_num, 1])
 
 def tile_user_his_mask(hist_len, interest_num, seq_max_len):
-    return tf.sequence_mask(tf.tile(hist_len, [1, interest_num]), seq_max_len)
+    return tf.tile(tf.sequence_mask(hist_len, seq_max_len), [1, interest_num, 1])
 
 def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, interest_extractor='sa', add_pos=False,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
