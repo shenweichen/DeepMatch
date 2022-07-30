@@ -26,6 +26,7 @@ def tile_user_his_mask(hist_len, seq_max_len, interest_num):
 
 def softmax_Weighted_Sum(input):
     history_emb_add_pos,mask, attn = input[0],input[1],input[2]
+    attn = tf.transpose(attn, [0, 2, 1])
     pad = tf.ones_like(mask, dtype=tf.float32) * (-2 ** 32 + 1)
     attn = tf.where(mask, attn, pad)  # [batch_size, seq_len, num_interests]
     attn = tf.nn.softmax(attn)# [batch_size, seq_len, num_interests]
@@ -134,7 +135,6 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
         attn = DNN((item_embedding_dim*4, interest_num), dnn_activation, l2_reg_dnn,
                         dnn_dropout, dnn_use_bn, output_activation=None, seed=seed,
                         name="user_dnn_attn")(history_emb_add_pos)
-        attn = tf.transpose(attn, [0, 2, 1]) # [None, interest_num, max_len]
         mask = Lambda(tile_user_his_mask, arguments={'interest_num': interest_num,
                     'seq_max_len':seq_max_len})(hist_len) # [None, interest_num, max_len]
         # high_capsule = SoftmaxWeightedSum(dropout_rate=0, future_binding=False,
