@@ -24,6 +24,14 @@ def tile_user_otherfeat(user_other_feature, interest_num):
 def tile_user_his_mask(hist_len, seq_max_len, interest_num):
     return tf.tile(tf.sequence_mask(hist_len, seq_max_len), [1, interest_num, 1])
 
+def softmax_Weighted_Sum(input):
+    history_emb_add_pos,mask, attn = input[0],input[1],input[2]
+    pad = tf.ones_like(mask, dtype=tf.float32) * (-2 ** 32 + 1)
+    attn = tf.where(mask, attn, pad)  # [batch_size, seq_len, num_interests]
+    attn = tf.nn.softmax(attn)# [batch_size, seq_len, num_interests]
+    high_capsule = tf.matmul(attn, history_emb_add_pos)
+    return high_capsule
+
 def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, interest_extractor='sa', add_pos=False,
          user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
          dnn_dropout=0, output_activation='linear', sampler_config=None, seed=1024):
@@ -131,11 +139,8 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
                     'seq_max_len':seq_max_len})(hist_len) # [None, interest_num, max_len]
         # high_capsule = SoftmaxWeightedSum(dropout_rate=0, future_binding=False,
         #                 seed=seed)([attn, history_emb_add_pos, mask])
-        pad = tf.ones_like(mask, dtype=tf.float32) * (-2 ** 32 + 1)
-        attn = tf.where(mask, attn, pad)  # [batch_size, seq_len, num_interests]
-        attn = tf.nn.softmax(attn, -2)# [batch_size, seq_len, num_interests]
-        # attn = tf.transpose(attn, [0, 2, 1])
-        high_capsule = tf.matmul(attn, history_emb_add_pos)
+        high_capsule = Lambda(softmax_Weighted_Sum)((history_emb_add_pos, mask, attn))
+
     print("high_capsule",high_capsule) #Tensor("softmax_weighted_sum/MatMul:0", shape=(None, 2, 32), dtype=float32) Tensor("capsule_layer/Reshape_1:0", shape=(None, 2, 32), dtype=float32)
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
