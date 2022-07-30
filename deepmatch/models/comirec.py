@@ -129,14 +129,19 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
         attn = tf.transpose(attn, [0, 2, 1]) # [None, interest_num, max_len]
         mask = Lambda(tile_user_his_mask, arguments={'interest_num': interest_num,
                     'seq_max_len':seq_max_len})(hist_len) # [None, interest_num, max_len]
-        high_capsule = SoftmaxWeightedSum(dropout_rate=0, future_binding=False,
-                        seed=seed)([attn, history_emb_add_pos, NoMask()(mask)])
+        # high_capsule = SoftmaxWeightedSum(dropout_rate=0, future_binding=False,
+        #                 seed=seed)([attn, history_emb_add_pos, mask])
+        pad = tf.ones_like(mask, dtype=tf.float32) * (-2 ** 32 + 1)
+        attn = tf.where(mask, attn, pad)  # [batch_size, seq_len, num_interests]
+        attn = tf.nn.softmax(attn, -2)# [batch_size, seq_len, num_interests]
+        # attn = tf.transpose(attn, [0, 2, 1])
+        high_capsule = tf.matmul(attn, history_emb_add_pos)
     print("high_capsule",high_capsule) #Tensor("softmax_weighted_sum/MatMul:0", shape=(None, 2, 32), dtype=float32) Tensor("capsule_layer/Reshape_1:0", shape=(None, 2, 32), dtype=float32)
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
         other_feature_tile = Lambda(tile_user_otherfeat, arguments={'interest_num': interest_num})(user_other_feature)
         print("other_feature_tile",other_feature_tile,"NoMask",NoMask()(other_feature_tile))
-        user_deep_input = high_capsule #Concatenate(axis=2)([NoMask()(other_feature_tile), high_capsule])
+        user_deep_input = Concatenate()([NoMask()(other_feature_tile), high_capsule])
     else:
         user_deep_input = high_capsule
 
