@@ -138,8 +138,8 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
             position_embedding = PositionEncoding()(history_emb)
             history_emb_add_pos = add_func([history_emb_add_pos, position_embedding])  # [None, max_len, emb_dim]
 
-        attn = DNN((item_embedding_dim * 4, interest_num), activation='tanh', l2_reg_dnn=l2_reg_dnn,
-                   dnn_dropout=dnn_dropout, dnn_use_bn=dnn_use_bn, output_activation=None, seed=seed,
+        attn = DNN((item_embedding_dim * 4, interest_num), activation='tanh', l2_reg=l2_reg_dnn,
+                   dropout_rate=dnn_dropout, use_bn=dnn_use_bn, output_activation=None, seed=seed,
                    name="user_dnn_attn")(history_emb_add_pos)
         mask = Lambda(tile_user_his_mask, arguments={'interest_num': interest_num,
                                                      'seq_max_len': seq_max_len})(
