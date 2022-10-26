@@ -9,8 +9,8 @@ Yukuo Cen, Jianwei Zhang, Xu Zou, et al. Controllable Multi-Interest Framework f
 import tensorflow as tf
 from deepctr.feature_column import SparseFeat, VarLenSparseFeat, DenseFeat, \
     embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features
-from deepctr.layers import DNN,PositionEncoding
-from deepctr.layers.utils import NoMask, combined_dnn_input,add_func
+from deepctr.layers import DNN, PositionEncoding
+from deepctr.layers.utils import NoMask, combined_dnn_input, add_func
 from tensorflow.python.keras.layers import Concatenate, Lambda
 from tensorflow.python.keras.models import Model
 from ..inputs import create_embedding_matrix
@@ -18,24 +18,29 @@ from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, Sampl
 from ..layers.interaction import SoftmaxWeightedSum
 from ..utils import get_item_embedding
 
+
 def tile_user_otherfeat(user_other_feature, interest_num):
     return tf.tile(tf.expand_dims(user_other_feature, -2), [1, interest_num, 1])
+
 
 def tile_user_his_mask(hist_len, seq_max_len, interest_num):
     return tf.tile(tf.sequence_mask(hist_len, seq_max_len), [1, interest_num, 1])
 
+
 def softmax_Weighted_Sum(input):
-    history_emb_add_pos,mask, attn = input[0],input[1],input[2]
+    history_emb_add_pos, mask, attn = input[0], input[1], input[2]
     attn = tf.transpose(attn, [0, 2, 1])
     pad = tf.ones_like(mask, dtype=tf.float32) * (-2 ** 32 + 1)
     attn = tf.where(mask, attn, pad)  # [batch_size, seq_len, num_interests]
-    attn = tf.nn.softmax(attn)# [batch_size, seq_len, num_interests]
+    attn = tf.nn.softmax(attn)  # [batch_size, seq_len, num_interests]
     high_capsule = tf.matmul(attn, history_emb_add_pos)
     return high_capsule
 
+
 def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, interest_extractor='sa', add_pos=False,
-         user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
-         dnn_dropout=0, output_activation='linear', sampler_config=None, seed=1024):
+            user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0,
+            l2_reg_embedding=1e-6,
+            dnn_dropout=0, output_activation='linear', sampler_config=None, seed=1024):
     """Instantiates the ComiRec Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
@@ -61,7 +66,7 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
 
     if len(item_feature_columns) > 1:
         raise ValueError("Now ComiRec only support 1 item feature like item_id")
-    if interest_extractor.lower() not in ['dr','sa']:
+    if interest_extractor.lower() not in ['dr', 'sa']:
         raise ValueError("Now ComiRec only support dr and sa two interest_extractor")
     item_feature_column = item_feature_columns[0]
     item_feature_name = item_feature_column.name
@@ -107,45 +112,48 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
     dense_value_list = get_dense_input(features, dense_feature_columns)
 
     sequence_embed_dict = varlen_embedding_lookup(embedding_matrix_dict, features, sparse_varlen_feature_columns)
-    sequence_embed_list = get_varlen_pooling_list(sequence_embed_dict, features, sparse_varlen_feature_columns, to_list=True)
+    sequence_embed_list = get_varlen_pooling_list(sequence_embed_dict, features, sparse_varlen_feature_columns,
+                                                  to_list=True)
 
     dnn_input_emb_list += sequence_embed_list
 
     # keys_emb = concat_func(keys_emb_list, mask=True)
     # query_emb = concat_func(query_emb_list, mask=True)
 
-    history_emb = PoolingLayer()(NoMask()(keys_emb_list))     # [None, max_len, emb_dim]
+    history_emb = PoolingLayer()(NoMask()(keys_emb_list))  # [None, max_len, emb_dim]
     target_emb = PoolingLayer()(NoMask()(query_emb_list))
 
     # target_emb_size = target_emb.get_shape()[-1].value
     # max_len = history_emb.get_shape()[1].value
     hist_len = features['hist_len']
 
-    high_capsule =None
-    if interest_extractor.lower()=='dr':
+    high_capsule = None
+    if interest_extractor.lower() == 'dr':
         high_capsule = CapsuleLayer(input_units=item_embedding_dim,
                                     out_units=item_embedding_dim, max_len=seq_max_len,
                                     k_max=interest_num)((history_emb, hist_len))
-    elif interest_extractor.lower()=='sa':
+    elif interest_extractor.lower() == 'sa':
         history_emb_add_pos = history_emb
         if add_pos:
             position_embedding = PositionEncoding()(history_emb)
-            history_emb_add_pos = add_func([history_emb_add_pos, position_embedding]) # [None, max_len, emb_dim]
+            history_emb_add_pos = add_func([history_emb_add_pos, position_embedding])  # [None, max_len, emb_dim]
 
-        attn = DNN((item_embedding_dim*4, interest_num), dnn_activation, l2_reg_dnn,
-                        dnn_dropout, dnn_use_bn, output_activation=None, seed=seed,
-                        name="user_dnn_attn")(history_emb_add_pos)
+        attn = DNN((item_embedding_dim * 4, interest_num), activation='tanh', l2_reg_dnn=l2_reg_dnn,
+                   dnn_dropout=dnn_dropout, dnn_use_bn=dnn_use_bn, output_activation=None, seed=seed,
+                   name="user_dnn_attn")(history_emb_add_pos)
         mask = Lambda(tile_user_his_mask, arguments={'interest_num': interest_num,
-                    'seq_max_len':seq_max_len})(hist_len) # [None, interest_num, max_len]
+                                                     'seq_max_len': seq_max_len})(
+            hist_len)  # [None, interest_num, max_len]
         # high_capsule = SoftmaxWeightedSum(dropout_rate=0, future_binding=False,
         #                 seed=seed)([attn, history_emb_add_pos, mask])
         high_capsule = Lambda(softmax_Weighted_Sum)((history_emb_add_pos, mask, attn))
 
-    print("high_capsule",high_capsule) #Tensor("softmax_weighted_sum/MatMul:0", shape=(None, 2, 32), dtype=float32) Tensor("capsule_layer/Reshape_1:0", shape=(None, 2, 32), dtype=float32)
+    print("high_capsule",
+          high_capsule)  # Tensor("softmax_weighted_sum/MatMul:0", shape=(None, 2, 32), dtype=float32) Tensor("capsule_layer/Reshape_1:0", shape=(None, 2, 32), dtype=float32)
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
         other_feature_tile = Lambda(tile_user_otherfeat, arguments={'interest_num': interest_num})(user_other_feature)
-        print("other_feature_tile",other_feature_tile,"NoMask",NoMask()(other_feature_tile))
+        print("other_feature_tile", other_feature_tile, "NoMask", NoMask()(other_feature_tile))
         user_deep_input = Concatenate()([NoMask()(other_feature_tile), high_capsule])
     else:
         user_deep_input = high_capsule
