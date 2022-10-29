@@ -62,6 +62,11 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
          <p>  ByteDance   </p>​
       </td>
       <td>
+        ​ <a href="https://github.com/liyuan97"><img width="70" height="70" src="https://github.com/liyuan97.png?s=40" alt="pic"></a><br>
+        ​ <a href="https://github.com/liyuan97">Li Yuan</a>
+        <p> Tencent    </p>​
+      </td>
+      <td>
         ​ <a href="https://github.com/yangjieyu"><img width="70" height="70" src="https://github.com/yangjieyu.png?s=40" alt="pic"></a><br>
         ​ <a href="https://github.com/yangjieyu">Yang Jieyu</a>
         <p> Ant Group    </p>​
@@ -70,11 +75,6 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
         ​ <a href="https://github.com/zzszmyf"><img width="70" height="70" src="https://github.com/zzszmyf.png?s=40" alt="pic"></a><br>
         ​ <a href="https://github.com/zzszmyf">Meng Yifan</a>
         <p> DeepCTR    </p>​
-      </td>
-      <td>
-        ​ <a href="https://github.com/liyuan97"><img width="70" height="70" src="https://github.com/liyuan97.png?s=40" alt="pic"></a><br>
-        ​ <a href="https://github.com/liyuan97">Li Yuan</a>
-        <p> Tencent    </p>​
       </td>
     </tr>
   </tbody>
