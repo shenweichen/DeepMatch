@@ -20,12 +20,12 @@ from ..layers.interaction import SoftmaxWeightedSum
 from ..utils import get_item_embedding
 
 
-def tile_user_otherfeat(user_other_feature, interest_num):
-    return tf.tile(tf.expand_dims(user_other_feature, -2), [1, interest_num, 1])
+def tile_user_otherfeat(user_other_feature, k_max):
+    return tf.tile(tf.expand_dims(user_other_feature, -2), [1, k_max, 1])
 
 
-def tile_user_his_mask(hist_len, seq_max_len, interest_num):
-    return tf.tile(tf.sequence_mask(hist_len, seq_max_len), [1, interest_num, 1])
+def tile_user_his_mask(hist_len, seq_max_len, k_max):
+    return tf.tile(tf.sequence_mask(hist_len, seq_max_len), [1, k_max, 1])
 
 
 def softmax_Weighted_Sum(input):
@@ -132,25 +132,25 @@ def ComiRec(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_
     if interest_extractor.lower() == 'dr':
         high_capsule = CapsuleLayer(input_units=item_embedding_dim,
                                     out_units=item_embedding_dim, max_len=seq_max_len,
-                                    k_max=interest_num)((history_emb, hist_len))
+                                    k_max=k_max)((history_emb, hist_len))
     elif interest_extractor.lower() == 'sa':
         history_emb_add_pos = history_emb
         if add_pos:
             position_embedding = PositionEncoding()(history_emb)
             history_emb_add_pos = add_func([history_emb_add_pos, position_embedding])  # [None, max_len, emb_dim]
 
-        attn = DNN((item_embedding_dim * 4, interest_num), activation='tanh', l2_reg=l2_reg_dnn,
+        attn = DNN((item_embedding_dim * 4, k_max), activation='tanh', l2_reg=l2_reg_dnn,
                    dropout_rate=dnn_dropout, use_bn=dnn_use_bn, output_activation=None, seed=seed,
                    name="user_dnn_attn")(history_emb_add_pos)
-        mask = Lambda(tile_user_his_mask, arguments={'interest_num': interest_num,
+        mask = Lambda(tile_user_his_mask, arguments={'k_max': k_max,
                                                      'seq_max_len': seq_max_len})(
-            hist_len)  # [None, interest_num, max_len]
+            hist_len)  # [None, k_max, max_len]
 
         high_capsule = Lambda(softmax_Weighted_Sum)((history_emb_add_pos, mask, attn))
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
-        other_feature_tile = Lambda(tile_user_otherfeat, arguments={'interest_num': interest_num})(user_other_feature)
+        other_feature_tile = Lambda(tile_user_otherfeat, arguments={'k_max': k_max})(user_other_feature)
         user_deep_input = Concatenate()([NoMask()(other_feature_tile), high_capsule])
     else:
         user_deep_input = high_capsule
@@ -171,8 +171,8 @@ def ComiRec(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
     if dynamic_k:
-        user_embeddings = MaskUserEmbedding(k_max)([user_embeddings, interest_num])
-        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb, interest_num))
+        user_embeddings = MaskUserEmbedding(k_max)([user_embeddings, k_max])
+        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb, k_max))
     else:
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
 
