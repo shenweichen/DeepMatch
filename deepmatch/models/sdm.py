@@ -30,7 +30,6 @@ def SDM(user_feature_columns, item_feature_columns, history_feature_list, units=
     :param user_feature_columns: An iterable containing user's features used by  the model.
     :param item_feature_columns: An iterable containing item's features used by  the model.
     :param history_feature_list: list,to indicate short and prefer sequence sparse field
-    :param num_sampled: int, the number of classes to randomly sample per batch.
     :param units: int, dimension for each output layer
     :param rnn_layers: int, layer number of rnn
     :param dropout_rate: float in [0,1), the probability we will drop out a given DNN coordinate.
