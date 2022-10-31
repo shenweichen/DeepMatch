@@ -12,6 +12,7 @@ def test_SDM():
 
     if tf.__version__ >= '2.0.0':
         tf.compat.v1.disable_eager_execution()
+        #tf.compat.v1.disable_v2_behavior()
     else:
         K.set_learning_phase(True)
 

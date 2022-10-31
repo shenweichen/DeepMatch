@@ -23,7 +23,6 @@ def YoutubeDNN(user_feature_columns, item_feature_columns,
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
     :param item_feature_columns: An iterable containing item's features used by  the model.
-    :param num_sampled: int, the number of classes to randomly sample per batch.
     :param user_dnn_hidden_units: list,list of positive integer or empty list, the layer number and units in each layer of user tower
     :param dnn_activation: Activation function to use in deep net
     :param dnn_use_bn: bool. Whether use BatchNormalization before activation or not in deep net

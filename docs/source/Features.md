@@ -96,3 +96,10 @@
 
 [Multi-interest network with dynamic routing for recommendation at Tmall](https://arxiv.org/pdf/1904.08030)
 
+### COMIREC (Controllable Multi-Interest Framework for Recommendation)
+
+[**COMIREC Model API**](./deepmatch.models.comirec.html)
+
+![COMIREC](../pics/comirec.jpg)
+
+[Controllable Multi-Interest Framework for Recommendation](https://arxiv.org/pdf/2005.09347)

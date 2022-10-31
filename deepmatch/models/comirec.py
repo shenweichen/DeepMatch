@@ -1,61 +1,57 @@
 """
 Author:
-    Qingliang Cai, leocaicoder@163.com
-    Weichen Shen, weichenswc@163.com
+    Li Yuan, lysysu@qq.com
 
 Reference:
-Li C, Liu Z, Wu M, et al. Multi-interest network with dynamic routing for recommendation at Tmall[C]//Proceedings of the 28th ACM International Conference on Information and Knowledge Management. 2019: 2615-2623.
+Yukuo Cen, Jianwei Zhang, Xu Zou, et al. Controllable Multi-Interest Framework for Recommendation//Accepted to KDD 2020
 """
 
 import tensorflow as tf
 from deepctr.feature_column import SparseFeat, VarLenSparseFeat, DenseFeat, \
     embedding_lookup, varlen_embedding_lookup, get_varlen_pooling_list, get_dense_input, build_input_features
-from deepctr.layers import DNN
-from deepctr.layers.utils import NoMask, combined_dnn_input
+from deepctr.layers import DNN, PositionEncoding
+from deepctr.layers.utils import NoMask, combined_dnn_input, add_func
 from tensorflow.python.keras.layers import Concatenate, Lambda
 from tensorflow.python.keras.models import Model
 
 from ..inputs import create_embedding_matrix
 from ..layers.core import CapsuleLayer, PoolingLayer, MaskUserEmbedding, LabelAwareAttention, SampledSoftmaxLayer, \
     EmbeddingIndex
+from ..layers.interaction import SoftmaxWeightedSum
 from ..utils import get_item_embedding
-
-
-def shape_target(target_emb_tmp, target_emb_size):
-    return tf.expand_dims(tf.reshape(target_emb_tmp, [-1, target_emb_size]), axis=-1)
 
 
 def tile_user_otherfeat(user_other_feature, k_max):
     return tf.tile(tf.expand_dims(user_other_feature, -2), [1, k_max, 1])
 
 
-def adaptive_interest_num(seq_len, k_max):
-    try:
-        log_len = tf.log1p(tf.cast(seq_len, dtype="float32"))
-        log_2 = tf.log(2.)
-    except AttributeError:
-        log_len = tf.math.log1p(tf.cast(seq_len, dtype="float32"))
-        log_2 = tf.math.log(2.)
-    k_user = tf.cast(tf.maximum(
-        1.,
-        tf.minimum(
-            tf.cast(k_max, dtype="float32"),  # k_max
-            log_len / log_2  # hist_len
-        )
-    ), dtype="int32")
-    return k_user
+def tile_user_his_mask(hist_len, seq_max_len, k_max):
+    return tf.tile(tf.sequence_mask(hist_len, seq_max_len), [1, k_max, 1])
 
 
-def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=False,
-         user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0, l2_reg_embedding=1e-6,
-         dnn_dropout=0, output_activation='linear', sampler_config=None, seed=1024):
-    """Instantiates the MIND Model architecture.
+def softmax_Weighted_Sum(input):
+    history_emb_add_pos, mask, attn = input[0], input[1], input[2]
+    attn = tf.transpose(attn, [0, 2, 1])
+    pad = tf.ones_like(mask, dtype=tf.float32) * (-2 ** 32 + 1)
+    attn = tf.where(mask, attn, pad)  # [batch_size, seq_len, num_interests]
+    attn = tf.nn.softmax(attn)  # [batch_size, seq_len, num_interests]
+    high_capsule = tf.matmul(attn, history_emb_add_pos)
+    return high_capsule
+
+
+def ComiRec(user_feature_columns, item_feature_columns, k_max=2, p=100, interest_extractor='sa',
+            add_pos=True,
+            user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0,
+            l2_reg_embedding=1e-6,
+            dnn_dropout=0, output_activation='linear', sampler_config=None, seed=1024):
+    """Instantiates the ComiRec Model architecture.
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
     :param item_feature_columns: An iterable containing item's features used by  the model.
     :param k_max: int, the max size of user interest embedding
     :param p: float,the parameter for adjusting the attention distribution in LabelAwareAttention.
-    :param dynamic_k: bool, whether or not use dynamic interest number
+    :param interest_extractor: string, type of a multi-interest extraction module, 'sa' means self-attentive and 'dr' means dynamic routing
+    :param add_pos: bool. Whether use positional encoding layer
     :param user_dnn_hidden_units: list,list of positive integer or empty list, the layer number and units in each layer of user tower
     :param dnn_activation: Activation function to use in deep net
     :param dnn_use_bn: bool. Whether use BatchNormalization before activation or not in deep net
@@ -70,11 +66,15 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=F
     """
 
     if len(item_feature_columns) > 1:
-        raise ValueError("Now MIND only support 1 item feature like item_id")
+        raise ValueError("Now ComiRec only support 1 item feature like item_id")
+    if interest_extractor.lower() not in ['dr', 'sa']:
+        raise ValueError("Now ComiRec only support dr and sa two interest_extractor")
     item_feature_column = item_feature_columns[0]
     item_feature_name = item_feature_column.name
     item_vocabulary_size = item_feature_columns[0].vocabulary_size
     item_embedding_dim = item_feature_columns[0].embedding_dim
+    if user_dnn_hidden_units[-1] != item_embedding_dim:
+        user_dnn_hidden_units = tuple(list(user_dnn_hidden_units) + [item_embedding_dim])
     # item_index = Input(tensor=tf.constant([list(range(item_vocabulary_size))]))
 
     history_feature_list = [item_feature_name]
@@ -121,28 +121,36 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=F
     # keys_emb = concat_func(keys_emb_list, mask=True)
     # query_emb = concat_func(query_emb_list, mask=True)
 
-    history_emb = PoolingLayer()(NoMask()(keys_emb_list))
+    history_emb = PoolingLayer()(NoMask()(keys_emb_list))  # [None, max_len, emb_dim]
     target_emb = PoolingLayer()(NoMask()(query_emb_list))
 
     # target_emb_size = target_emb.get_shape()[-1].value
     # max_len = history_emb.get_shape()[1].value
     hist_len = features['hist_len']
 
-    if dynamic_k:
-        interest_num = Lambda(adaptive_interest_num, arguments={'k_max': k_max})(hist_len)
-        high_capsule = CapsuleLayer(input_units=item_embedding_dim,
-                                    out_units=item_embedding_dim, max_len=seq_max_len,
-                                    k_max=k_max)((history_emb, hist_len, interest_num))
-    else:
+    high_capsule = None
+    if interest_extractor.lower() == 'dr':
         high_capsule = CapsuleLayer(input_units=item_embedding_dim,
                                     out_units=item_embedding_dim, max_len=seq_max_len,
                                     k_max=k_max)((history_emb, hist_len))
+    elif interest_extractor.lower() == 'sa':
+        history_emb_add_pos = history_emb
+        if add_pos:
+            position_embedding = PositionEncoding()(history_emb)
+            history_emb_add_pos = add_func([history_emb_add_pos, position_embedding])  # [None, max_len, emb_dim]
+
+        attn = DNN((item_embedding_dim * 4, k_max), activation='tanh', l2_reg=l2_reg_dnn,
+                   dropout_rate=dnn_dropout, use_bn=dnn_use_bn, output_activation=None, seed=seed,
+                   name="user_dnn_attn")(history_emb_add_pos)
+        mask = Lambda(tile_user_his_mask, arguments={'k_max': k_max,
+                                                     'seq_max_len': seq_max_len})(
+            hist_len)  # [None, k_max, max_len]
+
+        high_capsule = Lambda(softmax_Weighted_Sum)((history_emb_add_pos, mask, attn))
 
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
-
         other_feature_tile = Lambda(tile_user_otherfeat, arguments={'k_max': k_max})(user_other_feature)
-
         user_deep_input = Concatenate()([NoMask()(other_feature_tile), high_capsule])
     else:
         user_deep_input = high_capsule
@@ -162,11 +170,7 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=F
 
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
-    if dynamic_k:
-        user_embeddings = MaskUserEmbedding(k_max)([user_embeddings, interest_num])
-        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb, interest_num))
-    else:
-        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
+    user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
 
     output = SampledSoftmaxLayer(sampler_config._asdict())(
         [pooling_item_embedding_weight, user_embedding_final, item_features[item_feature_name]])

@@ -37,11 +37,11 @@ You can read the latest code at https://github.com/shenweichen/DeepMatch
 News
 -----
 
+10/31/2022 : Add `ComiRec` . `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.3.1>`_
+
 07/04/2022 : Support different negative sampling strategies, including `inbatch` , `uniform` , `frequency` , `adaptive` . `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.3.0>`_
 
 06/17/2022 : Fix some bugs. `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.2.1>`_
-
-10/12/2020 : Support different initializers for different embedding weights and loading pretrained embeddings. `Changelog <https://github.com/shenweichen/DeepMatch/releases/tag/v0.2.0>`_
 
 DisscussionGroup
 -----------------------
