@@ -15,7 +15,8 @@ from tensorflow.python.keras.layers import Concatenate, Lambda
 from tensorflow.python.keras.models import Model
 
 from ..inputs import create_embedding_matrix
-from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, SampledSoftmaxLayer, EmbeddingIndex
+from ..layers.core import CapsuleLayer, PoolingLayer, MaskUserEmbedding, LabelAwareAttention, SampledSoftmaxLayer, \
+    EmbeddingIndex
 from ..layers.interaction import SoftmaxWeightedSum
 from ..utils import get_item_embedding
 
