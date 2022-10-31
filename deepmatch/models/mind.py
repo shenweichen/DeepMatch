@@ -53,11 +53,9 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=F
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
     :param item_feature_columns: An iterable containing item's features used by  the model.
-    :param num_sampled: int, the number of classes to randomly sample per batch.
     :param k_max: int, the max size of user interest embedding
     :param p: float,the parameter for adjusting the attention distribution in LabelAwareAttention.
     :param dynamic_k: bool, whether or not use dynamic interest number
-    :param dnn_use_bn: bool. Whether use BatchNormalization before activation or not in deep net
     :param user_dnn_hidden_units: list,list of positive integer or empty list, the layer number and units in each layer of user tower
     :param dnn_activation: Activation function to use in deep net
     :param dnn_use_bn: bool. Whether use BatchNormalization before activation or not in deep net
@@ -169,7 +167,7 @@ def MIND(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=F
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb, interest_num))
     else:
         user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
-    print("swc")
+
     output = SampledSoftmaxLayer(sampler_config._asdict())(
         [pooling_item_embedding_weight, user_embedding_final, item_features[item_feature_name]])
     model = Model(inputs=inputs_list + item_inputs_list, outputs=output)

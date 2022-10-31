@@ -13,18 +13,20 @@ from deepctr.layers import DNN, PositionEncoding
 from deepctr.layers.utils import NoMask, combined_dnn_input, add_func
 from tensorflow.python.keras.layers import Concatenate, Lambda
 from tensorflow.python.keras.models import Model
+
 from ..inputs import create_embedding_matrix
-from ..layers.core import CapsuleLayer, PoolingLayer, LabelAwareAttention, SampledSoftmaxLayer, EmbeddingIndex
+from ..layers.core import CapsuleLayer, PoolingLayer, MaskUserEmbedding, LabelAwareAttention, SampledSoftmaxLayer, \
+    EmbeddingIndex
 from ..layers.interaction import SoftmaxWeightedSum
 from ..utils import get_item_embedding
 
 
-def tile_user_otherfeat(user_other_feature, interest_num):
-    return tf.tile(tf.expand_dims(user_other_feature, -2), [1, interest_num, 1])
+def tile_user_otherfeat(user_other_feature, k_max):
+    return tf.tile(tf.expand_dims(user_other_feature, -2), [1, k_max, 1])
 
 
-def tile_user_his_mask(hist_len, seq_max_len, interest_num):
-    return tf.tile(tf.sequence_mask(hist_len, seq_max_len), [1, interest_num, 1])
+def tile_user_his_mask(hist_len, seq_max_len, k_max):
+    return tf.tile(tf.sequence_mask(hist_len, seq_max_len), [1, k_max, 1])
 
 
 def softmax_Weighted_Sum(input):
@@ -37,7 +39,8 @@ def softmax_Weighted_Sum(input):
     return high_capsule
 
 
-def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, interest_extractor='sa', add_pos=False,
+def ComiRec(user_feature_columns, item_feature_columns, k_max=2, p=100, interest_extractor='sa',
+            add_pos=True,
             user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0,
             l2_reg_embedding=1e-6,
             dnn_dropout=0, output_activation='linear', sampler_config=None, seed=1024):
@@ -45,12 +48,10 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
 
     :param user_feature_columns: An iterable containing user's features used by  the model.
     :param item_feature_columns: An iterable containing item's features used by  the model.
-    :param num_sampled: int, the number of classes to randomly sample per batch.
-    :param interest_num: int, the max size of user interest embedding
+    :param k_max: int, the max size of user interest embedding
     :param p: float,the parameter for adjusting the attention distribution in LabelAwareAttention.
     :param interest_extractor: string, type of a multi-interest extraction module, 'sa' means self-attentive and 'dr' means dynamic routing
     :param add_pos: bool. Whether use positional encoding layer
-    :param dnn_use_bn: bool. Whether use BatchNormalization before activation or not in deep net
     :param user_dnn_hidden_units: list,list of positive integer or empty list, the layer number and units in each layer of user tower
     :param dnn_activation: Activation function to use in deep net
     :param dnn_use_bn: bool. Whether use BatchNormalization before activation or not in deep net
@@ -131,29 +132,25 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
     if interest_extractor.lower() == 'dr':
         high_capsule = CapsuleLayer(input_units=item_embedding_dim,
                                     out_units=item_embedding_dim, max_len=seq_max_len,
-                                    k_max=interest_num)((history_emb, hist_len))
+                                    k_max=k_max)((history_emb, hist_len))
     elif interest_extractor.lower() == 'sa':
         history_emb_add_pos = history_emb
         if add_pos:
             position_embedding = PositionEncoding()(history_emb)
             history_emb_add_pos = add_func([history_emb_add_pos, position_embedding])  # [None, max_len, emb_dim]
 
-        attn = DNN((item_embedding_dim * 4, interest_num), activation='tanh', l2_reg=l2_reg_dnn,
+        attn = DNN((item_embedding_dim * 4, k_max), activation='tanh', l2_reg=l2_reg_dnn,
                    dropout_rate=dnn_dropout, use_bn=dnn_use_bn, output_activation=None, seed=seed,
                    name="user_dnn_attn")(history_emb_add_pos)
-        mask = Lambda(tile_user_his_mask, arguments={'interest_num': interest_num,
+        mask = Lambda(tile_user_his_mask, arguments={'k_max': k_max,
                                                      'seq_max_len': seq_max_len})(
-            hist_len)  # [None, interest_num, max_len]
-        # high_capsule = SoftmaxWeightedSum(dropout_rate=0, future_binding=False,
-        #                 seed=seed)([attn, history_emb_add_pos, mask])
+            hist_len)  # [None, k_max, max_len]
+
         high_capsule = Lambda(softmax_Weighted_Sum)((history_emb_add_pos, mask, attn))
 
-    print("high_capsule",
-          high_capsule)  # Tensor("softmax_weighted_sum/MatMul:0", shape=(None, 2, 32), dtype=float32) Tensor("capsule_layer/Reshape_1:0", shape=(None, 2, 32), dtype=float32)
     if len(dnn_input_emb_list) > 0 or len(dense_value_list) > 0:
         user_other_feature = combined_dnn_input(dnn_input_emb_list, dense_value_list)
-        other_feature_tile = Lambda(tile_user_otherfeat, arguments={'interest_num': interest_num})(user_other_feature)
-        print("other_feature_tile", other_feature_tile, "NoMask", NoMask()(other_feature_tile))
+        other_feature_tile = Lambda(tile_user_otherfeat, arguments={'k_max': k_max})(user_other_feature)
         user_deep_input = Concatenate()([NoMask()(other_feature_tile), high_capsule])
     else:
         user_deep_input = high_capsule
@@ -173,7 +170,8 @@ def ComiRec(user_feature_columns, item_feature_columns, interest_num=2, p=100, i
 
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
-    user_embedding_final = LabelAwareAttention(k_max=interest_num, pow_p=p)((user_embeddings, target_emb))
+    user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
+
     output = SampledSoftmaxLayer(sampler_config._asdict())(
         [pooling_item_embedding_weight, user_embedding_final, item_features[item_feature_name]])
     model = Model(inputs=inputs_list + item_inputs_list, outputs=output)
