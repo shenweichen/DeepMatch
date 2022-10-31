@@ -1,4 +1,5 @@
 # History
+- 10/31/2022 : [v0.3.1](https://github.com/shenweichen/DeepMatch/releases/tag/v0.3.1) released.Add `ComiRec` model .
 - 07/04/2022 : [v0.3.0](https://github.com/shenweichen/DeepMatch/releases/tag/v0.3.0) released.Support different negative sampling strategies, including `inbatch`, `uniform`, `frequency`, `adaptive`.
 - 06/17/2022 : [v0.2.1](https://github.com/shenweichen/DeepMatch/releases/tag/v0.2.1) released.Fix some bugs.
 - 10/12/2020 : [v0.2.0](https://github.com/shenweichen/DeepMatch/releases/tag/v0.2.0) released.Support different initializers for different embedding weights and loading pretrained embeddings. 
