@@ -39,7 +39,7 @@ def softmax_Weighted_Sum(input):
     return high_capsule
 
 
-def ComiRec(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_k=False, interest_extractor='sa',
+def ComiRec(user_feature_columns, item_feature_columns, k_max=2, p=100, interest_extractor='sa',
             add_pos=True,
             user_dnn_hidden_units=(64, 32), dnn_activation='relu', dnn_use_bn=False, l2_reg_dnn=0,
             l2_reg_embedding=1e-6,
@@ -50,7 +50,6 @@ def ComiRec(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_
     :param item_feature_columns: An iterable containing item's features used by  the model.
     :param k_max: int, the max size of user interest embedding
     :param p: float,the parameter for adjusting the attention distribution in LabelAwareAttention.
-    :param dynamic_k: bool, whether or not use dynamic interest number
     :param interest_extractor: string, type of a multi-interest extraction module, 'sa' means self-attentive and 'dr' means dynamic routing
     :param add_pos: bool. Whether use positional encoding layer
     :param user_dnn_hidden_units: list,list of positive integer or empty list, the layer number and units in each layer of user tower
@@ -171,11 +170,7 @@ def ComiRec(user_feature_columns, item_feature_columns, k_max=2, p=100, dynamic_
 
     pooling_item_embedding_weight = PoolingLayer()([item_embedding_weight])
 
-    if dynamic_k:
-        user_embeddings = MaskUserEmbedding(k_max)([user_embeddings, k_max])
-        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb, k_max))
-    else:
-        user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
+    user_embedding_final = LabelAwareAttention(k_max=k_max, pow_p=p)((user_embeddings, target_emb))
 
     output = SampledSoftmaxLayer(sampler_config._asdict())(
         [pooling_item_embedding_weight, user_embedding_final, item_features[item_feature_name]])
