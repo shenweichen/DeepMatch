@@ -62,7 +62,14 @@ jobs:
           - python-version: 3.9
             tf-version: 1.15.0
           - python-version: 3.9
-            tf-version: 2.2.0
+            tf-version: 1.14.0
+          - python-version: 3.10.7
+            tf-version: 1.4.0
+          - python-version: 3.10.7
+            tf-version: 1.15.0
+          - python-version: 3.10.7
+            tf-version: 1.14.0
+
 
     steps:
 
