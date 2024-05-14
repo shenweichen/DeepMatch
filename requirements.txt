@@ -1,0 +1,9 @@
+faiss-cpu # only for python3.8
+recommonmark==0.7.1
+tensorflow==2.6.2
+pandas==1.1.5
+numpy==1.19 # typeDict
+tqdm
+scikit-learn
+jupyter # for EDA
+-e . # deepmatch local install
