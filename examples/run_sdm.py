@@ -4,8 +4,8 @@ from deepmatch.models import SDM
 from deepmatch.utils import sampledsoftmaxloss, NegativeSampler
 from preprocess import gen_data_set_sdm, gen_model_input_sdm
 from sklearn.preprocessing import LabelEncoder
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.models import Model
+from tensorflow.keras import backend as K
+from tensorflow.keras.models import Model
 
 if __name__ == "__main__":
     data = pd.read_csvdata = pd.read_csv("./movielens_sample.txt")

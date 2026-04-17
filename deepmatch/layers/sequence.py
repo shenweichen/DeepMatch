@@ -6,7 +6,7 @@ Author:
 """
 
 import tensorflow as tf
-from tensorflow.python.keras.layers import Layer
+from tensorflow.keras.layers import Layer
 
 
 class DynamicMultiRNN(Layer):

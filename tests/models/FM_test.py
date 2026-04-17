@@ -2,7 +2,7 @@ import pytest
 import tensorflow as tf
 from deepmatch.models import FM
 from deepmatch.utils import sampledsoftmaxloss, NegativeSampler
-from tensorflow.python.keras import backend as K
+from tensorflow.keras import backend as K
 
 from ..utils import check_model, get_xy_fd
 

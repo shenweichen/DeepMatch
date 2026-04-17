@@ -9,7 +9,7 @@ Huang P S , He X , Gao J , et al. Learning deep structured semantic models for w
 
 from deepctr.feature_column import build_input_features, create_embedding_matrix
 from deepctr.layers import PredictionLayer, DNN, combined_dnn_input
-from tensorflow.python.keras.models import Model
+from tensorflow.keras.models import Model
 
 from ..inputs import input_from_feature_columns
 from ..layers.core import InBatchSoftmaxLayer

@@ -1,18 +1,27 @@
 # Quick-Start
 
 ## Installation Guide
-Now `deepmatch` is available for python `2.7 `and `3.6, 3.7, 3.8`.  
-`deepmatch` depends on tensorflow, you can specify to install the cpu version or gpu version through `pip`.
+Now `deepmatch` supports Python `>=3.7` and is tested with TensorFlow `1.15` and TensorFlow `2.x`.
 
-### CPU version
+DeepMatch does not pin or install TensorFlow for you. Install a TensorFlow build that matches your Python, NumPy, CPU/GPU, and operating system first, then install DeepMatch:
 
 ```bash
-$ pip install deepmatch[cpu]
+$ pip install tensorflow
+$ pip install deepmatch
 ```
-### GPU version
+
+For GPU environments, install the TensorFlow package recommended for your CUDA, cuDNN, and platform combination, then install `deepmatch`.
+
+For Python `>=3.9`, DeepMatch and its dependencies allow modern `h5py` releases with `h5py>=3.7.0`. If TensorFlow reports a NumPy conflict, follow the TensorFlow requirement for your selected TensorFlow release, for example using `numpy<2` when required by TensorFlow.
+
+Use public `tensorflow.keras` APIs in your own code. Avoid mixing `tensorflow.python.keras` with `tensorflow.keras`, because `tensorflow.python.*` is private TensorFlow API and can break model serialization or optimizer/metric loading across TensorFlow versions.
+
+### Install from source
 
 ```bash
-$ pip install deepmatch[gpu]
+$ git clone https://github.com/shenweichen/DeepMatch.git
+$ cd DeepMatch
+$ pip install .
 ```
 ## Run examples !!
 
