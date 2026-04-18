@@ -83,7 +83,7 @@ def gen_model_input(train_set, user_profile, seq_max_len):
     train_label = np.array([line[2] for line in train_set])
     train_seq = [line[3] for line in train_set]
     train_hist_len = np.array([line[4] for line in train_set])
-    train_seq_genres = np.array([line[5] for line in train_set])
+    train_seq_genres = [line[5] for line in train_set]
     train_genres = np.array([line[6] for line in train_set])
     train_seq_pad = pad_sequences(train_seq, maxlen=seq_max_len, padding='post', truncating='post', value=0)
     train_seq_genres_pad = pad_sequences(train_seq_genres, maxlen=seq_max_len, padding='post', truncating='post',
@@ -106,8 +106,8 @@ def gen_model_input_sdm(train_set, user_profile, seq_short_max_len, seq_prefer_m
     prefer_train_seq = [line[4] for line in train_set]
     train_short_len = np.array([line[5] for line in train_set])
     train_prefer_len = np.array([line[6] for line in train_set])
-    short_train_seq_genres = np.array([line[7] for line in train_set])
-    prefer_train_seq_genres = np.array([line[8] for line in train_set])
+    short_train_seq_genres = [line[7] for line in train_set]
+    prefer_train_seq_genres = [line[8] for line in train_set]
 
     train_short_item_pad = pad_sequences(short_train_seq, maxlen=seq_short_max_len, padding='post', truncating='post',
                                          value=0)
