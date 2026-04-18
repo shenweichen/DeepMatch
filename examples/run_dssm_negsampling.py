@@ -3,7 +3,7 @@ from deepctr.feature_column import SparseFeat, VarLenSparseFeat
 from deepmatch.models import *
 from preprocess import gen_data_set, gen_model_input
 from sklearn.preprocessing import LabelEncoder
-from tensorflow.python.keras.models import Model
+from tensorflow.keras.models import Model
 
 if __name__ == "__main__":
 

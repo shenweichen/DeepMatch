@@ -10,8 +10,8 @@ import math
 
 from deepctr.feature_column import input_from_feature_columns, build_input_features, SparseFeat
 from deepctr.layers import DNN, combined_dnn_input
-from tensorflow.python.keras.layers import Lambda, Concatenate, Multiply
-from tensorflow.python.keras.models import Model
+from tensorflow.keras.layers import Lambda, Concatenate, Multiply
+from tensorflow.keras.models import Model
 
 
 def NCF(user_feature_columns, item_feature_columns, user_gmf_embedding_dim=20, item_gmf_embedding_dim=20,

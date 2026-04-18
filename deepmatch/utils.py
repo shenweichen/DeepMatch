@@ -19,8 +19,8 @@ except ImportError:
 
 import tensorflow as tf
 
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.layers import Lambda
+from tensorflow.keras import backend as K
+from tensorflow.keras.layers import Lambda
 
 
 class NegativeSampler(

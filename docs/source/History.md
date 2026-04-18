@@ -1,4 +1,5 @@
 # History
+- 04/17/2026 : [v0.3.2](https://github.com/shenweichen/DeepMatch/releases/tag/v0.3.2) released. Improve TensorFlow compatibility guidance and migrate private `tensorflow.python.keras` imports to public `tensorflow.keras` APIs.
 - 10/31/2022 : [v0.3.1](https://github.com/shenweichen/DeepMatch/releases/tag/v0.3.1) released.Add `ComiRec` model .
 - 07/04/2022 : [v0.3.0](https://github.com/shenweichen/DeepMatch/releases/tag/v0.3.0) released.Support different negative sampling strategies, including `inbatch`, `uniform`, `frequency`, `adaptive`.
 - 06/17/2022 : [v0.2.1](https://github.com/shenweichen/DeepMatch/releases/tag/v0.2.1) released.Fix some bugs.

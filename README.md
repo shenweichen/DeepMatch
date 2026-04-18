@@ -1,7 +1,7 @@
 # DeepMatch
 
 [![Python Versions](https://img.shields.io/pypi/pyversions/deepmatch.svg)](https://pypi.org/project/deepmatch)
-[![TensorFlow Versions](https://img.shields.io/badge/TensorFlow-1.9+/2.0+-blue.svg)](https://pypi.org/project/deepmatch)
+[![TensorFlow Versions](https://img.shields.io/badge/TensorFlow-1.15/2.0+-blue.svg)](https://pypi.org/project/deepmatch)
 [![Downloads](https://pepy.tech/badge/deepmatch)](https://pepy.tech/project/deepmatch)
 [![PyPI Version](https://img.shields.io/pypi/v/deepmatch.svg)](https://pypi.org/project/deepmatch)
 [![GitHub Issues](https://img.shields.io/github/issues/shenweichen/deepmatch.svg
@@ -10,13 +10,26 @@
 
 
 [![Documentation Status](https://readthedocs.org/projects/deepmatch/badge/?version=latest)](https://deepmatch.readthedocs.io/)
-![CI status](https://github.com/shenweichen/deepmatch/workflows/CI/badge.svg)
+[![CI](https://github.com/shenweichen/DeepMatch/actions/workflows/ci.yml/badge.svg)](https://github.com/shenweichen/DeepMatch/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/shenweichen/DeepMatch/branch/master/graph/badge.svg)](https://codecov.io/gh/shenweichen/DeepMatch)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/c5a2769ec35444d8958f6b58ff85029b)](https://www.codacy.com/gh/shenweichen/DeepMatch/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=shenweichen/DeepMatch&amp;utm_campaign=Badge_Grade)
 [![Disscussion](https://img.shields.io/badge/chat-wechat-brightgreen?style=flat)](https://github.com/shenweichen/DeepMatch#disscussiongroup)
 [![License](https://img.shields.io/github/license/shenweichen/deepmatch.svg)](https://github.com/shenweichen/deepmatch/blob/master/LICENSE)
 
 DeepMatch is a deep matching model library for recommendations & advertising. It's easy to **train models** and to **export representation vectors** for user and item which can be used for **ANN search**.You can use any complex model with `model.fit()`and `model.predict()` .
+
+## Installation and compatibility
+
+DeepMatch does not pin or install TensorFlow for you. Install a TensorFlow build that matches your Python, NumPy, CPU/GPU, and operating system first, then install DeepMatch:
+
+```bash
+pip install tensorflow
+pip install deepmatch
+```
+
+For Python `>=3.9`, DeepMatch and its dependencies allow modern `h5py` releases with `h5py>=3.7.0`. If TensorFlow reports a NumPy conflict, follow the TensorFlow requirement for your selected TensorFlow release, for example using `numpy<2` when required by TensorFlow.
+
+Use public `tensorflow.keras` APIs in your own code and examples. Avoid mixing `tensorflow.python.keras` with `tensorflow.keras`, because `tensorflow.python.*` is private TensorFlow API and can break model serialization or optimizer/metric loading across TensorFlow versions.
 
 Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.html) or [**Run examples**](./examples/colab_MovieLen1M_YoutubeDNN.ipynb) !
 
@@ -88,4 +101,3 @@ Let's [**Get Started!**](https://deepmatch.readthedocs.io/en/latest/Quick-Start.
 |公众号：浅梦学习笔记|微信：deepctrbot|学习小组 [加入](https://t.zsxq.com/026UJEuzv) [主题集合](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MjM5MzY4NzE3MA==&action=getalbum&album_id=1361647041096843265&scene=126#wechat_redirect)|
 |:--:|:--:|:--:|
 | [![公众号](./docs/pics/code.png)](https://github.com/shenweichen/AlgoNotes)| [![微信](./docs/pics/deepctrbot.png)](https://github.com/shenweichen/AlgoNotes)|[![学习小组](./docs/pics/planet_github.png)](https://t.zsxq.com/026UJEuzv)|
-

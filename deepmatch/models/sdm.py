@@ -12,8 +12,8 @@ from deepctr.feature_column import build_input_features, SparseFeat, DenseFeat, 
     VarLenSparseFeat, \
     create_embedding_matrix, embedding_lookup, varlen_embedding_lookup, concat_func
 from deepctr.layers.utils import NoMask
-from tensorflow.python.keras.layers import Dense, Lambda
-from tensorflow.python.keras.models import Model
+from tensorflow.keras.layers import Dense, Lambda
+from tensorflow.keras.models import Model
 
 from ..layers.core import PoolingLayer, SampledSoftmaxLayer, EmbeddingIndex
 from ..layers.interaction import UserAttention, SelfMultiHeadAttention, AttentionSequencePoolingLayer

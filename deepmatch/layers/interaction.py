@@ -8,8 +8,8 @@ Author:
 import tensorflow as tf
 from deepctr.layers.normalization import LayerNormalization
 from deepctr.layers.utils import softmax, reduce_mean
-from tensorflow.python.keras.initializers import TruncatedNormal
-from tensorflow.python.keras.layers import Layer, Dense, Dropout
+from tensorflow.keras.initializers import TruncatedNormal
+from tensorflow.keras.layers import Layer, Dense, Dropout
 
 
 class DotAttention(Layer):

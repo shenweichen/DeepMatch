@@ -6,8 +6,8 @@ Author:
 from deepctr.feature_column import build_input_features
 from deepctr.layers.core import PredictionLayer
 from deepctr.layers.utils import concat_func, reduce_sum
-from tensorflow.python.keras.layers import Lambda
-from tensorflow.python.keras.models import Model
+from tensorflow.keras.layers import Lambda
+from tensorflow.keras.models import Model
 
 from ..inputs import create_embedding_matrix, input_from_feature_columns
 from ..layers.core import InBatchSoftmaxLayer
