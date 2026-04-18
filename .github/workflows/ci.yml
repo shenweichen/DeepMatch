@@ -25,15 +25,19 @@ jobs:
           - python-version: "3.7"
             tf-version: "1.15.5"
             protobuf-version: "3.19.0"
+            run-examples: "false"
           - python-version: "3.10"
             tf-version: "2.10.0"
             protobuf-version: ""
+            run-examples: "true"
           - python-version: "3.10"
             tf-version: "2.15.0"
             protobuf-version: ""
+            run-examples: "false"
           - python-version: "3.11"
             tf-version: "2.15.0"
             protobuf-version: ""
+            run-examples: "false"
 
     steps:
       - uses: actions/checkout@v5
@@ -83,6 +87,24 @@ jobs:
         timeout-minutes: 240
         run: |
           pytest --cov=deepmatch --cov-report=xml --cov-report=term-missing:skip-covered
+
+      - name: Install example runtime dependencies
+        if: ${{ (github.event_name != 'pull_request' || steps.filter.outputs.code_related == 'true') && matrix.run-examples == 'true' }}
+        run: |
+          python -m pip install -q pandas scikit-learn tqdm
+
+      - name: Smoke test examples
+        if: ${{ (github.event_name != 'pull_request' || steps.filter.outputs.code_related == 'true') && matrix.run-examples == 'true' }}
+        timeout-minutes: 60
+        working-directory: examples
+        env:
+          DEEPMATCH_EXAMPLE_FAST: "1"
+        run: |
+          python run_youtubednn.py
+          python run_dssm_inbatchsoftmax.py
+          python run_dssm_negsampling.py
+          python run_sdm.py
+          python run_ncf.py
 
       - name: Upload coverage to Codecov
         if: ${{ github.event_name != 'pull_request' || steps.filter.outputs.code_related == 'true' }}
