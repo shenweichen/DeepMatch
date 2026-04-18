@@ -8,13 +8,13 @@ if __name__ == "__main__":
     fast_mode = os.environ.get("DEEPMATCH_EXAMPLE_FAST", "0") == "1"
     data = pd.read_csvdata = pd.read_csv("./movielens_sample.txt")
     sparse_features = ["movie_id", "user_id",
-                       "gender", "age", "occupation", "zip", ]
+                       "gender", "age", "occupation", "zip", "genres"]
     SEQ_LEN = 50
     negsample = 3
 
     # 1.Label Encoding for sparse features,and process sequence features with `gen_date_set` and `gen_model_input`
 
-    features = ['user_id', 'movie_id', 'gender', 'age', 'occupation', 'zip']
+    features = ['user_id', 'movie_id', 'gender', 'age', 'occupation', 'zip', 'genres']
     feature_max_idx = {}
     for feature in features:
         lbe = LabelEncoder()
