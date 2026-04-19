@@ -131,3 +131,52 @@ def gen_model_input_sdm(train_set, user_profile, seq_short_max_len, seq_prefer_m
         train_model_input[key] = user_profile.loc[train_model_input['user_id']][key].values
 
     return train_model_input, train_label
+
+
+def gen_model_input_gru4rec(data, batch_size, session_key, item_key, time_key):
+    """
+    Implement session-parallel mini-batches in 'session-based recommendations with recurrent neural networks'
+    section 3.1.1.
+
+    """
+    data.sort_values([session_key, time_key], inplace=True)
+
+    click_offsets = np.zeros(data[session_key].nunique() + 1, dtype=np.int32)
+    # group & sort the df by session_key and get the offset values
+    click_offsets[1:] = data.groupby(session_key).size().cumsum()
+
+    session_idx_arr = np.arange(data[session_key].nunique())
+
+    iters = np.arange(batch_size)
+    maxiter = iters.max()
+    start = click_offsets[session_idx_arr[iters]]
+    end = click_offsets[session_idx_arr[iters] + 1]
+    mask = []  # indicator for the sessions to be terminated
+    finished = False
+
+    while not finished:
+        minlen = (end - start).min()
+        # Item indices (for embedding) for clicks where the first sessions start
+        idx_target = data[item_key].values[start]
+        for i in range(minlen - 1):
+            # Build inputs & targets
+            idx_input = idx_target
+            idx_target = data[item_key].values[start + i + 1]
+            inp = idx_input
+            target = idx_target
+            yield inp, target, mask
+
+        # click indices where a particular session meets second-to-last element
+        start = start + (minlen - 1)
+        # see if how many sessions should terminate
+        mask = np.arange(len(iters))[(end - start) <= 1]
+        done_sessions_counter = len(mask)
+        for idx in mask:
+            maxiter += 1
+            if maxiter >= len(click_offsets) - 1:
+                finished = True
+                break
+            # update the next starting/ending point
+            iters[idx] = maxiter
+            start[idx] = click_offsets[session_idx_arr[maxiter]]
+            end[idx] = click_offsets[session_idx_arr[maxiter] + 1]
